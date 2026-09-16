@@ -1,0 +1,83 @@
+# E1 任务集。协议见 protocol.md 第 6 节。
+#
+# dev：写脚本、调提示词用，可随时改。
+# eval：预注册。填好后提交；运行开始后不改。结果不理想只能新增 batch，不能改旧 batch。
+# 字段：
+#   id          任务标识，方向前缀 zh2en / en2zh
+#   direction   zh2en = 中文使用者找英文项目；en2zh = 英文使用者找仅中文 README 的项目
+#   type        term | uncovered | ambiguous | negation | long
+#   query       用户原话，不做任何改写
+#   need        任务写作者对"什么算合适"的一句说明，判定时参考；不含仓库名
+#   written_at  写作日期，须早于首次运行
+
+preregistration:
+  eval_frozen_commit: null      # 填 eval 组提交的 SHA
+  prompts_frozen_commit: null   # 填 prompts/ 提交的 SHA
+  seed_set_frozen_commit: null  # 填 seed-set.jsonl 提交的 SHA
+  thresholds_confirmed_by: null # 发起人确认协议第 9 节阈值的日期
+
+dev:
+  - id: zh2en-dev-01
+    direction: zh2en
+    type: term
+    query: 剪贴板历史 工具
+    need: 桌面端记录剪贴板历史并可搜索回粘的工具，任一系统
+    written_at: 2026-09-17
+  - id: zh2en-dev-02
+    direction: zh2en
+    type: negation
+    query: 剪贴板历史 不要 electron
+    need: 同上，但排除 Electron 实现
+    written_at: 2026-09-17
+  - id: zh2en-dev-03
+    direction: zh2en
+    type: long
+    query: 想找一个能自托管的稍后读服务，能保存网页正文，手机上也能看
+    need: 自托管稍后读，保存正文、有移动端访问方式
+    written_at: 2026-09-17
+  - id: zh2en-dev-04
+    direction: zh2en
+    type: ambiguous
+    query: 番茄钟 命令行
+    need: 终端里用的番茄工作法计时器；不是番茄品种、不是图形界面应用
+    written_at: 2026-09-17
+  - id: zh2en-dev-05
+    direction: zh2en
+    type: uncovered
+    query: 把微信聊天记录导出成 HTML
+    need: 导出微信聊天记录为可离线浏览的 HTML，任一平台
+    written_at: 2026-09-17
+  - id: en2zh-dev-01
+    direction: en2zh
+    type: term
+    query: clipboard history manager windows
+    need: Windows 剪贴板历史工具；目标是只有中文 README 的项目也能进入候选
+    written_at: 2026-09-17
+  - id: en2zh-dev-02
+    direction: en2zh
+    type: uncovered
+    query: convert wechat official account article to markdown
+    need: 微信公众号文章转 Markdown
+    written_at: 2026-09-17
+  - id: en2zh-dev-03
+    direction: en2zh
+    type: term
+    query: bilibili video downloader cli
+    need: 命令行下载 B 站视频
+    written_at: 2026-09-17
+  - id: en2zh-dev-04
+    direction: en2zh
+    type: long
+    query: offline OCR for screenshots on macOS, no cloud, Chinese and English text
+    need: macOS 本地截图 OCR，支持中英文，不上传
+    written_at: 2026-09-17
+  - id: en2zh-dev-05
+    direction: en2zh
+    type: negation
+    query: lightweight self-hosted rss reader without docker
+    need: 自托管 RSS 阅读器，不依赖 Docker 部署
+    written_at: 2026-09-17
+
+eval:
+  # 第一批。每方向每类至少 2 条，合计 ≥ 20。填好后提交并把 SHA 写进 preregistration。
+  batch_1: []
