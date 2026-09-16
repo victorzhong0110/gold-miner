@@ -6,6 +6,10 @@ Gold Miner is a planned Chrome extension for discovering and exploring GitHub pr
 
 **当前状态 / Status：产品规划阶段，尚无可安装的扩展版本。Planning stage; no installable extension is available yet.**
 
+## 设计参考与研究记录
+
+- [EhViewer 对跨语言检索的启发](docs/research/ehviewer-cross-language-search.md)：来源核对、多语言软件术语表、复用边界，以及纯词表／纯 AI／混合方案实验 E9。
+
 ## 产品验证与开发计划
 
 以下为完整的 v0.3 计划，包含已确认需求、开发阶段、待验证命题和实验设计。
