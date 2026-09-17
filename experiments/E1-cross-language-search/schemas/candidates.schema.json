@@ -107,52 +107,6 @@
       "type": "string"
     },
     "sources": {
-      "description": "合并去重后保留的全部来源关联（e1_minimal_runner.py merged_candidates  emitting）。每个元素对应一次变体命中，保留全部而不只保留首见；per_query_records 行不带本字段，merged 行带本字段。",
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "variant_query": {
-            "description": "该次命中的用户语言层面查询。",
-            "minLength": 1,
-            "type": "string"
-          },
-          "api_query": {
-            "description": "该次命中实际发给 GitHub Search API 的查询串。",
-            "minLength": 1,
-            "type": "string"
-          },
-          "variant_lang": {
-            "description": "该次命中 variant_query 的语言。",
-            "enum": [
-              "zh",
-              "en"
-            ],
-            "type": "string"
-          },
-          "rank": {
-            "description": "该次命中在所属变体查询结果中的排名。",
-            "minimum": 1,
-            "type": "integer"
-          },
-          "page": {
-            "description": "该次命中的 Search API 页号。",
-            "minimum": 1,
-            "type": "integer"
-          }
-        },
-        "required": [
-          "variant_query",
-          "api_query",
-          "variant_lang",
-          "rank",
-          "page"
-        ]
-      }
-    },
-    "sources": {
       "description": "合并去重后保留的全部来源关联（每条含 variant_query、api_query、variant_lang、rank、page）。逐查询原始记录不含本字段；合并行可含。对应 protocol.md 第 3 节与 run-settings.json 排序说明。",
       "items": {
         "additionalProperties": false,
