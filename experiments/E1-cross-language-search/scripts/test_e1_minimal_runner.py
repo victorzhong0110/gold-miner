@@ -51,8 +51,14 @@ class TestBudgets(unittest.TestCase):
             sleep_seconds=0,
         )
         self.assertEqual(out["actual_requests"], 1)
+        self.assertEqual(out["attempted_requests"], 1)
+        self.assertEqual(out["successful_requests"], 1)
+        self.assertEqual(out["failed_requests"], 0)
+        self.assertEqual(out["cancelled_variants"], 0)
         self.assertEqual(out["requested_budget"], 1)
         self.assertEqual(len(out["candidates"]), 1)
+        self.assertEqual(len(out["merged_candidates"]), 1)
+        self.assertEqual(len(out["per_query_records"]), 1)
 
     def test_a_rejects_two_variants(self):
         with self.assertRaises(ValueError):
@@ -132,8 +138,61 @@ class TestMergeDedup(unittest.TestCase):
             sleep_seconds=0,
         )
         self.assertEqual(out["actual_requests"], 2)
+        self.assertEqual(out["attempted_requests"], 2)
+        self.assertEqual(out["successful_requests"], 2)
+        self.assertEqual(out["failed_requests"], 0)
+        self.assertEqual(out["cancelled_variants"], 0)
         repos = [c["repo"] for c in out["candidates"]]
         self.assertEqual(repos, ["Owner/Repo", "other/one", "other/two"])
+        # per_query_records keeps every hit (2+2 including cross-variant dup).
+        self.assertEqual(len(out["per_query_records"]), 4)
+        self.assertEqual(len(out["merged_candidates"]), 3)
+        # merged retains ALL source associations, not first-seen only.
+        first = out["merged_candidates"][0]
+        self.assertIn("sources", first)
+        self.assertEqual(len(first["sources"]), 2)
+        self.assertEqual(
+            [s["variant_query"] for s in first["sources"]], ["q1", "q2"]
+        )
+        self.assertEqual(
+            [s["api_query"] for s in first["sources"]], ["q1", "q2"]
+        )
+        for s in first["sources"]:
+            for k in ("variant_query", "api_query", "variant_lang", "rank", "page"):
+                self.assertIn(k, s)
+
+    def test_runs_all_variants_even_when_first_fills_merge(self):
+        calls = {"n": 0}
+
+        def make_many(prefix, n):
+            return make_items(*[f"{prefix}/{i}" for i in range(n)])
+
+        def fake_get(url, headers):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return make_many("fill", runner.MERGED_TOP_N)
+            return make_items("late/only")
+
+        out = runner.run_method(
+            run_id="r1",
+            task_id="t1",
+            direction="zh2en",
+            arm="B",
+            variants=[
+                {"variant_query": "q1", "variant_lang": "zh", "api_query": "q1"},
+                {"variant_query": "q2", "variant_lang": "en", "api_query": "q2"},
+            ],
+            http_get=fake_get,
+            sleep_func=noop,
+            sleep_seconds=0,
+        )
+        # Never break outer loop early when one query fills merge.
+        self.assertEqual(calls["n"], 2)
+        self.assertEqual(out["attempted_requests"], 2)
+        self.assertEqual(out["successful_requests"], 2)
+        self.assertEqual(len(out["per_query_records"]), runner.MERGED_TOP_N + 1)
+        self.assertEqual(len(out["merged_candidates"]), runner.MERGED_TOP_N)
+        self.assertEqual(len(out["candidates"]), runner.MERGED_TOP_N)
 
     def test_seed_flagging_case_insensitive(self):
         def fake_get(url, headers):
@@ -203,9 +262,16 @@ class TestErrorsCancel(unittest.TestCase):
             sleep_seconds=0,
         )
         self.assertEqual(out["actual_requests"], 1)
+        # Failed attempts count toward cost; success count alone is not cost.
+        self.assertEqual(out["attempted_requests"], 2)
+        self.assertEqual(out["successful_requests"], 1)
+        self.assertEqual(out["failed_requests"], 1)
+        self.assertEqual(out["cancelled_variants"], 0)
         self.assertEqual(len(out["errors"]), 1)
         self.assertIn("TimeoutError", out["errors"][0]["error"])
         self.assertEqual(len(out["candidates"]), 1)
+        self.assertEqual(len(out["per_query_records"]), 1)
+        self.assertEqual(len(out["merged_candidates"]), 1)
 
     def test_cancel_stops_new_requests(self):
         calls = {"n": 0}
@@ -240,7 +306,12 @@ class TestErrorsCancel(unittest.TestCase):
         )
         self.assertEqual(calls["n"], 1)
         self.assertEqual(out["actual_requests"], 1)
+        self.assertEqual(out["attempted_requests"], 1)
+        self.assertEqual(out["successful_requests"], 1)
+        self.assertEqual(out["failed_requests"], 0)
+        self.assertEqual(out["cancelled_variants"], 1)
         self.assertEqual(out["errors"][-1]["error"], "cancelled")
+        self.assertEqual(len(out["per_query_records"]), 1)
 
     def test_cancel_records_each_remaining_variant(self):
         def fake_get(url, headers):
@@ -262,7 +333,13 @@ class TestErrorsCancel(unittest.TestCase):
             sleep_seconds=0,
         )
         self.assertEqual(out["actual_requests"], 0)
+        self.assertEqual(out["attempted_requests"], 0)
+        self.assertEqual(out["successful_requests"], 0)
+        self.assertEqual(out["failed_requests"], 0)
+        self.assertEqual(out["cancelled_variants"], 3)
         self.assertEqual(out["candidates"], [])
+        self.assertEqual(out["merged_candidates"], [])
+        self.assertEqual(out["per_query_records"], [])
         self.assertEqual(len(out["errors"]), 3)
         self.assertEqual(
             [e["variant_index"] for e in out["errors"]], [0, 1, 2]
@@ -303,8 +380,10 @@ class TestErrorsCancel(unittest.TestCase):
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         schema_arms = set(schema["properties"]["arm"]["enum"])
         # Runner produces GitHub rows for A/B/C/M; D is a tool control and
-        # must not be silently recorded as a GitHub run.
+        # must not be silently recorded as a GitHub run. Schema must allow
+        # M and retain A/B/C/D for other record paths.
         self.assertEqual(set(runner.ALLOWED_ARMS), {"A", "B", "C", "M"})
+        self.assertEqual(schema_arms, {"A", "B", "C", "D", "M"})
         self.assertTrue(
             set(runner.ALLOWED_ARMS) <= schema_arms,
             f"runner arms {sorted(runner.ALLOWED_ARMS)} not subset of "

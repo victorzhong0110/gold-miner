@@ -231,10 +231,20 @@ class TestW1Consistency(unittest.TestCase):
         schema_path = E1 / "schemas" / "candidates.schema.json"
         schema = json.loads(read_text(schema_path))
         self.assertEqual(
-            set(schema["properties"]["arm"]["enum"]), {"A", "B", "C", "M"}
+            set(schema["properties"]["arm"]["enum"]), {"A", "B", "C", "D", "M"}
         )
         self.assertIn("第 5 节", schema["description"])
         self.assertNotIn("第 7 节", schema["description"])
+        # sources must be documented when merged rows emit it.
+        self.assertIn("sources", schema["properties"])
+        self.assertFalse(schema.get("additionalProperties", True))
+        src_required = set(
+            schema["properties"]["sources"]["items"]["required"]
+        )
+        self.assertEqual(
+            src_required,
+            {"variant_query", "api_query", "variant_lang", "rank", "page"},
+        )
 
     def test_judgments_schema_fields(self):
         schema_path = E1 / "schemas" / "judgments.schema.json"

@@ -180,9 +180,22 @@ def run_method(
 ) -> dict:
     """Run one (task, arm) with a fixed GitHub budget, return records.
 
-    Returns ``{"candidates": [...merged, deduped, truncated...],
-    "errors": [...], "actual_requests": int, "requested_budget": int}``.
-    ``candidates`` rows conform to candidates.schema.json required fields.
+    Two phases:
+    1. Run ALL budgeted variants first (respecting ``should_cancel``),
+       collecting per-query raw hits into ``per_query_records``.
+    2. Only after every query finishes, dedupe/merge/sort/truncate to
+       ``MERGED_TOP_N`` into ``merged_candidates`` (with ``candidates``
+       as a backward-compatible alias).
+
+    Returns ``{"per_query_records": [...every hit...],
+    "merged_candidates": [...deduped, truncated, with sources...],
+    "candidates": [...alias of merged_candidates...],
+    "errors": [...], "requested_budget": int,
+    "attempted_requests": int, "successful_requests": int,
+    "failed_requests": int, "cancelled_variants": int,
+    "actual_requests": int (deprecated alias of successful_requests)}``.
+    Rows conform to candidates.schema.json required fields; merged rows
+    additionally carry ``sources``.
     """
     if arm == "D":
         raise ValueError("arm D is a networked-assistant control, not a GitHub run")
@@ -207,11 +220,15 @@ def run_method(
         )
     seeds = {s.lower() for s in (seed_repos or set()) if isinstance(s, str)}
 
-    merged: list = []
-    seen: set = set()
+    per_query_records: list = []
     errors: list = []
-    actual_requests = 0
+    attempted_requests = 0
+    successful_requests = 0
+    failed_requests = 0
+    cancelled_variants = 0
     fetched_at = _utcnow()
+    # Phase 1: run ALL budgeted variants first (respect cancel),
+    # collecting per-query raw hits. No merge truncation here.
     for index, variant in enumerate(clean_variants):
         if should_cancel is not None and should_cancel():
             for pending in range(index, len(clean_variants)):
@@ -222,6 +239,7 @@ def run_method(
                         "error": "cancelled",
                     }
                 )
+                cancelled_variants += 1
             break
         try:
             repos = search_repos(
@@ -234,6 +252,8 @@ def run_method(
                 sleep_seconds=sleep_seconds,
             )
         except Exception as exc:  # record, do not fabricate candidates
+            attempted_requests += 1
+            failed_requests += 1
             errors.append(
                 {
                     "variant_index": index,
@@ -242,14 +262,14 @@ def run_method(
                 }
             )
             continue
-        actual_requests += 1
+        attempted_requests += 1
+        successful_requests += 1
         for rank0, repo_item in enumerate(repos[:per_page], start=1):
             full_name = repo_item.get("full_name") or repo_item.get("repo") or ""
             key = canonical(full_name) if full_name else ""
-            if not full_name or key in seen:
+            if not full_name:
                 continue
-            seen.add(key)
-            merged.append(
+            per_query_records.append(
                 build_candidate_row(
                     run_id=run_id,
                     task_id=task_id,
@@ -269,15 +289,39 @@ def run_method(
                     fetched_at=fetched_at,
                 )
             )
-            if len(merged) >= MERGED_TOP_N:
-                break
-        if len(merged) >= MERGED_TOP_N:
-            break
+    # Phase 2: merge/dedupe/sort/truncate only after every query finishes.
+    # First-seen order (variant order, then rank) is preserved; truncation
+    # to MERGED_TOP_N happens here, never by breaking the outer loop early.
+    merged_by_key: dict = {}
+    order: list = []
+    for rec in per_query_records:
+        key = canonical(rec["repo"])
+        src = {
+            "variant_query": rec["variant_query"],
+            "api_query": rec["api_query"],
+            "variant_lang": rec["variant_lang"],
+            "rank": rec["rank"],
+            "page": rec["page"],
+        }
+        if key not in merged_by_key:
+            merged_entry = dict(rec)
+            merged_entry["sources"] = [src]
+            merged_by_key[key] = merged_entry
+            order.append(key)
+        else:
+            merged_by_key[key]["sources"].append(src)
+    merged = [merged_by_key[k] for k in order][:MERGED_TOP_N]
     return {
-        "candidates": merged[:MERGED_TOP_N],
+        "per_query_records": per_query_records,
+        "merged_candidates": merged,
+        "candidates": merged,
         "errors": errors,
-        "actual_requests": actual_requests,
         "requested_budget": requested_budget,
+        "attempted_requests": attempted_requests,
+        "successful_requests": successful_requests,
+        "failed_requests": failed_requests,
+        "cancelled_variants": cancelled_variants,
+        "actual_requests": successful_requests,
     }
 
 
