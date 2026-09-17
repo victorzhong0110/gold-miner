@@ -2,7 +2,7 @@
 
 Basis:
 - docs/engineering/prerequisites.md Section 1 (text-match header, 2s serial interval)
-- experiments/E1-cross-language-search/protocol.md Section 7 candidates fields
+- experiments/E1-cross-language-search/protocol.md Section 5 candidates fields
   (repo, stars, matched_fields come from parsing here)
 
 Design for testability:

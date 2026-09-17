@@ -20,10 +20,27 @@ Design for testability and honesty:
   ``ValueError`` so callers cannot silently record it as a GitHub run.
 - Cancellation: pass ``should_cancel`` callable returning True to stop
   before each new GitHub request. Already-sent requests stay recorded;
-  pending variants are marked ``cancelled`` in errors, never fabricated.
+  each remaining pending variant gets one ``cancelled`` entry in errors,
+  never fabricated candidates.
 - Errors (HTTP failures, timeouts, bad payloads) are recorded per
   variant in ``errors`` and do not poison other variants. Missing
   ``text_matches`` becomes ``["unknown"]`` via ``github_search``.
+- Two-phase merge: run ALL budgeted variants first (respecting cancel),
+  collecting per-query raw hits into ``per_query_records``; only after
+  every query finishes, dedupe by ``canonical``/merge/sort/truncate to
+  ``MERGED_TOP_N``. Never break the outer loop early just because one
+  query filled the merge window.
+- Sources: ``per_query_records`` keeps every hit with its
+  variant/query/rank/page; ``merged_candidates`` dedupes but retains ALL
+  source associations as
+  ``sources: [{variant_query, api_query, variant_lang, rank, page}, ...]``,
+  not first-seen only.
+- Counters: ``attempted_requests`` counts every GitHub call tried
+  (successful + failed); ``successful_requests`` counts only successes;
+  ``failed_requests`` counts exceptions; ``cancelled_variants`` counts
+  variants skipped by cancel. Failed attempts count toward cost;
+  success count alone is not cost. ``actual_requests`` is kept as a
+  deprecated alias of ``successful_requests`` for backward compatibility.
 """
 
 from __future__ import annotations
@@ -197,13 +214,14 @@ def run_method(
     fetched_at = _utcnow()
     for index, variant in enumerate(clean_variants):
         if should_cancel is not None and should_cancel():
-            errors.append(
-                {
-                    "variant_index": index,
-                    "api_query": variant["api_query"],
-                    "error": "cancelled",
-                }
-            )
+            for pending in range(index, len(clean_variants)):
+                errors.append(
+                    {
+                        "variant_index": pending,
+                        "api_query": clean_variants[pending]["api_query"],
+                        "error": "cancelled",
+                    }
+                )
             break
         try:
             repos = search_repos(

@@ -1,1 +1,104 @@
-{"$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "description": "依据 protocol.md 第 7 节 judgments 字段列表，一行一条。各组前 10 合并去重、隐藏组别后判定，再回填到组。", "properties": {"hard_conditions": {"description": "硬条件判定。", "enum": ["satisfied", "conflict", "unknown"], "type": "string"}, "judge": {"description": "判定人标识。", "minLength": 1, "type": "string"}, "judged_at": {"description": "判定时间，RFC 3339。", "format": "date-time", "type": "string"}, "kind": {"description": "仓库种类。", "enum": ["tool", "library", "tutorial", "list", "mirror", "other"], "type": "string"}, "notes": {"description": "备注，可为空字符串。", "type": "string"}, "novel_to_judge": {"description": "对判定人是否首次见到。", "enum": ["yes", "no"], "type": "string"}, "purpose_fit": {"description": "用途适合度。", "enum": ["yes", "partial", "no"], "type": "string"}, "repo": {"description": "仓库全名 owner/repo，原样保存。", "pattern": "^[^/\\s]+/[^/\\s]+$", "type": "string"}, "run_id": {"description": "本次运行标识，对应 runs/<日期>-<标签>。", "minLength": 1, "type": "string"}, "task_id": {"description": "任务标识，dev/eval 组 id 或种子任务 id。", "minLength": 1, "type": "string"}}, "required": ["run_id", "task_id", "repo", "purpose_fit", "hard_conditions", "kind", "novel_to_judge", "judge", "judged_at", "notes"], "title": "E1 judgments.jsonl 单行记录", "type": "object"}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "依据 protocol.md 第 5 节 judgments 字段列表，一行一条。首轮各组前 5 合并去重、隐藏组别后判定，再回填到组；后续扩大到前 10 时另开批次。",
+  "properties": {
+    "hard_conditions": {
+      "description": "硬条件判定。",
+      "enum": [
+        "satisfied",
+        "conflict",
+        "unknown"
+      ],
+      "type": "string"
+    },
+    "judge": {
+      "description": "判定人标识。",
+      "minLength": 1,
+      "type": "string"
+    },
+    "judged_at": {
+      "description": "判定时间，RFC 3339。",
+      "format": "date-time",
+      "type": "string"
+    },
+    "kind": {
+      "description": "仓库种类。",
+      "enum": [
+        "tool",
+        "library",
+        "tutorial",
+        "list",
+        "mirror",
+        "other"
+      ],
+      "type": "string"
+    },
+    "notes": {
+      "description": "备注，可为空字符串。",
+      "type": "string"
+    },
+    "novel_to_judge": {
+      "description": "对判定人是否首次见到。",
+      "enum": [
+        "yes",
+        "no"
+      ],
+      "type": "string"
+    },
+    "purpose_fit": {
+      "description": "用途适合度。",
+      "enum": [
+        "yes",
+        "partial",
+        "no"
+      ],
+      "type": "string"
+    },
+    "repo": {
+      "description": "仓库全名 owner/repo，原样保存。",
+      "pattern": "^[^/\\s]+/[^/\\s]+$",
+      "type": "string"
+    },
+    "run_id": {
+      "description": "本次运行标识，对应 runs/<日期>-<标签>。",
+      "minLength": 1,
+      "type": "string"
+    },
+    "task_id": {
+      "description": "任务标识，dev/eval 组 id 或种子任务 id。",
+      "minLength": 1,
+      "type": "string"
+    },
+    "worth_following": {
+      "description": "是否值得继续看。对应 protocol.md 第 5 节 judgments 字段与 judgment-guide.md 第 2 节。",
+      "enum": [
+        "yes",
+        "no",
+        "unknown"
+      ],
+      "type": "string"
+    },
+    "reason": {
+      "description": "值得/不值得继续看的理由：原话或明确标记的技术判断；真实使用者价值判断与技术判断分列。必填。",
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "run_id",
+    "task_id",
+    "repo",
+    "purpose_fit",
+    "hard_conditions",
+    "kind",
+    "novel_to_judge",
+    "judge",
+    "judged_at",
+    "notes",
+    "worth_following",
+    "reason"
+  ],
+  "title": "E1 judgments.jsonl 单行记录",
+  "type": "object"
+}

@@ -156,6 +156,11 @@ class TestW1RunSettings(unittest.TestCase):
         self.assertEqual(budget["B"]["max_github_requests"], 2)
         self.assertEqual(budget["C"]["max_github_requests"], 4)
         self.assertEqual(budget["M"]["max_github_requests"], 4)
+        # 模型预算与 prompts/README 必须一致：A 0、B/C/M 各最多 1 次。
+        self.assertEqual(budget["A"]["max_model_requests"], 0)
+        self.assertEqual(budget["B"]["max_model_requests"], 1)
+        self.assertEqual(budget["C"]["max_model_requests"], 1)
+        self.assertEqual(budget["M"]["max_model_requests"], 1)
         self.assertEqual(data["candidate_merge"]["per_query_top_n"], 30)
         self.assertEqual(data["candidate_merge"]["truncate_merged_top_n"], 30)
         self.assertEqual(data["judgment_window"]["human_check_top_k_per_group"], 5)
@@ -166,6 +171,26 @@ class TestW1RunSettings(unittest.TestCase):
     def test_no_real_model_configured(self):
         data = json.loads(read_text(SETTINGS))
         self.assertIsNone(data["model"].get("concrete_model_id"))
+
+    def test_all_freeze_markers_unfrozen(self):
+        text = read_text(QUERIES)
+        for key in (
+            "eval_frozen_commit: null",
+            "prompts_frozen_commit: null",
+            "seed_set_frozen_commit: null",
+            "run_settings_commit: null",
+        ):
+            self.assertIn(key, text, f"queries.yaml 缺少未冻结标记 {key}")
+        data = json.loads(read_text(SETTINGS))
+        for key in (
+            "eval_frozen_commit",
+            "prompts_frozen_commit",
+            "seed_set_frozen_commit",
+            "run_settings_commit",
+        ):
+            self.assertIsNone(
+                data["freeze"].get(key), f"run-settings {key} 应为 null（未冻结）"
+            )
 
 
 class TestW1SeedDraft(unittest.TestCase):
@@ -197,6 +222,56 @@ class TestW1NoSecrets(unittest.TestCase):
         for path in (READING, GUIDE, SETTINGS, SEED_DRAFT, SESSION, QUERIES):
             hits = scan_secrets(read_text(path))
             self.assertFalse(hits, f"{path.name} 疑似含密钥模式: {hits}")
+
+
+class TestW1Consistency(unittest.TestCase):
+    """跨文件一致性：预算、节号、schema 与证据路径必须对齐。"""
+
+    def test_candidates_schema_arms(self):
+        schema_path = E1 / "schemas" / "candidates.schema.json"
+        schema = json.loads(read_text(schema_path))
+        self.assertEqual(
+            set(schema["properties"]["arm"]["enum"]), {"A", "B", "C", "M"}
+        )
+        self.assertIn("第 5 节", schema["description"])
+        self.assertNotIn("第 7 节", schema["description"])
+
+    def test_judgments_schema_fields(self):
+        schema_path = E1 / "schemas" / "judgments.schema.json"
+        schema = json.loads(read_text(schema_path))
+        for field in ("worth_following", "reason"):
+            self.assertIn(
+                field, schema["properties"], f"judgments 缺少协议第 5 节字段 {field}"
+            )
+            self.assertIn(
+                field, schema["required"], f"judgments required 缺少 {field}"
+            )
+        self.assertIn("第 5 节", schema["description"])
+        self.assertNotIn("第 7 节", schema["description"])
+
+    def test_prompts_readme_budgets_and_sections(self):
+        text = read_text(E1 / "prompts" / "README.md")
+        self.assertIn("第 3 节", text)
+        self.assertIn("最多 2 次 Search API 调用、最多 1 次模型调用", text)
+        self.assertIn("最多 4 次 Search API 调用、最多 1 次模型调用", text)
+        self.assertNotIn("最多 5 次", text)
+        self.assertNotIn("最多 2 次模型调用", text)
+
+    def test_runs_readme_sections(self):
+        text = read_text(E1 / "runs" / "README.md")
+        self.assertIn("第 5 节", text)
+        self.assertNotIn("依据 protocol.md 第 11 节", text)
+        self.assertNotIn("第 7 节），一行一条", text)
+
+    def test_backlog_evidence_paths(self):
+        text = read_text(ROOT / "docs" / "backlog.md")
+        for path in (
+            "experiments/E1-cross-language-search/w2-source-check-2026-09-17.md",
+            "experiments/E1-cross-language-search/scripts/e1_minimal_runner.py",
+            "experiments/E1-cross-language-search/w4-first-round-status-2026-09-17.md",
+            "experiments/E2-open-ended-discovery/session-setup.md",
+        ):
+            self.assertIn(path, text, f"backlog 证据路径缺失或非全路径: {path}")
 
 
 if __name__ == "__main__":

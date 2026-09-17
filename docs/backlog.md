@@ -1,7 +1,7 @@
 # 黄金矿工当前待办
 
 更新：2026-09-17。依据：[v0.4](plan/v0.4.md)。
-OpenCode GUI 推进更新：2026-09-18（分支 `opencode/gui-w1-w8`）。W1–W3 有产物；W4 未跑评估；W5 等发起人短会话；W6/W7 仅准备；W8 为未充分证据下的决策草稿。证据见 `experiments/E1-cross-language-search/W1-report.md`、`w2-source-check-2026-09-17.md`、`scripts/e1_minimal_runner.py`、`w4-first-round-status-2026-09-17.md`、`../E2-open-ended-discovery/session-setup.md`、`docs/reports/w6-*.md`/`w7-*.md`/`w8-*.md`。
+OpenCode GUI 推进更新：2026-09-18（分支 `opencode/gui-w1-w8`）。W1–W3 有产物；W4 未跑评估；W5 等发起人短会话；W6/W7 仅准备；W8 为未充分证据下的决策草稿。证据见 `experiments/E1-cross-language-search/W1-report.md`、`experiments/E1-cross-language-search/w2-source-check-2026-09-17.md`、`experiments/E1-cross-language-search/scripts/e1_minimal_runner.py`、`experiments/E1-cross-language-search/w4-first-round-status-2026-09-17.md`、`experiments/E2-open-ended-discovery/session-setup.md`、`docs/reports/w6-baseline-connectivity-2026-09-17.md`/`docs/reports/w7-metadata-e8-prep-2026-09-17.md`/`docs/reports/w8-first-round-decision-2026-09-17.md`。
 本文是可直接执行的工作索引；未创建对应 GitHub issues，未启动下面的实验与开发。
 
 状态：完成 / 可开始 / 有依赖 / 条件性 / 暂缓。“可开始”不等于本次已经运行。每次完成工作包后，记录提交或报告路径，不能只改勾选。

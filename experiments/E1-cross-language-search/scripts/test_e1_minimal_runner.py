@@ -1,5 +1,6 @@
 """Unit tests for e1_minimal_runner.py. No real network: all HTTP is faked."""
 
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -241,6 +242,33 @@ class TestErrorsCancel(unittest.TestCase):
         self.assertEqual(out["actual_requests"], 1)
         self.assertEqual(out["errors"][-1]["error"], "cancelled")
 
+    def test_cancel_records_each_remaining_variant(self):
+        def fake_get(url, headers):
+            raise AssertionError("cancelled before any request, must not call HTTP")
+
+        out = runner.run_method(
+            run_id="r1",
+            task_id="t1",
+            direction="zh2en",
+            arm="C",
+            variants=[
+                {"variant_query": "a", "variant_lang": "zh", "api_query": "a"},
+                {"variant_query": "b", "variant_lang": "en", "api_query": "b"},
+                {"variant_query": "c", "variant_lang": "zh", "api_query": "c"},
+            ],
+            http_get=fake_get,
+            should_cancel=lambda: True,
+            sleep_func=noop,
+            sleep_seconds=0,
+        )
+        self.assertEqual(out["actual_requests"], 0)
+        self.assertEqual(out["candidates"], [])
+        self.assertEqual(len(out["errors"]), 3)
+        self.assertEqual(
+            [e["variant_index"] for e in out["errors"]], [0, 1, 2]
+        )
+        self.assertTrue(all(e["error"] == "cancelled" for e in out["errors"]))
+
     def test_candidate_row_validation(self):
         base = dict(
             run_id="r",
@@ -265,6 +293,43 @@ class TestErrorsCancel(unittest.TestCase):
         bad2 = dict(base, matched_fields=["title-guess"])
         with self.assertRaises(ValueError):
             runner.build_candidate_row(**bad2)
+
+    def test_runner_arms_conform_to_candidates_schema(self):
+        schema_path = (
+            Path(__file__).resolve().parent.parent
+            / "schemas"
+            / "candidates.schema.json"
+        )
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        schema_arms = set(schema["properties"]["arm"]["enum"])
+        # Runner produces GitHub rows for A/B/C/M; D is a tool control and
+        # must not be silently recorded as a GitHub run.
+        self.assertEqual(set(runner.ALLOWED_ARMS), {"A", "B", "C", "M"})
+        self.assertTrue(
+            set(runner.ALLOWED_ARMS) <= schema_arms,
+            f"runner arms {sorted(runner.ALLOWED_ARMS)} not subset of "
+            f"schema arms {sorted(schema_arms)}",
+        )
+        required = schema["required"]
+        out = runner.run_method(
+            run_id="r1",
+            task_id="t1",
+            direction="zh2en",
+            arm="A",
+            variants=[
+                {
+                    "variant_query": "剪贴板历史",
+                    "variant_lang": "zh",
+                    "api_query": "剪贴板历史",
+                }
+            ],
+            http_get=lambda u, h: make_items("a/one"),
+            sleep_func=noop,
+            sleep_seconds=0,
+        )
+        self.assertEqual(len(out["candidates"]), 1)
+        for field in required:
+            self.assertIn(field, out["candidates"][0])
 
 
 if __name__ == "__main__":
