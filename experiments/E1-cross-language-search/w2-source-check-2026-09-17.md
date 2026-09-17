@@ -16,6 +16,12 @@
 
 ## 2 证据在哪里
 
+- 结构化产物（权威，以此为准）：`w2-probe-2026-09-17.json`（本目录，同批新鲜探测的机器可读记录）。
+  - 本文件以下散文摘要不是替代品；核对以 JSON 为准。
+  - 新鲜批次：`batch_started_at 2026-09-17T20:19:11Z` 至 `batch_finished_at 2026-09-17T20:19:32Z`，无凭据（`no GITHUB_TOKEN`），`User-Agent E1-w2-check/1a`，`per_page=5`，串行间隔 5 秒，共 4 探测（`GET /rate_limit`＋3 搜索）。
+  - 每探测含 `started_at/finished_at`、`query`、`http_status`、限流头（`x-ratelimit-limit/remaining/reset/resource/used`，`retry-after` 如有）、`incomplete_results`、`total_count`、前 3（`repo/stars/matched_fields/description`）、`matched_field_summary`；失败则 `blocked=true` 并如实记录 `error`。本批 4 次全部 `200`，`blocked=false`，无超时、无 `retry-after`；若遇 `403`/限流将如实记失败并标 `blocked`。
+  - 新鲜值（与第 1 批历史不同，证明非复制历史）：默认英文短词 `total_count 878, incomplete_results false`，前 3 与历史同名但第 2 项 stars 为 486（历史 487）；README 组 `total_count 33072`（历史 33068），第 2 项 stars 114028（历史 114024）；中文短语 `total_count 154`（历史 153）。限流：`core remaining 0`（共享出口紧张），`search remaining 9/8/7`。
+- 历史第 1 批报告仍保留如下（`2026-09-17T19:39:10Z` 起）；不得将其当作新鲜证据引用，新鲜核对以 JSON 为准。
 - 本文件即 W2 报告；原始命令见第 4 节复现块。
 - 实际运行时间：`2026-09-17T19:39:10Z` 起，Python `urllib` 同步串行。
 - 本地可运行检查：`python3 -m unittest discover -s experiments/E1-cross-language-search/scripts -p "test_*.py"`（70 tests OK，见 W1；W2 未新增断言型测试， live 探测不可重复断言为通过）。
