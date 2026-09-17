@@ -1,0 +1,31 @@
+{
+  "_note": "TEST FIXTURE ONLY: minimal fake GitHub Search response for unit tests, not real api.github.com data.",
+  "total_count": 2,
+  "incomplete_results": false,
+  "items": [
+    {
+      "full_name": "octocat/Hello-World",
+      "stargazers_count": 1234,
+      "description": "My first repository on GitHub!",
+      "topics": ["octocat", "demo"],
+      "text_matches": [
+        {
+          "fragment": "Hello-World",
+          "matches": [
+            {
+              "text": "Hello",
+              "indices": [0, 5]
+            }
+          ],
+          "property": "name"
+        }
+      ]
+    },
+    {
+      "full_name": "someone/示例项目",
+      "stargazers_count": 45,
+      "description": "一个中文示例项目",
+      "topics": []
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 # E1 任务集。v0.4 协议见 protocol.md 第 2 节。
-# 当前仅有 dev 题；eval 未填写、未冻结、未运行。
+# eval.batch_1 已填写；冻结 SHA 待本提交写入运行清单。未运行。
 #
 # dev：写脚本、调提示词用，可随时改。
 # eval：预注册。填好后提交；运行开始后不改。结果不理想只能新增 batch，不能改旧 batch。
@@ -81,6 +81,127 @@ dev:
     written_at: 2026-09-17
 
 eval:
-  # 第一批开放任务：首轮建议每方向 4 条；已知目标题另存种子记录。
-  # 数量是探索性默认建议，运行前固定；不构成统计保证。SHA 写入后续运行清单。
-  batch_1: []
+  # 第一批开放任务。两方向需求互不重复；每方向 10 条、五类各 2。
+  # 多于 v0.4「每方向 4 条」的探索性建议，运行前固定；不构成统计保证。
+  # 已知目标题另存种子记录。SHA 写入后续运行清单。
+  batch_1:
+    - id: zh2en-eval-01
+      direction: zh2en
+      type: term
+      query: 局域网文件互传 工具
+      need: 局域网内跨设备传文件的工具
+      written_at: 2026-09-18
+    - id: zh2en-eval-02
+      direction: zh2en
+      type: term
+      query: 屏幕录制转 gif 工具
+      need: 能把屏幕录制转成 GIF 的工具
+      written_at: 2026-09-18
+    - id: zh2en-eval-03
+      direction: zh2en
+      type: uncovered
+      query: 网易云歌单导出成文本
+      need: 把网易云音乐歌单导出为可再导入的文本或文件，不是听歌客户端
+      written_at: 2026-09-18
+    - id: zh2en-eval-04
+      direction: zh2en
+      type: uncovered
+      query: 微信表情包自己做
+      need: 从图片制作可添加到微信的表情包，不是表情商店爬虫
+      written_at: 2026-09-18
+    - id: zh2en-eval-05
+      direction: zh2en
+      type: ambiguous
+      query: 鼠标手势 工具
+      need: 电脑上用鼠标手势触发操作的工具，不是生物小鼠相关
+      written_at: 2026-09-18
+    - id: zh2en-eval-06
+      direction: zh2en
+      type: ambiguous
+      query: composer 依赖安装
+      need: PHP Composer 包管理，不是音乐作曲软件
+      written_at: 2026-09-18
+    - id: zh2en-eval-07
+      direction: zh2en
+      type: negation
+      query: 本地记账软件 不要联网
+      need: 本地记账，不上传、不同步到云
+      written_at: 2026-09-18
+    - id: zh2en-eval-08
+      direction: zh2en
+      type: negation
+      query: 静态站点生成器 不要 node
+      need: 静态站点生成器，运行与构建不依赖 Node.js
+      written_at: 2026-09-18
+    - id: zh2en-eval-09
+      direction: zh2en
+      type: long
+      query: 我想找一个能在 Windows 和 Mac 上同步的待办清单，支持离线使用，到期能提醒我。
+      need: 多端同步、可离线、带到期提醒的待办，不是日历订阅器
+      written_at: 2026-09-18
+    - id: zh2en-eval-10
+      direction: zh2en
+      type: long
+      query: 我需要一个可以把手机上的照片自动备份到家里电脑的工具，最好开机就能自己跑，不用我每次手动传。
+      need: 手机照片自动备份到家用电脑并可开机自启，不是网盘客户端
+      written_at: 2026-09-18
+    - id: en2zh-eval-01
+      direction: en2zh
+      type: term
+      query: china housing provident fund calculator
+      need: 住房公积金缴存或贷款计算器；中文材料描述的项目或能力也可进入候选，不强制整仓库仅中文
+      written_at: 2026-09-18
+    - id: en2zh-eval-02
+      direction: en2zh
+      type: term
+      query: alipay bill csv parser
+      need: 解析支付宝导出账单的工具，不是通用 CSV 库
+      written_at: 2026-09-18
+    - id: en2zh-eval-03
+      direction: en2zh
+      type: uncovered
+      query: weekly report generator for office workers in china
+      need: 根据工作记录生成中文周报的工具
+      written_at: 2026-09-18
+    - id: en2zh-eval-04
+      direction: en2zh
+      type: uncovered
+      query: monitor 12306 leftover train tickets and alert me
+      need: 监控 12306 余票并提醒，不是通用火车票展示站
+      written_at: 2026-09-18
+    - id: en2zh-eval-05
+      direction: en2zh
+      type: ambiguous
+      query: ding talk robot webhook
+      need: 钉钉群机器人或 webhook 工具，不是门铃或 ding 提示音
+      written_at: 2026-09-18
+    - id: en2zh-eval-06
+      direction: en2zh
+      type: ambiguous
+      query: little red book note exporter
+      need: 导出小红书笔记或封面信息的工具，不是笔记本品牌或红皮书
+      written_at: 2026-09-18
+    - id: en2zh-eval-07
+      direction: en2zh
+      type: negation
+      query: baidu netdisk downloader no chrome extension
+      need: 百度网盘下载工具，排除浏览器扩展
+      written_at: 2026-09-18
+    - id: en2zh-eval-08
+      direction: en2zh
+      type: negation
+      query: wecom bot self-hosted no saas
+      need: 可自托管的企业微信机器人，排除只提供云端 SaaS 的服务
+      written_at: 2026-09-18
+    - id: en2zh-eval-09
+      direction: en2zh
+      type: long
+      query: I want a self-hosted tool that archives my Weibo posts including images, lets me search them locally, and is not a browser extension.
+      need: 自托管微博归档（含图、可本地搜索），排除浏览器扩展
+      written_at: 2026-09-18
+    - id: en2zh-eval-10
+      direction: en2zh
+      type: long
+      query: A desktop app that fills Chinese individual income tax forms from exported salary CSVs, works offline, and is not an accounting SaaS.
+      need: 用工资 CSV 填中国个税表的离线桌面工具，排除在线记账 SaaS
+      written_at: 2026-09-18

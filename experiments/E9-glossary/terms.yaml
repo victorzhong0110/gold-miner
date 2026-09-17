@@ -1,0 +1,162 @@
+# E9 小型开源软件用途术语表（未验证，仅为查询生成候选）
+# 独立编写，未从 EhTagTranslator 或 EhViewer 词库复制任何词条。
+- id: clipboard-history
+  zh: [剪贴板历史, 剪贴板记录, 剪切板历史]
+  en: [clipboard history, clipboard manager, paste history]
+  notes: 剪贴板历史指保留多次复制记录以便回查粘贴，不等于只增大单次复制容量
+- id: self-hosting
+  zh: [自托管, 自部署, 私有部署]
+  en: [self-hosting, self-hosted, self hosting]
+  notes: 自托管指可把服务端部署在自己机器或服务器上，不等于离线可用
+- id: ocr
+  zh: [文字识别, 光学字符识别, 图片转文字]
+  en: [OCR, optical character recognition, text recognition]
+  notes: 文字识别指从图片或扫描件中提取可编辑文本，不等于只给图片加标注
+- id: rss-reader
+  zh: [RSS阅读器, 订阅阅读器, RSS订阅工具]
+  en: [RSS reader, feed reader, RSS aggregator]
+  notes: RSS阅读器指聚合已订阅源的更新并阅读，不等于算法推荐的信息流
+- id: later-read
+  zh: [稍后读, 稍后阅读, 待读清单]
+  en: [read later, read-it-later, save for later]
+  notes: 稍后读指先收藏链接以后再读，不等于已自动归档全文的笔记库
+- id: pomodoro
+  zh: [番茄钟, 番茄工作法, 专注计时]
+  en: [pomodoro, pomodoro timer, focus timer]
+  notes: 番茄钟指按专注与休息交替计时来保持节奏，不等于简单的秒表或闹钟
+- id: screenshot
+  zh: [截图, 截屏, 屏幕截图]
+  en: [screenshot, screen capture, screencap]
+  notes: 截图指捕获当前屏幕画面存为图片，不等于录屏生成的视频文件
+- id: wechat-export
+  zh: [微信导出, 微信聊天记录导出, 公众号文章导出]
+  en: [WeChat export, wechat backup export, wechat history export]
+  notes: 微信导出指把聊天记录或文章存为本地可读文件，不等于微信自带的换机迁移
+- id: changelog
+  zh: [更新日志, 变更日志, 版本说明]
+  en: [changelog, release notes, change log]
+  notes: 更新日志指按版本记录改动与修复的说明文档，不等于自动生成的提交记录列表
+- id: monorepo
+  zh: [单仓多包, 单体仓库, Monorepo]
+  en: [monorepo, mono-repo, monolithic repository]
+  notes: 单仓多包指一个仓库管理多个相关包并共享工具链，不等于把无关项目随意堆进同一目录
+- id: markdown-editor
+  zh: [Markdown编辑器, MD编辑器, Markdown写作工具]
+  en: [markdown editor, md editor, markdown writer]
+  notes: Markdown编辑器指支持Markdown语法写作与预览的工具，不等于只能导出PDF的富文本编辑器
+- id: terminal-emulator
+  zh: [终端模拟器, 终端工具, 命令行终端]
+  en: [terminal emulator, terminal, console emulator]
+  notes: 终端模拟器指提供命令行交互界面的应用，不等于远程服务器本身
+- id: code-formatter
+  zh: [代码格式化工具, 代码美化, 格式化程序]
+  en: [code formatter, formatter, code beautifier]
+  notes: 代码格式化指按规则统一缩进与空格风格，不等于检查逻辑错误的静态分析
+- id: code-linter
+  zh: [代码检查工具, 静态检查, Linter]
+  en: [code linter, linter, static checker]
+  notes: 代码检查指按规则提示可能错误与风格问题，不等于自动重写代码的格式化工具
+- id: package-manager
+  zh: [包管理器, 依赖管理器, 软件包管理工具]
+  en: [package manager, dependency manager, pkg manager]
+  notes: 包管理器指解析版本并安装复用依赖的工具，不等于托管代码的仓库网站本身
+- id: static-site-generator
+  zh: [静态站点生成器, 静态网站生成器, SSG]
+  en: [static site generator, SSG, static generator]
+  notes: 静态站点生成器指把模板与内容构建成静态网页的工具，不等于需服务端渲染的动态博客后台
+- id: note-taking
+  zh: [笔记软件, 笔记工具, 知识记录]
+  en: [note-taking, notes app, note manager]
+  notes: 笔记软件指记录整理个人知识并可检索的工具，不等于只能收藏链接的稍后读工具
+- id: password-manager
+  zh: [密码管理器, 密码管理工具, 密码保险箱]
+  en: [password manager, password vault, credential manager]
+  notes: 密码管理器指加密保存并自动填充账号口令的工具，不等于浏览器自带的简单记住密码
+- id: file-sync
+  zh: [文件同步, 文件同步工具, 多端同步]
+  en: [file sync, file synchronization, sync tool]
+  notes: 文件同步指在多设备间保持同一份文件一致的工具，不等于只做一次性拷贝的备份工具
+- id: api-client
+  zh: [接口调试工具, API客户端, 接口测试工具]
+  en: [API client, HTTP client, API tester]
+  notes: 接口调试工具指手动构造请求并查看响应的客户端，不等于对外提供假数据的模拟服务
+- id: container-management
+  zh: [容器管理, 容器管理工具, 镜像容器管理]
+  en: [container management, container manager, docker manager]
+  notes: 容器管理指创建启停查看容器与镜像的工具，不等于直接在宿主机安装软件的包管理器
+- id: continuous-integration
+  zh: [持续集成, CI流水线, 自动化构建]
+  en: [continuous integration, CI pipeline, CI]
+  notes: 持续集成指提交后自动构建测试并反馈结果的流水线，不等于只做定时拷贝的计划任务
+- id: pdf-toolkit
+  zh: [PDF工具箱, PDF处理工具, PDF合并拆分]
+  en: [PDF toolkit, PDF tools, PDF merger]
+  notes: PDF工具箱指合并拆分压缩加水印等本地处理合集，不等于只能阅读不能编辑的阅读器
+- id: json-viewer
+  zh: [JSON查看器, JSON格式化查看, JSON解析工具]
+  en: [JSON viewer, JSON formatter, JSON parser]
+  notes: JSON查看器指折叠高亮并校验JSON结构的阅读工具，不等于可改接口数据的抓包代理
+- id: regex-tester
+  zh: [正则测试工具, 正则表达式测试, 规则表达式调试]
+  en: [regex tester, regexp tester, regular expression tester]
+  notes: 正则测试指实时验证匹配规则与示例文本的工具，不等于全文检索文件的搜索工具
+- id: git-client
+  zh: [Git客户端, Git图形客户端, 版本管理工具]
+  en: [Git client, git GUI, git frontend]
+  notes: Git客户端指用图形界面执行提交分支合并的工具，不等于托管仓库的远程代码平台
+- id: diff-tool
+  zh: [文件对比工具, 差异对比, Diff工具]
+  en: [diff tool, file comparison, diff viewer]
+  notes: 文件对比指逐行高亮两个版本差异的工具，不等于合并后自动解决冲突的合并器
+- id: env-manager
+  zh: [环境变量管理, Env管理, 配置管理工具]
+  en: [env manager, environment manager, dotenv manager]
+  notes: 环境变量管理指按项目隔离读写键值配置的工具，不等于存放代码的版本控制系统
+- id: log-viewer
+  zh: [日志查看器, 日志分析工具, 日志阅读器]
+  en: [log viewer, log analyzer, log tailer]
+  notes: 日志查看器指分页过滤高亮大日志文件的阅读工具，不等于采集上报日志的监控探针
+- id: database-client
+  zh: [数据库客户端, 数据库管理工具, DB客户端]
+  en: [database client, DB client, database GUI]
+  notes: 数据库客户端指连接查询浏览表结构的图形工具，不等于数据库服务端本身
+- id: mock-server
+  zh: [接口模拟服务, Mock服务, 假数据服务]
+  en: [mock server, fake API server, API mock]
+  notes: 接口模拟指按约定返回假数据供前端联调的服务，不等于真实业务后端
+- id: docs-generator
+  zh: [文档生成器, 接口文档生成, 静态文档工具]
+  en: [docs generator, documentation generator, doc generator]
+  notes: 文档生成器指从注释或规范生成可浏览文档的工具，不等于手写笔记的知识库
+- id: dependency-updater
+  zh: [依赖更新工具, 依赖升级, 自动更新依赖]
+  en: [dependency updater, dependency bot, dep updater]
+  notes: 依赖更新指检测新版并提合并请求的自动化工具，不等于安装软件包的包管理器本身
+- id: snippet-manager
+  zh: [代码片段管理, 片段收藏工具, 代码速查]
+  en: [snippet manager, code snippet manager, snippet library]
+  notes: 代码片段管理指收藏常用小段代码并快速检索复用的工具，不等于完整的IDE代码补全
+- id: window-manager
+  zh: [窗口管理工具, 分屏管理, 平铺窗口]
+  en: [window manager, window tiling, window organizer]
+  notes: 窗口管理指快速分屏置顶切换应用窗口的工具，不等于更换桌面的主题美化
+- id: app-launcher
+  zh: [应用启动器, 快捷启动, 启动器工具]
+  en: [app launcher, launcher, quick launcher]
+  notes: 应用启动器指用键盘快速搜索并打开应用的入口，不等于系统自带的文件资源管理器
+- id: backup-tool
+  zh: [备份工具, 数据备份, 定时备份]
+  en: [backup tool, backup utility, archiver]
+  notes: 备份工具指按策略复制数据以便灾后恢复的工具，不等于实时双向同步的同步盘
+- id: image-compressor
+  zh: [图片压缩工具, 图像压缩, 无损压缩图片]
+  en: [image compressor, image optimizer, img compress]
+  notes: 图片压缩指减小体积并尽量保持观感的工具，不等于改尺寸加滤镜的修图软件
+- id: mind-mapping
+  zh: [思维导图, 脑图工具, 结构梳理]
+  en: [mind map, mind mapping, concept map]
+  notes: 思维导图指用分支结构梳理思路层级的工具，不等于按时间排期的甘特图
+- id: kanban-board
+  zh: [看板工具, 任务看板, Kanban]
+  en: [kanban board, kanban, task board]
+  notes: 看板工具指按待办进行中已完成拖拽管理任务的工具，不等于带打卡统计的番茄钟
