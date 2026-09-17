@@ -1,10 +1,11 @@
-# E1 任务集。协议见 protocol.md 第 6 节。
+# E1 任务集。v0.4 协议见 protocol.md 第 2 节。
+# 当前仅有 dev 题；eval 未填写、未冻结、未运行。
 #
 # dev：写脚本、调提示词用，可随时改。
 # eval：预注册。填好后提交；运行开始后不改。结果不理想只能新增 batch，不能改旧 batch。
 # 字段：
 #   id          任务标识，方向前缀 zh2en / en2zh
-#   direction   zh2en = 中文使用者找英文项目；en2zh = 英文使用者找仅中文 README 的项目
+#   direction   zh2en = 中文使用者找英文项目；en2zh = 英文使用者发现中文材料描述的项目或能力；不强制整仓库仅中文
 #   type        term | uncovered | ambiguous | negation | long
 #   query       用户原话，不做任何改写
 #   need        任务写作者对"什么算合适"的一句说明，判定时参考；不含仓库名
@@ -14,7 +15,8 @@ preregistration:
   eval_frozen_commit: null      # 填 eval 组提交的 SHA
   prompts_frozen_commit: null   # 填 prompts/ 提交的 SHA
   seed_set_frozen_commit: null  # 填 seed-set.jsonl 提交的 SHA
-  thresholds_confirmed_by: null # 发起人确认协议第 9 节阈值的日期
+  run_settings_commit: null     # 运行前固定方法预算/字段/排序的已存在提交；不采用旧版效果阈值
+  protocol_version: v0.4
 
 dev:
   - id: zh2en-dev-01
@@ -79,5 +81,6 @@ dev:
     written_at: 2026-09-17
 
 eval:
-  # 第一批。每方向每类至少 2 条，合计 ≥ 20。填好后提交并把 SHA 写进 preregistration。
+  # 第一批开放任务：首轮建议每方向 4 条；已知目标题另存种子记录。
+  # 数量是探索性默认建议，运行前固定；不构成统计保证。SHA 写入后续运行清单。
   batch_1: []
