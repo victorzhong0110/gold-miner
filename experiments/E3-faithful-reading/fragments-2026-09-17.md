@@ -11,7 +11,8 @@
 - 片段全部取自本仓库已提交的公开文件（下述 `materials_commit` 时刻的内容），无需网络、无需凭据即可核对。
 - 翻译对照（现成工具 vs 原文）未运行：未调用沉浸式翻译、Chrome 内置翻译或任何模型；工具版本号实测、等待与费用记录均为未知。
 - 阅读基线沿用 `reading-baseline.md` v1（沉浸式翻译双语对照模式为基线、Chrome 内置翻译为降级项）；本文件不改变该基线。
-- `materials_commit: 2be593765150adb15b92c2093505d48ecbcf769a`（`git rev-parse HEAD` 实测，非编造；仅标识片段出处提交，不构成 eval 冻结）。
+- `materials_commit: 2be593765150adb15b92c2093505d48ecbcf769a`（创建时 `git rev-parse HEAD` 实测，非编造；仅标识片段出处提交，不构成 eval 冻结）。
+- 冻结语义：本 SHA 为片段出处冻结，创建后故意不再跟随 HEAD；校验以 `git cat-file -e` 存在性加 `git show SHA:路径` 逐字核对为准。引用源文件有改动时另起新日期文件，不得直接改本文件 SHA 或引用行。
 - 付费调用计数：0。密钥扫描：本文件无 `sk-` / `ghp_` / `github_pat_` 模式（见测试）。
 
 ## 1 片段（共 8 条，两方向 × 术语/否定/限制/代码/讨论关系）

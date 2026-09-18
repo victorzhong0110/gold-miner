@@ -90,13 +90,21 @@ def parse_checklist(text):
     return frags
 
 
-def git_head():
-    out = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(REPO_ROOT),
+def git_commit_exists(sha: str) -> bool:
+    out = subprocess.run(["git", "cat-file", "-e", sha + "^{commit}"],
+                         cwd=str(REPO_ROOT),
                          capture_output=True, text=True, timeout=15)
-    sha = (out.stdout or "").strip()
-    if out.returncode != 0 or not SHA_RE.fullmatch(sha):
-        raise AssertionError("cannot read real git HEAD")
-    return sha
+    return out.returncode == 0
+
+
+def git_show_blob(sha: str, relpath: str) -> str:
+    out = subprocess.run(["git", "show", "%s:%s" % (sha, relpath)],
+                         cwd=str(REPO_ROOT),
+                         capture_output=True, text=True, timeout=15)
+    if out.returncode != 0:
+        raise AssertionError("missing blob %s at %s: %s"
+                             % (relpath, sha, (out.stderr or "").strip()[:200]))
+    return out.stdout or ""
 
 
 class TestChecklistExists(unittest.TestCase):
@@ -165,11 +173,39 @@ class TestHonestyMarkers(unittest.TestCase):
         for rx in SECRET_RES:
             self.assertIsNone(rx.search(text), "secret pattern in checklist")
 
-    def test_materials_commit_is_real_head(self):
+    def test_materials_commit_is_real_frozen_commit(self):
         text = CHECKLIST.read_text(encoding="utf-8")
         m = re.search(r"materials_commit:\s*([0-9a-f]{40})", text)
         self.assertIsNotNone(m, "materials_commit SHA missing")
-        self.assertEqual(m.group(1), git_head())
+        sha = m.group(1)
+        # Frozen source commit: must exist as a real commit, but is
+        # intentionally NOT required to equal current HEAD. Bumping the
+        # SHA without re-verifying quotes would fabricate provenance,
+        # and forcing HEAD equality turns every later commit red.
+        self.assertTrue(SHA_RE.fullmatch(sha), "materials_commit shape invalid")
+        self.assertTrue(git_commit_exists(sha),
+                        "materials_commit is not a real commit: %s" % sha)
+
+    def test_quotes_match_frozen_commit_blobs(self):
+        text = CHECKLIST.read_text(encoding="utf-8")
+        m = re.search(r"materials_commit:\s*([0-9a-f]{40})", text)
+        self.assertIsNotNone(m, "materials_commit SHA missing")
+        sha = m.group(1)
+        self.assertTrue(SHA_RE.fullmatch(sha))
+        self.assertTrue(git_commit_exists(sha))
+        frags = parse_checklist(text)
+        for fid, f in sorted(frags.items()):
+            blob = git_show_blob(sha, f["file"])
+            lines = blob.splitlines()
+            self.assertLessEqual(f["end"], len(lines),
+                                 "%s line range exceeds %s@%s (%d lines)"
+                                 % (fid, f["file"], sha[:7], len(lines)))
+            window = "\n".join(lines[f["start"] - 1:f["end"]])
+            for q in f["quotes"]:
+                self.assertIn(q, window,
+                              "%s quote not in %s@%s L%d-%d: %r"
+                              % (fid, f["file"], sha[:7],
+                                 f["start"], f["end"], q[:60]))
 
     def test_eval_freeze_not_claimed(self):
         text = CHECKLIST.read_text(encoding="utf-8")
