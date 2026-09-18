@@ -1,1 +1,170 @@
-{"$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "description": "依据 protocol.md 第 7 节 candidates 字段列表，一行一条。readme_lang 仅对进入前 10 的候选计算，其余行可缺省，见 required 说明。", "properties": {"api_query": {"description": "实际发给 GitHub Search API 的查询串。", "maxLength": 256, "minLength": 1, "type": "string"}, "arm": {"description": "协议第 5 节方法组。", "enum": ["A", "B", "C", "D"], "type": "string"}, "direction": {"description": "zh2en=中文使用者找英文项目；en2zh=英文使用者找仅中文 README 项目。", "enum": ["zh2en", "en2zh"], "type": "string"}, "fetched_at": {"description": "Search API 抓取时间，RFC 3339。", "format": "date-time", "type": "string"}, "is_seed_target": {"description": "是否为该任务的种子目标仓库。", "type": "boolean"}, "matched_fields": {"description": "text-match 命中的名称/简介/README，没有则记 unknown。", "items": {"enum": ["name", "description", "readme", "unknown"], "type": "string"}, "minItems": 1, "type": "array", "uniqueItems": true}, "page": {"description": "Search API 页号。", "minimum": 1, "type": "integer"}, "rank": {"description": "该变体查询结果中的排名。", "minimum": 1, "type": "integer"}, "readme_lang": {"description": "第 2 节分类器标签，仅进入前 10 的候选计算：zh_only=仅中文，bilingual=双语，en=英文，ja=含假名，ko=含韩文。", "enum": ["zh_only", "bilingual", "en", "ja", "ko"], "type": "string"}, "repo": {"description": "仓库全名 owner/repo，原样保存。", "pattern": "^[^/\\s]+/[^/\\s]+$", "type": "string"}, "run_id": {"description": "本次运行标识，对应 runs/<日期>-<标签>。", "minLength": 1, "type": "string"}, "stars": {"description": "Search API 返回的 stargazers_count。", "minimum": 0, "type": "integer"}, "task_id": {"description": "任务标识，dev/eval 组 id 或种子任务 id。", "minLength": 1, "type": "string"}, "variant_lang": {"description": "variant_query 的语言。", "enum": ["zh", "en"], "type": "string"}, "variant_query": {"description": "改写或翻译后的单条查询（用户语言层面）。", "minLength": 1, "type": "string"}}, "required": ["run_id", "task_id", "direction", "arm", "variant_query", "variant_lang", "api_query", "page", "rank", "repo", "stars", "matched_fields", "is_seed_target", "fetched_at"], "title": "E1 candidates.jsonl 单行记录", "type": "object"}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "依据 protocol.md 第 5 节 candidates 记录格式，一行一条。readme_lang 仅对进入人工判定窗口的候选计算（首轮各组前 5，见 judgment-guide.md；后续扩大到前 10 时另开批次），其余行可缺省，见 required 说明。",
+  "properties": {
+    "api_query": {
+      "description": "实际发给 GitHub Search API 的查询串。",
+      "maxLength": 256,
+      "minLength": 1,
+      "type": "string"
+    },
+    "arm": {
+      "description": "协议第 3 节方法组。A/B/C/M 为 GitHub 检索组（e1_minimal_runner.py 执行）；D 为联网助手强对照，另行记录但本 schema 保留以兼容全量候选路径。",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "M"
+      ],
+      "type": "string"
+    },
+    "direction": {
+      "description": "zh2en=中文使用者找英文项目；en2zh=英文使用者找仅中文 README 项目。",
+      "enum": [
+        "zh2en",
+        "en2zh"
+      ],
+      "type": "string"
+    },
+    "fetched_at": {
+      "description": "Search API 抓取时间，RFC 3339。",
+      "format": "date-time",
+      "type": "string"
+    },
+    "is_seed_target": {
+      "description": "是否为该任务的种子目标仓库。",
+      "type": "boolean"
+    },
+    "matched_fields": {
+      "description": "text-match 命中的名称/简介/README，没有则记 unknown。",
+      "items": {
+        "enum": [
+          "name",
+          "description",
+          "readme",
+          "unknown"
+        ],
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "page": {
+      "description": "Search API 页号。",
+      "minimum": 1,
+      "type": "integer"
+    },
+    "rank": {
+      "description": "该变体查询结果中的排名。",
+      "minimum": 1,
+      "type": "integer"
+    },
+    "readme_lang": {
+      "description": "第 2 节分类器标签，仅进入前 10 的候选计算：zh_only=仅中文，bilingual=双语，en=英文，ja=含假名，ko=含韩文。",
+      "enum": [
+        "zh_only",
+        "bilingual",
+        "en",
+        "ja",
+        "ko"
+      ],
+      "type": "string"
+    },
+    "repo": {
+      "description": "仓库全名 owner/repo，原样保存。",
+      "pattern": "^[^/\\s]+/[^/\\s]+$",
+      "type": "string"
+    },
+    "run_id": {
+      "description": "本次运行标识，对应 runs/<日期>-<标签>。",
+      "minLength": 1,
+      "type": "string"
+    },
+    "stars": {
+      "description": "Search API 返回的 stargazers_count。",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "task_id": {
+      "description": "任务标识，dev/eval 组 id 或种子任务 id。",
+      "minLength": 1,
+      "type": "string"
+    },
+    "variant_lang": {
+      "description": "variant_query 的语言。",
+      "enum": [
+        "zh",
+        "en"
+      ],
+      "type": "string"
+    },
+    "variant_query": {
+      "description": "改写或翻译后的单条查询（用户语言层面）。",
+      "minLength": 1,
+      "type": "string"
+    },
+    "sources": {
+      "description": "合并去重后保留的全部来源关联（每条含 variant_query、api_query、variant_lang、rank、page）。逐查询原始记录不含本字段；合并行可含。对应 protocol.md 第 3 节与 run-settings.json 排序说明。",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "api_query": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "rank": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "variant_lang": {
+            "enum": [
+              "zh",
+              "en"
+            ],
+            "type": "string"
+          },
+          "variant_query": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "variant_query",
+          "api_query",
+          "variant_lang",
+          "rank",
+          "page"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": [
+    "run_id",
+    "task_id",
+    "direction",
+    "arm",
+    "variant_query",
+    "variant_lang",
+    "api_query",
+    "page",
+    "rank",
+    "repo",
+    "stars",
+    "matched_fields",
+    "is_seed_target",
+    "fetched_at"
+  ],
+  "title": "E1 candidates.jsonl 单行记录",
+  "type": "object"
+}

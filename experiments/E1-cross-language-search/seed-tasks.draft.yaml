@@ -1,0 +1,103 @@
+# E1 已知目标诊断任务草案（W1，未冻结、未验证、未运行）
+
+对应 [E1 协议](protocol.md)第 2 节“已知目标诊断”、[v0.4](../../docs/plan/v0.4.md) W1。
+状态：`draft-unfrozen`。开放评估见 `queries.yaml` eval.batch_1，本文件与开放题分开存放。
+
+## 为什么是草案而不是冻结种子集
+
+- 冻结种子集需要逐条核对：来源、发现日期、stars、用途与能力证据、README 语言标签，并包含低热度材料，且 HelloGitHub 不能是唯一来源。
+- 上述核对需要真实来源检查（W2）与原文抓取，W1 未执行网络请求，因此本轮不声称任何种子仓库存在、 stars 数或语言标签。
+- 本文件只固定采集位与判定边界，不提供可计入命中率的 `repo`。`entries` 为空是如实状态，不是遗漏。
+
+```yaml
+protocol_version: v0.4
+status: draft-unfrozen
+open_tasks_ref: queries.yaml eval.batch_1
+entries: []
+slots:
+  - slot_id: seed-diag-zh2en-01
+    direction: zh2en
+    type: term
+    collection_plan: 待从公开项目文档或社区介绍取英文 README 仓库 1 个，含低热度候选
+    query: null
+    repo: null
+    source: null
+    stars: null
+    readme_lang: null
+  - slot_id: seed-diag-zh2en-02
+    direction: zh2en
+    type: uncovered
+    collection_plan: 待取 1 个，来源与上一条不同
+    query: null
+    repo: null
+    source: null
+    stars: null
+    readme_lang: null
+  - slot_id: seed-diag-zh2en-03
+    direction: zh2en
+    type: ambiguous
+    collection_plan: 待取 1 个
+    query: null
+    repo: null
+    source: null
+    stars: null
+    readme_lang: null
+  - slot_id: seed-diag-zh2en-04
+    direction: zh2en
+    type: negation
+    collection_plan: 待取 1 个
+    query: null
+    repo: null
+    source: null
+    stars: null
+    readme_lang: null
+  - slot_id: seed-diag-en2zh-01
+    direction: en2zh
+    type: term
+    collection_plan: 待从中文介绍材料取中文能力描述仓库 1 个，HelloGitHub 仅作线索之一
+    query: null
+    repo: null
+    source: null
+    stars: null
+    readme_lang: null
+  - slot_id: seed-diag-en2zh-02
+    direction: en2zh
+    type: uncovered
+    collection_plan: 待取 1 个，来源与上一条不同
+    query: null
+    repo: null
+    source: null
+    stars: null
+    readme_lang: null
+  - slot_id: seed-diag-en2zh-03
+    direction: en2zh
+    type: ambiguous
+    collection_plan: 待取 1 个
+    query: null
+    repo: null
+    source: null
+    stars: null
+    readme_lang: null
+  - slot_id: seed-diag-en2zh-04
+    direction: en2zh
+    type: long
+    collection_plan: 待取 1 个，含低热度材料
+    query: null
+    repo: null
+    source: null
+    stars: null
+    readme_lang: null
+bias_disclosure: 由项目介绍反推的查询只作已知目标题；开放任务作者不先看种子答案；人工挑选与同一人构题判断照实披露
+freeze_rule: 运行评估前提交任务、种子、提示词/词表、字段配置、排序、预算、模型标识和运行说明；运行后不改本批；修复另开批次
+```
+
+## 进入冻结的条件（W2/W3 输入）
+
+1. W2 完成来源可用性检查（默认字段与 README 查询、失败与限流记录）。
+2. 按 `schemas/seed-set.schema.json` 逐条补齐 `repo`、`stars`（>= 50）、`readme_lang`、`hellogithub_issue` 或其他来源、`zh_description`、`query`、`query_lang`、`frozen_at`。
+3. 开放任务作者确认未看种子答案，并记录判断者身份与盲测状态。
+
+## 未运行说明
+
+- 本文件未产生任何命中率、召回或 stars 结论；`stars: null`、`repo: null` 为如实未知，不计入任何指标。
+- 不把 dev 题成功、预选库演示或单条好案例写成开放检索已验证。
