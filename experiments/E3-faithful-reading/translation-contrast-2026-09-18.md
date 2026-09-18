@@ -5,13 +5,17 @@
 `experiments/E1-cross-language-search/reading-baseline.md` v1、
 `docs/engineering/prerequisites.md` 第 6 节“自建翻译启用时”行、
 `docs/reports/w6-baseline-connectivity-2026-09-17.md`。
-状态：片段集已冻结；本文件只给对照协议、源风险笔记与空观察模板；翻译对照输出未运行；零付费调用；零密钥。
+状态：8 条仓库内片段是 smoke / 冒烟集（只核 excerpt＋label 管道，不是真实阅读场景覆盖）；
+本文件只给对照协议、源风险笔记与空观察模板；翻译对照输出未运行；零付费调用；零密钥。
 
 将改路径（AGENTS.md 第 18 条）：本文件为新建；另改 `docs/reports/w6-baseline-connectivity-2026-09-17.md`（E3 行追记）
 与 `docs/backlog.md`（W6 行）；不改 `docs/plan/v0.3.md`、仓库名、`LICENSE`、扩展代码。
 
 ## 0 诚实边界
 
+- 片段范围：`fragments-2026-09-17.md` 的 8 条是 **smoke / 冒烟集**，只核 excerpt＋label 管道；
+  不是真实多轮 issue 讨论、引用或纠错覆盖。建议继续作冒烟用。正式对照需另取真实项目的代码 / 注释 / 讨论线程，
+  不得把本 8 条写成已覆盖真实阅读场景，也不得在仓库内编造伪“真实项目”片段。
 - 不编造实验结果与准确率数字。本文件不含任何译文输出、不含缺口结论、不含准确率。
 - 不调用付费/个人模型 API；不点 Subscribe/Go；零支出。本环境未发起任何翻译请求。
 - 翻译输出列与判定列全部填“未运行”；工具版本、浏览器版本、设置、等待与费用全部记“未知”。

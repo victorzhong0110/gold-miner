@@ -40,6 +40,8 @@
 
 - 片段集已固定：`experiments/E3-faithful-reading/fragments-2026-09-17.md`（`materials_commit: 2be5937`，8 条 F-01..F-08，
   来源存在性与引用逐字由 `test_fragments.py` 覆盖并通过）。
+  **范围：这 8 条是仓库内 smoke / 冒烟集**，只核 excerpt＋label 管道，不是真实多轮 issue 讨论、引用或纠错覆盖；
+  建议继续作冒烟。正式对照集需另取真实项目代码 / 注释 / 讨论线程，不在仓库内编造伪“真实项目”片段。
 - 对照协议与空模板已新增：`experiments/E3-faithful-reading/translation-contrast-2026-09-18.md`
  （含工具/版本/设置/语言对/原文可见/失败记录协议、逐片段源风险笔记、翻译与判定全 `未运行` 的观察模板）。
 - Live 对照输出仍未运行：工具版本、浏览器版本、设置、等待与费用未知；零请求、零费用；未点 Subscribe/Go。

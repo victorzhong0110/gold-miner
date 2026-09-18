@@ -58,6 +58,7 @@
   - 片段已冻结：`experiments/E3-faithful-reading/fragments-2026-09-17.md`，
     `materials_commit: 2be593765150adb15b92c2093505d48ecbcf769a`（`git cat-file -e` 存在性已核验；
     冻结语义为片段出处冻结，故意不跟随 HEAD，见该文件第 0 节与 `test_fragments.py`）。
+    这 8 条是仓库内 **smoke / 冒烟集**（只核 excerpt＋label 管道），不是真实阅读场景覆盖。
   - 对照协议已落地：`experiments/E3-faithful-reading/translation-contrast-2026-09-18.md`
    （含工具/版本/设置/语言对/原文可见/失败记录协议、逐片段源风险笔记、全 `未运行` 观察模板）。
   - 对照输出仍未运行：翻译输出与判定列全 `未运行`；工具版本、浏览器版本、设置、等待与费用全未知；
@@ -70,6 +71,8 @@
   - §3-2（种子集）：仍未做。`seed-tasks.draft.yaml` 仍 `draft-unfrozen` 且 `entries: []`。
   - §3-3（W5）：仍阻塞，需发起人两对短会话排期；本次无会话发生。
   - §3-4（E3 片段集）：部分完成——片段冻结与对照协议已完成，对照输出待运行（运行者在新日期文件记录实测值，不得回填旧文件）。
+    已冻结的 8 条是仓库内 **smoke / 冒烟集**（只核 excerpt＋label 管道），不是真实阅读场景覆盖；
+    正式对照需另取真实项目材料，不把本 8 条写成已覆盖多轮讨论 / 引用 / 纠错。
   - §3-5（E8）：2026-09-18 已复测 1 次即遇限流停止，见 `experiments/E8-discoverability/2026-09-18-retest.md`
    （`GET /repos` 403，核心 `remaining 0/60`，搜索查询未发起）；基线仍为 `experiments/E8-discoverability/2026-09-17-probe.md`。
   - §3-6（模型）：仍阻塞，需个人本地配置就绪后才做最小连接探测；密钥永不进仓库。

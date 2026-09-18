@@ -15,7 +15,10 @@ Scope (honest, owner-independent):
   Callers must supply explicit ``variants`` per task via
   ``variants_by_task`` (e.g. from a frozen file). Without them the batch
   refuses that arm with a ``blocked`` record instead of fabricating
-  queries. D is always refused (tool control, no GitHub budget).
+  queries. Task IDs in the variants file are checked against the batch
+  (coverage miss = blocked). CLI treats blocked / coverage miss as a
+  non-zero exit and prints ok/blocked/fail counts plus the reason.
+  D is always refused (tool control, no GitHub budget).
 - eval.batch_1 refuses to run while freeze markers are null, unless the
   caller passes ``allow_unfrozen=True`` explicitly for a local dry-run.
   Dry-runs never write into ``runs/`` unless ``allow_runs_dir=True`` AND
@@ -162,6 +165,102 @@ def is_eval_frozen(settings: dict) -> bool:
     return all(freeze.get(k) not in (None, "null", "") for k in keys)
 
 
+def check_variant_coverage(tasks: list, variants_by_task: dict | None) -> dict:
+    """Compare batch task IDs to a variants mapping.
+
+    A task is missing when its id is absent or the supplied list is empty.
+    Extra variant keys (not in the batch) are reported but do not fail
+    completeness: the batch only requires every task to be covered.
+    """
+    if not isinstance(tasks, list):
+        raise ValueError("tasks must be a list")
+    task_ids = [str(t.get("id", "")).strip() for t in tasks]
+    provided = variants_by_task if isinstance(variants_by_task, dict) else {}
+    missing: list[str] = []
+    for tid in task_ids:
+        supplied = provided.get(tid)
+        if not supplied:
+            missing.append(tid)
+    extra = [k for k in provided if k not in set(task_ids)]
+    return {
+        "task_ids": task_ids,
+        "missing_task_ids": missing,
+        "extra_variant_ids": extra,
+        "covered": len(task_ids) - len(missing),
+        "complete": len(missing) == 0 and len(task_ids) > 0,
+    }
+
+
+def decide_exit(
+    totals: dict,
+    coverage: dict | None = None,
+) -> tuple[int, str]:
+    """Map batch totals / coverage to a process exit code and reason.
+
+    0: all attempted work ok (and coverage complete when checked).
+    1: mixed failure — any error/partial, or some-but-not-all blocked.
+    2: requests were attempted and every request failed.
+    7: coverage miss or every task blocked (no useful coverage).
+    """
+    n_tasks = int(totals.get("tasks", 0) or 0)
+    n_blocked = int(totals.get("tasks_blocked", 0) or 0)
+    n_error = int(totals.get("tasks_error", 0) or 0)
+    n_partial = int(totals.get("tasks_partial", 0) or 0)
+    attempted = int(totals.get("attempted_requests", 0) or 0)
+    successful = int(totals.get("successful_requests", 0) or 0)
+
+    if coverage is not None and not coverage.get("complete", True):
+        n_miss = len(coverage.get("missing_task_ids") or [])
+        return 7, f"coverage miss: {n_miss} task id(s) missing from variants"
+    if n_blocked > 0 and n_tasks > 0 and n_blocked == n_tasks:
+        return 7, f"all {n_blocked} tasks blocked"
+    if n_blocked > 0:
+        return 1, f"blocked tasks: {n_blocked}"
+    if attempted > 0 and successful == 0:
+        return 2, "all requests failed"
+    if n_error > 0 or n_partial > 0:
+        return 1, "error/partial tasks"
+    return 0, "ok"
+
+
+def format_batch_summary(
+    *,
+    totals: dict,
+    coverage: dict | None = None,
+    exit_code: int = 0,
+    exit_reason: str = "",
+    n_rows: int = 0,
+    n_raw: int = 0,
+    out_dir: Path | str | None = None,
+) -> str:
+    """Terminal summary: ok / blocked / fail counts and exit reason."""
+    n_ok = int(totals.get("tasks_ok", 0) or 0)
+    n_blocked = int(totals.get("tasks_blocked", 0) or 0)
+    n_error = int(totals.get("tasks_error", 0) or 0)
+    n_partial = int(totals.get("tasks_partial", 0) or 0)
+    n_cancelled = int(totals.get("tasks_cancelled", 0) or 0)
+    n_fail = n_error + n_partial
+    lines = [
+        (
+            f"summary: tasks={totals.get('tasks', 0)} ok={n_ok} "
+            f"blocked={n_blocked} fail={n_fail} partial={n_partial} "
+            f"error={n_error} cancelled={n_cancelled} rows={n_rows} raw={n_raw}"
+        )
+    ]
+    if coverage is not None:
+        missing = coverage.get("missing_task_ids") or []
+        n_ids = len(coverage.get("task_ids") or [])
+        miss_ids = ",".join(missing) if missing else "-"
+        lines.append(
+            f"coverage: covered={coverage.get('covered', 0)}/{n_ids} "
+            f"missing={len(missing)} ids={miss_ids}"
+        )
+    if out_dir is not None:
+        lines.append(f"out={out_dir}")
+    lines.append(f"exit={exit_code} reason={exit_reason}")
+    return "\n".join(lines)
+
+
 def build_a_variants(task: dict) -> list:
     """Deterministic A-arm variants: original query only, default field."""
     query = task["query"]
@@ -198,10 +297,11 @@ def run_batch(
 ) -> dict:
     """Run one arm over tasks serially. Never fabricates candidates.
 
-    Returns {"task_results": [...], "totals": {...}, "manifest_extra": ...}.
+    Returns {"task_results": [...], "totals": {...}, "coverage": ...}.
     Each task_result has task_id/direction/status ("ok"/"blocked"/
-    "cancelled"/"error"), per_query_records/merged_candidates (empty
-    unless ok), errors, and counters.
+    "cancelled"/"error"/"partial"), per_query_records/merged_candidates
+    (empty unless ok/partial), errors, and counters. For B/C/M, coverage
+    lists task IDs missing from variants_by_task.
     """
     if arm == "D":
         raise ValueError("arm D is a networked-assistant control, not a GitHub run")
@@ -227,6 +327,9 @@ def run_batch(
         "per_query_records": 0,
         "merged_candidates": 0,
     }
+    coverage = None
+    if arm in ("B", "C", "M"):
+        coverage = check_variant_coverage(tasks, variants_by_task)
 
     for task in tasks:
         task_id = task.get("id", "")
@@ -293,16 +396,23 @@ def run_batch(
         else:
             supplied = (variants_by_task or {}).get(task_id)
             if not supplied:
+                if variants_by_task:
+                    block_reason = (
+                        f"arm {arm} coverage miss: task {task_id} absent "
+                        "or empty in variants_by_task; refusing to fabricate"
+                    )
+                else:
+                    block_reason = (
+                        f"arm {arm} needs explicit variants_by_task "
+                        "(model/wordlist owner-dependent); refusing to "
+                        "fabricate queries"
+                    )
                 task_results.append(
                     {
                         "task_id": task_id,
                         "direction": direction,
                         "status": "blocked",
-                        "reason": (
-                            f"arm {arm} needs explicit variants_by_task "
-                            "(model/wordlist owner-dependent); refusing to "
-                            "fabricate queries"
-                        ),
+                        "reason": block_reason,
                         "per_query_records": [],
                         "merged_candidates": [],
                         "candidates": [],
@@ -408,7 +518,11 @@ def run_batch(
         totals["merged_candidates"] += len(out["merged_candidates"])
         task_results.append(entry)
 
-    return {"task_results": task_results, "totals": totals}
+    return {
+        "task_results": task_results,
+        "totals": totals,
+        "coverage": coverage,
+    }
 
 
 def build_manifest(
@@ -534,12 +648,38 @@ def main(argv: list | None = None) -> int:
     variants_by_task = None
     if args.variants_json:
         variants_by_task = json.loads(Path(args.variants_json).read_text())
-    if args.arm in ("B", "C", "M") and not variants_by_task:
-        print(
-            f"arm {args.arm} needs --variants-json with explicit per-task "
-            "variants (model/wordlist owner-dependent); refusing to fabricate"
-        )
-        return 4
+    coverage = None
+    if args.arm in ("B", "C", "M"):
+        if not variants_by_task:
+            print(
+                f"arm {args.arm} needs --variants-json with explicit per-task "
+                "variants (model/wordlist owner-dependent); refusing to fabricate"
+            )
+            return 4
+        coverage = check_variant_coverage(tasks, variants_by_task)
+        if not coverage["complete"] and not args.live:
+            preview = {
+                "tasks": len(tasks),
+                "tasks_ok": 0,
+                "tasks_partial": 0,
+                "tasks_blocked": len(coverage["missing_task_ids"]),
+                "tasks_cancelled": 0,
+                "tasks_error": 0,
+                "attempted_requests": 0,
+                "successful_requests": 0,
+                "failed_requests": 0,
+            }
+            code, reason = decide_exit(preview, coverage)
+            print(
+                format_batch_summary(
+                    totals=preview,
+                    coverage=coverage,
+                    exit_code=code,
+                    exit_reason=reason,
+                    out_dir=out_dir,
+                )
+            )
+            return code
 
     if not args.live:
         print("no live http_get: dry-run refuses network by design")
@@ -599,25 +739,31 @@ def main(argv: list | None = None) -> int:
         "per_query_rows": n_raw,
         "task_result_rows": n_tasks,
     }
+    coverage = out.get("coverage") or coverage
+    if coverage is not None:
+        manifest["variant_coverage"] = {
+            "complete": coverage.get("complete"),
+            "covered": coverage.get("covered"),
+            "missing_task_ids": coverage.get("missing_task_ids", []),
+            "extra_variant_ids": coverage.get("extra_variant_ids", []),
+        }
     (out_dir / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     totals = out["totals"]
+    code, reason = decide_exit(totals, coverage)
     print(
-        f"tasks={totals['tasks']} ok={totals.get('tasks_ok', 0)} "
-        f"partial={totals.get('tasks_partial', 0)} "
-        f"error={totals.get('tasks_error', 0)} rows={n} raw={n_raw} "
-        f"out={out_dir}"
+        format_batch_summary(
+            totals=totals,
+            coverage=coverage,
+            exit_code=code,
+            exit_reason=reason,
+            n_rows=n,
+            n_raw=n_raw,
+            out_dir=out_dir,
+        )
     )
-    # Exit: all attempts failed -> 2; any error/partial -> 1; else 0.
-    if (
-        totals.get("attempted_requests", 0) > 0
-        and totals.get("successful_requests", 0) == 0
-    ):
-        return 2
-    if totals.get("tasks_error", 0) > 0 or totals.get("tasks_partial", 0) > 0:
-        return 1
-    return 0
+    return code
 
 
 __all__ = [
@@ -625,6 +771,9 @@ __all__ = [
     "ALLOWED_BATCHES",
     "build_a_variants",
     "build_manifest",
+    "check_variant_coverage",
+    "decide_exit",
+    "format_batch_summary",
     "is_eval_frozen",
     "load_queries",
     "load_run_settings",

@@ -159,6 +159,18 @@ class TestCoverage(unittest.TestCase):
 
 
 class TestHonestyMarkers(unittest.TestCase):
+    def test_smoke_only_scope_declared(self):
+        text = CHECKLIST.read_text(encoding="utf-8")
+        self.assertIn("冒烟", text)
+        self.assertIn("smoke", text.lower())
+        self.assertIn("excerpt", text.lower())
+        self.assertIn("不是", text)
+        self.assertTrue(
+            ("多轮" in text) or ("issue" in text.lower()),
+            "checklist must deny real multi-turn / issue-discussion coverage",
+        )
+        self.assertIn("真实项目", text)
+
     def test_translation_comparison_marked_not_run(self):
         text = CHECKLIST.read_text(encoding="utf-8")
         self.assertIn("未运行", text)

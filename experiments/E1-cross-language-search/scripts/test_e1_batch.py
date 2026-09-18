@@ -382,5 +382,161 @@ class TestFailureStatusAndArtifacts(unittest.TestCase):
             self.assertEqual(task_row["per_query_record_count"], 2)
             self.assertEqual(task_row["merged_candidate_count"], 2)
 
+
+class TestVariantCoverageAndBlockedExit(unittest.TestCase):
+    """P2: mismatched/missing variants must not look like a successful batch."""
+
+    def _run_main(self, *argv):
+        import io
+        from contextlib import redirect_stdout
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = batch.main(list(argv))
+        return code, buf.getvalue()
+
+    def test_check_variant_coverage_reports_missing_ids(self):
+        tasks = [{"id": "zh2en-dev-01"}, {"id": "zh2en-dev-02"}]
+        variants = {
+            "other-task": [
+                {"variant_query": "x", "variant_lang": "zh", "api_query": "x"}
+            ]
+        }
+        cov = batch.check_variant_coverage(tasks, variants)
+        self.assertFalse(cov["complete"])
+        self.assertEqual(cov["covered"], 0)
+        self.assertEqual(cov["missing_task_ids"], ["zh2en-dev-01", "zh2en-dev-02"])
+        self.assertEqual(cov["extra_variant_ids"], ["other-task"])
+
+    def test_check_variant_coverage_partial_miss(self):
+        tasks = [{"id": "keep-me"}, {"id": "miss-me"}]
+        variants = {
+            "keep-me": [
+                {"variant_query": "x", "variant_lang": "zh", "api_query": "x"}
+            ]
+        }
+        cov = batch.check_variant_coverage(tasks, variants)
+        self.assertFalse(cov["complete"])
+        self.assertEqual(cov["covered"], 1)
+        self.assertEqual(cov["missing_task_ids"], ["miss-me"])
+
+    def test_decide_exit_blocked_and_coverage_nonzero(self):
+        all_blocked = {
+            "tasks": 10,
+            "tasks_ok": 0,
+            "tasks_blocked": 10,
+            "tasks_error": 0,
+            "tasks_partial": 0,
+            "attempted_requests": 0,
+            "successful_requests": 0,
+        }
+        code, reason = batch.decide_exit(all_blocked)
+        self.assertNotEqual(code, 0)
+        self.assertIn("blocked", reason)
+
+        miss = batch.check_variant_coverage(
+            [{"id": "a"}, {"id": "b"}],
+            {"zzz": [{"variant_query": "x", "variant_lang": "zh", "api_query": "x"}]},
+        )
+        code, reason = batch.decide_exit(
+            {"tasks": 2, "tasks_blocked": 2, "tasks_ok": 0,
+             "tasks_error": 0, "tasks_partial": 0,
+             "attempted_requests": 0, "successful_requests": 0},
+            miss,
+        )
+        self.assertNotEqual(code, 0)
+        self.assertIn("coverage", reason)
+
+        mixed = {
+            "tasks": 2,
+            "tasks_ok": 1,
+            "tasks_blocked": 1,
+            "tasks_error": 0,
+            "tasks_partial": 0,
+            "attempted_requests": 1,
+            "successful_requests": 1,
+        }
+        code, reason = batch.decide_exit(mixed)
+        self.assertNotEqual(code, 0)
+        self.assertIn("blocked", reason)
+
+    def test_cli_mismatched_variant_ids_nonzero_exit_and_summary(self):
+        import tempfile
+
+        q = batch.load_queries(QUERIES)
+        self.assertGreaterEqual(len(q["dev"]), 1)
+        mismatch = {
+            "not-a-real-task": [
+                {
+                    "variant_query": "unrelated",
+                    "variant_lang": "zh",
+                    "api_query": "unrelated",
+                }
+            ]
+        }
+        with tempfile.TemporaryDirectory() as td:
+            vpath = Path(td) / "variants.json"
+            vpath.write_text(json.dumps(mismatch), encoding="utf-8")
+            code, out = self._run_main(
+                "--queries", str(QUERIES),
+                "--run-settings", str(SETTINGS),
+                "--batch", "dev",
+                "--arm", "B",
+                "--run-id", "mismatch-ids",
+                "--out-dir", str(Path(td) / "out"),
+                "--variants-json", str(vpath),
+            )
+        self.assertNotEqual(code, 0)
+        lowered = out.lower()
+        self.assertIn("blocked", lowered)
+        self.assertIn("coverage", lowered)
+        self.assertIn("summary", lowered)
+        self.assertIn("reason", lowered)
+
+    def test_run_batch_mismatched_ids_all_blocked_no_requests(self):
+        q = batch.load_queries(QUERIES)
+        tasks = q["dev"][:10]
+        self.assertEqual(len(tasks), 10)
+        calls = {"n": 0}
+
+        def counting_get(url, headers):
+            calls["n"] += 1
+            return {"items": []}
+
+        out = batch.run_batch(
+            tasks=tasks,
+            arm="B",
+            run_id="mismatch-batch",
+            http_get=counting_get,
+            variants_by_task={
+                "wrong-id-only": [
+                    {
+                        "variant_query": "x",
+                        "variant_lang": "zh",
+                        "api_query": "x",
+                    }
+                ]
+            },
+            sleep_func=noop,
+            sleep_seconds=0,
+        )
+        self.assertEqual(out["totals"]["tasks_blocked"], 10)
+        self.assertEqual(out["totals"]["tasks_ok"], 0)
+        self.assertEqual(out["totals"]["attempted_requests"], 0)
+        self.assertEqual(calls["n"], 0)
+        self.assertFalse(out["coverage"]["complete"])
+        code, reason = batch.decide_exit(out["totals"], out["coverage"])
+        self.assertNotEqual(code, 0)
+        self.assertIn("coverage", reason)
+        summary = batch.format_batch_summary(
+            totals=out["totals"],
+            coverage=out["coverage"],
+            exit_code=code,
+            exit_reason=reason,
+        )
+        self.assertIn("blocked", summary.lower())
+        self.assertIn("coverage", summary.lower())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
