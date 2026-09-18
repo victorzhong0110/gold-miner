@@ -216,6 +216,7 @@ def run_batch(
     totals = {
         "tasks": 0,
         "tasks_ok": 0,
+        "tasks_partial": 0,
         "tasks_blocked": 0,
         "tasks_cancelled": 0,
         "tasks_error": 0,
@@ -377,7 +378,23 @@ def run_batch(
             "cancelled_variants": out["cancelled_variants"],
             "requested_budget": out["requested_budget"],
         }
-        if out.get("cancelled_variants"):
+        attempted = out["attempted_requests"]
+        successful = out["successful_requests"]
+        failed = out["failed_requests"]
+        cancelled = out.get("cancelled_variants", 0)
+        # Distinguish success / partial / all-failed / cancelled.
+        # All timeouts must NOT look like "ok with zero hits".
+        if cancelled and attempted == 0:
+            entry["status"] = "cancelled"
+            totals["tasks_cancelled"] += 1
+        elif attempted > 0 and successful == 0:
+            entry["status"] = "error"
+            entry["reason"] = "all requests failed"
+            totals["tasks_error"] += 1
+        elif failed > 0 and successful > 0:
+            entry["status"] = "partial"
+            totals["tasks_partial"] += 1
+        elif cancelled:
             entry["status"] = "cancelled"
             totals["tasks_cancelled"] += 1
         else:
@@ -437,6 +454,44 @@ def write_candidates_jsonl(path: Path, task_results: list) -> int:
             for row in tr.get("merged_candidates", []):
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
                 n += 1
+    return n
+
+
+def write_per_query_jsonl(path: Path, task_results: list) -> int:
+    """Persist ALL raw per-query hits (pre-merge truncation)."""
+    n = 0
+    with open(path, "w", encoding="utf-8") as f:
+        for tr in task_results:
+            task_id = tr.get("task_id", "")
+            for row in tr.get("per_query_records", []):
+                payload = dict(row)
+                payload.setdefault("task_id", task_id)
+                f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+                n += 1
+    return n
+
+
+def write_task_results_jsonl(path: Path, task_results: list) -> int:
+    """Persist per-task status, counters, and errors for audit."""
+    n = 0
+    with open(path, "w", encoding="utf-8") as f:
+        for tr in task_results:
+            payload = {
+                "task_id": tr.get("task_id", ""),
+                "direction": tr.get("direction", ""),
+                "status": tr.get("status", ""),
+                "reason": tr.get("reason", ""),
+                "attempted_requests": tr.get("attempted_requests", 0),
+                "successful_requests": tr.get("successful_requests", 0),
+                "failed_requests": tr.get("failed_requests", 0),
+                "cancelled_variants": tr.get("cancelled_variants", 0),
+                "requested_budget": tr.get("requested_budget"),
+                "per_query_record_count": len(tr.get("per_query_records", [])),
+                "merged_candidate_count": len(tr.get("merged_candidates", [])),
+                "errors": tr.get("errors", []),
+            }
+            f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+            n += 1
     return n
 
 
@@ -518,6 +573,12 @@ def main(argv: list | None = None) -> int:
     finished_at = _utcnow()
     out_dir.mkdir(parents=True, exist_ok=True)
     n = write_candidates_jsonl(out_dir / "candidates.jsonl", out["task_results"])
+    n_raw = write_per_query_jsonl(
+        out_dir / "per_query_records.jsonl", out["task_results"]
+    )
+    n_tasks = write_task_results_jsonl(
+        out_dir / "task_results.jsonl", out["task_results"]
+    )
     manifest = build_manifest(
         run_id=args.run_id,
         batch=args.batch,
@@ -530,10 +591,32 @@ def main(argv: list | None = None) -> int:
         http_mode="live-urllib",
         allow_unfrozen=args.allow_unfrozen,
     )
+    manifest["artifacts"] = {
+        "candidates_jsonl": "candidates.jsonl",
+        "per_query_records_jsonl": "per_query_records.jsonl",
+        "task_results_jsonl": "task_results.jsonl",
+        "candidates_rows": n,
+        "per_query_rows": n_raw,
+        "task_result_rows": n_tasks,
+    }
     (out_dir / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    print(f"tasks={out['totals']['tasks']} rows={n} out={out_dir}")
+    totals = out["totals"]
+    print(
+        f"tasks={totals['tasks']} ok={totals.get('tasks_ok', 0)} "
+        f"partial={totals.get('tasks_partial', 0)} "
+        f"error={totals.get('tasks_error', 0)} rows={n} raw={n_raw} "
+        f"out={out_dir}"
+    )
+    # Exit: all attempts failed -> 2; any error/partial -> 1; else 0.
+    if (
+        totals.get("attempted_requests", 0) > 0
+        and totals.get("successful_requests", 0) == 0
+    ):
+        return 2
+    if totals.get("tasks_error", 0) > 0 or totals.get("tasks_partial", 0) > 0:
+        return 1
     return 0
 
 
@@ -548,6 +631,8 @@ __all__ = [
     "materials_commit",
     "run_batch",
     "write_candidates_jsonl",
+    "write_per_query_jsonl",
+    "write_task_results_jsonl",
     "main",
 ]
 

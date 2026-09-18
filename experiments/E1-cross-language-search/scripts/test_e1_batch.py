@@ -282,5 +282,105 @@ class TestNoPlaceholdersOrSecrets(unittest.TestCase):
                 )
 
 
+
+
+class TestFailureStatusAndArtifacts(unittest.TestCase):
+    def test_all_requests_failed_not_ok(self):
+        """P2: total timeouts must be status=error, not tasks_ok."""
+
+        def boom(url, headers):
+            raise TimeoutError("simulated timeout")
+
+        q = batch.load_queries(QUERIES)
+        tasks = []
+        for i in range(10):
+            base = dict(q["dev"][0])
+            base["id"] = f"fail-{i}"
+            tasks.append(base)
+        out = batch.run_batch(
+            tasks=tasks,
+            arm="A",
+            run_id="test-all-fail",
+            http_get=boom,
+            sleep_func=noop,
+            sleep_seconds=0,
+        )
+        self.assertEqual(out["totals"]["tasks"], 10)
+        self.assertEqual(out["totals"]["tasks_ok"], 0)
+        self.assertEqual(out["totals"]["tasks_error"], 10)
+        self.assertEqual(out["totals"]["attempted_requests"], 10)
+        self.assertEqual(out["totals"]["successful_requests"], 0)
+        self.assertEqual(out["totals"]["failed_requests"], 10)
+        for tr in out["task_results"]:
+            self.assertEqual(tr["status"], "error")
+
+    def test_partial_status_when_mixed(self):
+        calls = {"n": 0}
+
+        def flaky(url, headers):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return make_items("ok/one")
+            raise TimeoutError("fail")
+
+        q = batch.load_queries(QUERIES)
+        task = dict(q["dev"][0])
+        task["id"] = "partial-1"
+        variants = {
+            "partial-1": [
+                {"variant_query": "a", "variant_lang": "zh", "api_query": "a"},
+                {"variant_query": "b", "variant_lang": "en", "api_query": "b"},
+            ]
+        }
+        out = batch.run_batch(
+            tasks=[task],
+            arm="C",
+            run_id="test-partial",
+            http_get=flaky,
+            variants_by_task=variants,
+            sleep_func=noop,
+            sleep_seconds=0,
+        )
+        self.assertEqual(out["task_results"][0]["status"], "partial")
+        self.assertEqual(out["totals"]["tasks_partial"], 1)
+        self.assertEqual(out["totals"]["tasks_ok"], 0)
+
+    def test_persist_raw_hits_and_task_results(self):
+        import tempfile
+
+        q = batch.load_queries(QUERIES)
+        out = batch.run_batch(
+            tasks=q["dev"][:1],
+            arm="A",
+            run_id="test-persist",
+            http_get=lambda u, h: make_items("Owner/Repo", "Other/Two"),
+            sleep_func=noop,
+            sleep_seconds=0,
+        )
+        with tempfile.TemporaryDirectory() as td:
+            td = Path(td)
+            n_cand = batch.write_candidates_jsonl(
+                td / "candidates.jsonl", out["task_results"]
+            )
+            n_raw = batch.write_per_query_jsonl(
+                td / "per_query_records.jsonl", out["task_results"]
+            )
+            n_task = batch.write_task_results_jsonl(
+                td / "task_results.jsonl", out["task_results"]
+            )
+            self.assertEqual(n_cand, 2)
+            self.assertEqual(n_raw, 2)
+            self.assertEqual(n_task, 1)
+            raw_lines = (
+                td / "per_query_records.jsonl"
+            ).read_text().strip().splitlines()
+            self.assertEqual(len(raw_lines), 2)
+            task_row = json.loads(
+                (td / "task_results.jsonl").read_text().strip()
+            )
+            self.assertEqual(task_row["status"], "ok")
+            self.assertEqual(task_row["per_query_record_count"], 2)
+            self.assertEqual(task_row["merged_candidate_count"], 2)
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

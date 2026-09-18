@@ -27,9 +27,11 @@ Design for testability and honesty:
   ``text_matches`` becomes ``["unknown"]`` via ``github_search``.
 - Two-phase merge: run ALL budgeted variants first (respecting cancel),
   collecting per-query raw hits into ``per_query_records``; only after
-  every query finishes, dedupe by ``canonical``/merge/sort/truncate to
-  ``MERGED_TOP_N``. Never break the outer loop early just because one
-  query filled the merge window.
+  every query finishes, dedupe by ``canonical`` then rank with the
+  C/M-shared competitive key (best/min rank across sources, then more
+  sources, then first-seen) and truncate to ``MERGED_TOP_N``. Never
+  break the outer loop early just because one query filled the merge
+  window. Identical ``api_query`` values are deduped before requests.
 - Sources: ``per_query_records`` keeps every hit with its
   variant/query/rank/page; ``merged_candidates`` dedupes but retains ALL
   source associations as
@@ -163,6 +165,69 @@ def build_candidate_row(
     }
 
 
+
+def _dedupe_variants_by_api_query(variants: list) -> list:
+    """Keep first occurrence of each exact api_query (protocol: count after dedupe)."""
+    seen: set[str] = set()
+    out: list = []
+    for variant in variants:
+        key = variant["api_query"]
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(variant)
+    return out
+
+
+def _merge_records_competitive(per_query_records: list, top_n: int = MERGED_TOP_N) -> list:
+    """C/M-shared merge: every lane competes; do not first-fill then truncate.
+
+    Score = (best_rank_across_sources, -num_sources, first_seen_index).
+    Lower tuple sorts first. Truncate only after sorting.
+    """
+    merged_by_key: dict = {}
+    first_seen: dict = {}
+    for idx, rec in enumerate(per_query_records):
+        key = canonical(rec["repo"])
+        src = {
+            "variant_query": rec["variant_query"],
+            "api_query": rec["api_query"],
+            "variant_lang": rec["variant_lang"],
+            "rank": rec["rank"],
+            "page": rec["page"],
+        }
+        if key not in merged_by_key:
+            merged_entry = dict(rec)
+            merged_entry["sources"] = [src]
+            merged_by_key[key] = merged_entry
+            first_seen[key] = idx
+        else:
+            merged_by_key[key]["sources"].append(src)
+            # Prefer row fields from the best-ranked source for display.
+            if src["rank"] < merged_by_key[key]["rank"]:
+                for field in (
+                    "variant_query",
+                    "variant_lang",
+                    "api_query",
+                    "page",
+                    "rank",
+                    "stars",
+                    "matched_fields",
+                    "is_seed_target",
+                    "fetched_at",
+                ):
+                    if field in rec:
+                        merged_by_key[key][field] = rec[field]
+
+    def sort_key(repo_key: str):
+        entry = merged_by_key[repo_key]
+        best_rank = min(s["rank"] for s in entry["sources"])
+        return (best_rank, -len(entry["sources"]), first_seen[repo_key])
+
+    ordered = sorted(merged_by_key.keys(), key=sort_key)
+    return [merged_by_key[k] for k in ordered[:top_n]]
+
+
 def run_method(
     *,
     run_id: str,
@@ -218,6 +283,8 @@ def run_method(
             f"arm {arm} allows at most {requested_budget} variants, "
             f"got {len(clean_variants)}"
         )
+    # Protocol: dedupe identical api_query before counting/executing requests.
+    clean_variants = _dedupe_variants_by_api_query(clean_variants)
     seeds = {s.lower() for s in (seed_repos or set()) if isinstance(s, str)}
 
     per_query_records: list = []
@@ -227,7 +294,7 @@ def run_method(
     failed_requests = 0
     cancelled_variants = 0
     fetched_at = _utcnow()
-    # Phase 1: run ALL budgeted variants first (respect cancel),
+    # Phase 1: run ALL budgeted (deduped) variants first (respect cancel),
     # collecting per-query raw hits. No merge truncation here.
     for index, variant in enumerate(clean_variants):
         if should_cancel is not None and should_cancel():
@@ -289,28 +356,9 @@ def run_method(
                     fetched_at=fetched_at,
                 )
             )
-    # Phase 2: merge/dedupe/sort/truncate only after every query finishes.
-    # First-seen order (variant order, then rank) is preserved; truncation
-    # to MERGED_TOP_N happens here, never by breaking the outer loop early.
-    merged_by_key: dict = {}
-    order: list = []
-    for rec in per_query_records:
-        key = canonical(rec["repo"])
-        src = {
-            "variant_query": rec["variant_query"],
-            "api_query": rec["api_query"],
-            "variant_lang": rec["variant_lang"],
-            "rank": rec["rank"],
-            "page": rec["page"],
-        }
-        if key not in merged_by_key:
-            merged_entry = dict(rec)
-            merged_entry["sources"] = [src]
-            merged_by_key[key] = merged_entry
-            order.append(key)
-        else:
-            merged_by_key[key]["sources"].append(src)
-    merged = [merged_by_key[k] for k in order][:MERGED_TOP_N]
+    # Phase 2: C/M-shared competitive merge after every query finishes.
+    # Every lane competes by best rank (then source count); truncate last.
+    merged = _merge_records_competitive(per_query_records, MERGED_TOP_N)
     return {
         "per_query_records": per_query_records,
         "merged_candidates": merged,
@@ -331,5 +379,7 @@ __all__ = [
     "PER_QUERY_TOP_N",
     "MERGED_TOP_N",
     "build_candidate_row",
+    "_dedupe_variants_by_api_query",
+    "_merge_records_competitive",
     "run_method",
 ]

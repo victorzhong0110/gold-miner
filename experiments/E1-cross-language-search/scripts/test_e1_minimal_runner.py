@@ -193,6 +193,9 @@ class TestMergeDedup(unittest.TestCase):
         self.assertEqual(len(out["per_query_records"]), runner.MERGED_TOP_N + 1)
         self.assertEqual(len(out["merged_candidates"]), runner.MERGED_TOP_N)
         self.assertEqual(len(out["candidates"]), runner.MERGED_TOP_N)
+        # Competitive merge (C/M-shared): translated rank-1 must compete in.
+        repos = [c["repo"] for c in out["merged_candidates"]]
+        self.assertIn("late/only", repos)
 
     def test_seed_flagging_case_insensitive(self):
         def fake_get(url, headers):
@@ -413,3 +416,60 @@ class TestErrorsCancel(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestCompetitiveMergeAndDedupe(unittest.TestCase):
+    def test_translated_lane_competes_when_original_fills_top_n(self):
+        """P1: original fills 30; translated finds target at rank 1 -> kept."""
+        calls = {"n": 0}
+
+        def fake_get(url, headers):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return make_items(*[f"orig/{i}" for i in range(runner.MERGED_TOP_N)])
+            return make_items("target/translated-hit")
+
+        out = runner.run_method(
+            run_id="r1",
+            task_id="t1",
+            direction="zh2en",
+            arm="C",
+            variants=[
+                {"variant_query": "zh-q", "variant_lang": "zh", "api_query": "zh-q"},
+                {"variant_query": "en-q", "variant_lang": "en", "api_query": "en-q"},
+            ],
+            http_get=fake_get,
+            sleep_func=noop,
+            sleep_seconds=0,
+        )
+        repos = [c["repo"] for c in out["merged_candidates"]]
+        self.assertIn("target/translated-hit", repos)
+        self.assertEqual(len(repos), runner.MERGED_TOP_N)
+
+    def test_duplicate_api_query_requests_once(self):
+        """P2: identical api_query must not double-hit the API."""
+        calls = {"n": 0}
+
+        def fake_get(url, headers):
+            calls["n"] += 1
+            return make_items("only/once")
+
+        out = runner.run_method(
+            run_id="r1",
+            task_id="t1",
+            direction="zh2en",
+            arm="B",
+            variants=[
+                {"variant_query": "q", "variant_lang": "zh", "api_query": "same"},
+                {"variant_query": "q-dup", "variant_lang": "zh", "api_query": "same"},
+            ],
+            http_get=fake_get,
+            sleep_func=noop,
+            sleep_seconds=0,
+        )
+        self.assertEqual(calls["n"], 1)
+        self.assertEqual(out["attempted_requests"], 1)
+        self.assertEqual(out["successful_requests"], 1)
+        self.assertEqual(len(out["per_query_records"]), 1)
+
+
