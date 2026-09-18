@@ -47,3 +47,31 @@
   - `docs/reports/w8-first-round-decision-2026-09-17.md`（本文件）
 - 沿用（此前已在工作区、未提交，本轮未改内容，只复核）：`W1-report.md`、`reading-baseline.md`、`judgment-guide.md`、`run-settings.json`、`seed-tasks.draft.yaml`、`session-setup.md`、`scripts/test_w1_materials.py`。
 - 未运行项全部标“未运行”，未用计划文档或模拟成功替代证据；未编造 GitHub 结果、H0/E1 指标、API 额度、用户反馈。
+
+## 5 追记 2026-09-18（W6/E3 证据更新，不改 §§1–4 本轮记录）
+
+将改路径（AGENTS.md 第 18 条）：`docs/reports/w8-first-round-decision-2026-09-17.md`（本追记 only）、
+`docs/backlog.md`（W8 行 only）、`experiments/E8-discoverability/` 下新日期文件（如配额允许则新建，否则不建）。
+不改 `docs/plan/v0.3.md`、仓库名、`LICENSE`、扩展代码；只改任务指定文件。
+
+- W6/E3 行刷新（§1 W6 行的后续状态，不重写原文）：
+  - 片段已冻结：`experiments/E3-faithful-reading/fragments-2026-09-17.md`，
+    `materials_commit: 2be593765150adb15b92c2093505d48ecbcf769a`（`git cat-file -e` 存在性已核验；
+    冻结语义为片段出处冻结，故意不跟随 HEAD，见该文件第 0 节与 `test_fragments.py`）。
+  - 对照协议已落地：`experiments/E3-faithful-reading/translation-contrast-2026-09-18.md`
+   （含工具/版本/设置/语言对/原文可见/失败记录协议、逐片段源风险笔记、全 `未运行` 观察模板）。
+  - 对照输出仍未运行：翻译输出与判定列全 `未运行`；工具版本、浏览器版本、设置、等待与费用全未知；
+    零请求、零费用；未点 Subscribe/Go；无密钥。
+  - 个人模型探测仍阻塞：本地无个人配置，最小连接探测未发生；W4 评估检索、W5 短会话均未发生，
+    本追记不替代其中任何一项证据。
+- §3 下一步最小动作刷新（只标注增量，不重写 §3）：
+  - §3-1（冻结回填）：仍未做。`queries.yaml` 的 `eval_frozen_commit`、`run-settings.json` 的 `freeze.*` 保持 `null`；
+    种子与模型均未就绪，回填即虚假冻结。
+  - §3-2（种子集）：仍未做。`seed-tasks.draft.yaml` 仍 `draft-unfrozen` 且 `entries: []`。
+  - §3-3（W5）：仍阻塞，需发起人两对短会话排期；本次无会话发生。
+  - §3-4（E3 片段集）：部分完成——片段冻结与对照协议已完成，对照输出待运行（运行者在新日期文件记录实测值，不得回填旧文件）。
+  - §3-5（E8）：2026-09-18 已复测 1 次即遇限流停止，见 `experiments/E8-discoverability/2026-09-18-retest.md`
+   （`GET /repos` 403，核心 `remaining 0/60`，搜索查询未发起）；基线仍为 `experiments/E8-discoverability/2026-09-17-probe.md`。
+  - §3-6（模型）：仍阻塞，需个人本地配置就绪后才做最小连接探测；密钥永不进仓库。
+- 决策结论不变：§2 分方向/分功能处置维持原样；本追记只刷新证据指针，不产生新的效果结论。
+  本轮仍零检索运行、零会话、零付费调用；未编造 GitHub 结果、H0 占比、E1 指标、API 额度。
