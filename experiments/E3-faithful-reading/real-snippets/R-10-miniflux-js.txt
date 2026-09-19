@@ -1,0 +1,1 @@
+Blocks external JavaScript to prevent tracking and enhance security.

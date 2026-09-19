@@ -38,3 +38,11 @@ Search and open-ended discovery have separate decision paths. The proportion of 
 The project intends to be open source and has no short-term monetization goal. Each user brings their own model API; the project does not fund public inference or run a shared model proxy. Preferences stay local by default; sharing is opt-in. Repositories without cached translations must still have a discovery path.
 
 Good existing translation is part of the baseline. Custom translation is justified only by observed gaps. A separate discovery website, full GitHub crawl and large recommendation-model training are outside the first experiment.
+
+## 2026-09-19 trial extension (appended; historical lines above unchanged)
+
+This branch adds a local-loadable unpacked Chrome extension. It is **still not a product-effectiveness result**. Live E1/E2/E3 runs have not happened.
+
+- [Getting started](docs/guides/getting-started.md) — load `extension/`
+- [Config](docs/guides/config.md) · [v0.5 plan](docs/plan/v0.5-compressed-wp.md) · [Status](docs/reports/2026-09-19-wp1-wp6-status.md)
+- License still undecided: [0003](docs/decisions/0003-license.md)
