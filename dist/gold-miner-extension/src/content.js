@@ -96,7 +96,8 @@
     if (state.code && state.code !== "ok") {
       const p = document.createElement("p");
       p.className = "gm-status";
-      p.textContent = S.t(lang, state.code) || state.code;
+      const mapped = S.t(lang, state.code);
+      p.textContent = mapped || state.code;
       box.appendChild(p);
     }
     if (!state.hasModel) {
@@ -190,10 +191,13 @@
         state.code = (resp && resp.code) || "bad_response";
         state.candidates = (resp && resp.candidates) || [];
         state.originalQuery = (resp && resp.originalQuery) || state.originalQuery;
-        state.hasModel = resp && resp.hasModel;
+        state.hasModel = Boolean(resp && resp.hasModel);
         if (state.code === "rate_limited") state.code = "rateLimited";
         if (state.code === "timeout") state.code = "timeout";
         if (state.code === "model_unavailable") state.code = "modelUnavailable";
+        if (state.code === "bad_response") state.code = "badResponse";
+        if (state.code === "network_error") state.code = "networkError";
+        if (state.code === "storage_isolation_failed") state.code = "storageIsolationFailed";
         render(state);
       });
     });

@@ -21,8 +21,11 @@
       rateLimited: "接口限流，请稍后再试",
       timeout: "超时。已发出的请求可能已计费。",
       modelUnavailable: "模型不可用，已降级为无模型搜索",
-      noModel: "未配置模型，仅使用规则扩展与公开搜索",
+      noModel: "本次未走模型路径，仅使用规则扩展与公开搜索",
       close: "关闭",
+      badResponse: "搜索失败，未写入成功缓存",
+      networkError: "网络错误",
+      storageIsolationFailed: "存储隔离失败，密钥未保存",
     },
     en: {
       searchTitle: "Cross-language candidates",
@@ -39,8 +42,11 @@
       rateLimited: "Rate limited. Try again later.",
       timeout: "Timed out. In-flight requests may already be billed.",
       modelUnavailable: "Model unavailable; fell back to rule-based search",
-      noModel: "No model configured; using rules and public search only",
+      noModel: "Model path did not run; using rules and public search only",
       close: "Close",
+      badResponse: "Search failed; success cache was not written",
+      networkError: "Network error",
+      storageIsolationFailed: "Storage isolation failed; API key was not saved",
     },
   };
 
@@ -281,6 +287,59 @@
     }).slice(0, 4);
   }
 
+  function isSearchOrExploreKind(kind) {
+    const k = String(kind || "").toUpperCase();
+    return k === "SEARCH" || k === "EXPLORE";
+  }
+
+  function sanitizeCandidateList(list) {
+    const out = [];
+    for (const c of list || []) {
+      if (!c || typeof c !== "object") continue;
+      if (c.private_note || c.apiKey || c.token || c.OPENAI_API_KEY) continue;
+      if (c.private === true) continue;
+      const repo = canonicalRepo(c.repo || c.full_name || "");
+      if (!repo || isPrivateName(repo)) continue;
+      const purpose = rejectUntrustedDirective(c.purpose || c.description || "");
+      const why = rejectUntrustedDirective(c.why || "");
+      out.push({
+        repo: c.repo || c.full_name,
+        stars: Number(c.stars) || 0,
+        description: purpose.text,
+        html_url: typeof c.html_url === "string" ? c.html_url : "",
+        source: c.source || "unknown",
+        purpose: purpose.text,
+        why: why.text,
+        queryUsed: sanitizeRemoteText(c.queryUsed || ""),
+      });
+    }
+    return out;
+  }
+
+  function sanitizeExpansions(list) {
+    const out = [];
+    const seen = new Set();
+    for (const exp of list || []) {
+      if (!exp) continue;
+      const q = sanitizeRemoteText(exp.query || "");
+      if (!q || looksLikeInstruction(q) || seen.has(q)) continue;
+      seen.add(q);
+      out.push({
+        query: q,
+        lang: exp.lang || "",
+        source: exp.source || "",
+      });
+    }
+    return out;
+  }
+
+  function normalizePageKind(kind, repo) {
+    const k = String(kind || "").toUpperCase();
+    if (k === "SEARCH" || k === "EXPLORE") return k;
+    if (canonicalRepo(repo || "")) return "EXPLORE";
+    return "SEARCH";
+  }
+
   function sanitizeExport(bundle) {
     const out = {
       format: "gold-miner-cache-v1",
@@ -290,18 +349,225 @@
     const entries = (bundle && bundle.entries) || [];
     for (const e of entries) {
       if (!e || typeof e !== "object") continue;
-      const repo = canonicalRepo(e.repo || "");
-      if (!repo || isPrivateName(repo) || e.private === true) continue;
       if (e.private_note || e.apiKey || e.token || e.OPENAI_API_KEY) continue;
-      const purpose = rejectUntrustedDirective(e.purpose || e.description || "");
+      if (e.private === true) continue;
+      const repo = canonicalRepo(e.repo || "");
+      if (repo && isPrivateName(repo)) continue;
+      const pageKind = normalizePageKind(e.pageKind || e.page_kind, e.repo);
+      const query = sanitizeRemoteText(e.query || e.purpose || (repo ? e.repo : ""));
+      const searchLike = isSearchOrExploreKind(pageKind) && Boolean(query);
+      if (!repo && !searchLike) continue;
+      const purpose = rejectUntrustedDirective(e.purpose || e.description || query);
       out.entries.push({
-        repo: e.repo,
+        repo: repo ? e.repo : "",
+        pageKind: pageKind,
+        query: query,
         purpose: purpose.text,
         source: e.source || "unknown",
         language: e.language || "",
         content_version: e.content_version || "",
         processing_mode: e.processing_mode || "",
+        expansions: sanitizeExpansions(e.expansions),
+        rawCandidates: sanitizeCandidateList(e.rawCandidates || e.candidates),
       });
+    }
+    return out;
+  }
+
+  function importedCacheRecord(entry) {
+    const e = entry || {};
+    const pageKind = normalizePageKind(e.pageKind || e.page_kind, e.repo);
+    const query = sanitizeRemoteText(e.query || e.purpose || e.repo || "");
+    return {
+      key: cacheKey({
+        pageKind: pageKind,
+        contentVersion: e.content_version,
+        language: e.language,
+        processingMode: e.processing_mode || "rules",
+        query: query,
+      }),
+      record: {
+        repo: canonicalRepo(e.repo || "") ? e.repo : "",
+        pageKind: pageKind,
+        query: query,
+        purpose: e.purpose || query,
+        source: e.source || "bundle",
+        language: e.language || "",
+        content_version: e.content_version || "",
+        processing_mode: e.processing_mode || "rules",
+        expansions: sanitizeExpansions(e.expansions),
+        rawCandidates: sanitizeCandidateList(e.rawCandidates || e.candidates),
+      },
+    };
+  }
+
+  const EXPLORE_STOP = new Set([
+    "the",
+    "a",
+    "an",
+    "for",
+    "and",
+    "or",
+    "to",
+    "of",
+    "on",
+    "in",
+    "with",
+    "from",
+    "this",
+    "that",
+    "is",
+    "are",
+    "was",
+    "be",
+    "as",
+    "by",
+    "it",
+    "its",
+    "into",
+    "over",
+    "your",
+    "you",
+    "lightweight",
+    "simple",
+    "一个",
+    "的",
+    "和",
+    "与",
+    "或",
+    "在",
+    "是",
+  ]);
+
+  function descriptionKeywords(description, limit) {
+    const cap = limit || 2;
+    const words = sanitizeRemoteText(description)
+      .split(/[^\p{L}\p{N}+#.-]+/u)
+      .map(function (w) {
+        return w.trim();
+      })
+      .filter(function (w) {
+        return w.length >= 3 && !EXPLORE_STOP.has(w.toLowerCase());
+      });
+    const seen = new Set();
+    const out = [];
+    for (const w of words) {
+      const k = w.toLowerCase();
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(w);
+      if (out.length >= cap) break;
+    }
+    return out;
+  }
+
+  function buildExploreQueries(meta, lang) {
+    meta = meta || {};
+    const out = [];
+    for (const topic of (meta.topics || []).slice(0, 3)) {
+      const q = sanitizeRemoteText(String(topic));
+      if (q && !looksLikeInstruction(q)) {
+        out.push({ query: q, lang: "en", source: SOURCE_KINDS.topic_related });
+      }
+    }
+    for (const kw of descriptionKeywords(meta.description || "", 2)) {
+      out.push({
+        query: kw,
+        lang: lang || "en",
+        source: SOURCE_KINDS.github_search_default,
+      });
+    }
+    const owner = String(meta.full_name || meta.repo || "").split("/")[0];
+    if (owner && !looksLikeInstruction(owner)) {
+      out.push({
+        query: "user:" + owner,
+        lang: "en",
+        source: SOURCE_KINDS.same_owner,
+      });
+    }
+    const seen = new Set();
+    return out
+      .filter(function (row) {
+        if (!row.query || seen.has(row.query)) return false;
+        seen.add(row.query);
+        return true;
+      })
+      .slice(0, 4);
+  }
+
+  function parseModelExpansions(payload, original, lang) {
+    let data = payload;
+    if (typeof payload === "string") {
+      const trimmed = payload.trim();
+      const start = trimmed.indexOf("{");
+      const end = trimmed.lastIndexOf("}");
+      if (start < 0 || end <= start) return [];
+      try {
+        data = JSON.parse(trimmed.slice(start, end + 1));
+      } catch {
+        return [];
+      }
+    }
+    if (!data || typeof data !== "object") return [];
+    const rows = [];
+    if (Array.isArray(data.variants)) {
+      for (const v of data.variants) {
+        const q = sanitizeRemoteText((v && (v.query || v.variant_query)) || "");
+        if (q && !looksLikeInstruction(q)) {
+          rows.push({
+            query: q,
+            lang: (v && (v.lang || v.variant_lang)) || lang || "en",
+            source: SOURCE_KINDS.github_search_default,
+          });
+        }
+      }
+    } else {
+      for (const q of (data.zh || []).slice(0, 2)) {
+        const s = sanitizeRemoteText(q);
+        if (s && !looksLikeInstruction(s)) {
+          rows.push({ query: s, lang: "zh", source: SOURCE_KINDS.github_search_default });
+        }
+      }
+      for (const q of (data.en || []).slice(0, 2)) {
+        const s = sanitizeRemoteText(q);
+        if (s && !looksLikeInstruction(s)) {
+          rows.push({ query: s, lang: "en", source: SOURCE_KINDS.github_search_default });
+        }
+      }
+      for (const q of (data.queries || []).slice(0, 3)) {
+        const s = sanitizeRemoteText(q);
+        if (s && !looksLikeInstruction(s)) {
+          rows.push({
+            query: s,
+            lang: data.same_lang || lang || "en",
+            source: SOURCE_KINDS.github_search_default,
+          });
+        }
+      }
+      if (data.query) {
+        const s = sanitizeRemoteText(data.query);
+        if (s && !looksLikeInstruction(s)) {
+          rows.push({
+            query: s,
+            lang: data.other_lang || lang || "en",
+            source: SOURCE_KINDS.github_search_default,
+          });
+        }
+      }
+    }
+    const originalQ = sanitizeRemoteText(original);
+    const out = [];
+    if (originalQ) {
+      out.push({ query: originalQ, lang: lang || "zh", source: SOURCE_KINDS.original_query });
+    }
+    const seen = new Set(out.map(function (r) {
+      return r.query;
+    }));
+    for (const row of rows) {
+      if (seen.has(row.query)) continue;
+      seen.add(row.query);
+      out.push(row);
+      if (out.length >= 4) break;
     }
     return out;
   }
@@ -335,6 +601,13 @@
     Budget,
     expandQueries,
     sanitizeExport,
+    sanitizeCandidateList,
+    sanitizeExpansions,
+    importedCacheRecord,
+    normalizePageKind,
+    descriptionKeywords,
+    buildExploreQueries,
+    parseModelExpansions,
     allowedMessage,
   };
 })(typeof globalThis !== "undefined" ? globalThis : this);

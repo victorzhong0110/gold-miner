@@ -8,7 +8,7 @@
 
 ## 扩展 BYOK
 
-在选项页填写同一组字段。密钥进 `chrome.storage.local`，并由 service worker 尝试设为仅受信上下文可读。内容脚本只收到 `hasModel` 布尔值。
+在选项页填写同一组字段。密钥只经 service worker 的 `SAVE_SETTINGS` 写入，且必须先成功调用 `chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" })`。隔离失败则密钥不保存（语言/兴趣仍可保存）。内容脚本只收到 `hasModel`：该布尔值表示**本次结果是否真正走过模型路径**，不是「是否填了密钥」。
 
 未配置模型时扩展仍可：
 

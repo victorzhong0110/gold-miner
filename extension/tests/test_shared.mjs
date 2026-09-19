@@ -92,6 +92,63 @@ test("export strips secrets and private notes", () => {
   assert.ok(!JSON.stringify(bundle).includes("sk-"));
 });
 
+test("export keeps SEARCH entries and raw candidates for reuse", () => {
+  const bundle = S.sanitizeExport({
+    exported_at: "2026-09-19T00:00:00Z",
+    entries: [
+      {
+        repo: "",
+        pageKind: "SEARCH",
+        query: "clipboard",
+        purpose: "clipboard",
+        language: "zh",
+        content_version: "dom-1",
+        processing_mode: "rules",
+        expansions: [{ query: "clipboard", lang: "en", source: "original_query" }],
+        rawCandidates: [
+          {
+            repo: "EcoPasteHub/EcoPaste",
+            stars: 100,
+            description: "clipboard manager",
+            html_url: "https://github.com/EcoPasteHub/EcoPaste",
+          },
+        ],
+      },
+    ],
+  });
+  assert.equal(bundle.entries.length, 1);
+  assert.equal(bundle.entries[0].pageKind, "SEARCH");
+  assert.equal(bundle.entries[0].query, "clipboard");
+  assert.equal(bundle.entries[0].rawCandidates.length, 1);
+  const packed = S.importedCacheRecord(bundle.entries[0]);
+  assert.match(packed.key, /^SEARCH\|/);
+  assert.equal(packed.record.rawCandidates[0].repo, "EcoPasteHub/EcoPaste");
+});
+
+test("explore queries come from topics and description", () => {
+  const rows = S.buildExploreQueries(
+    {
+      full_name: "p0deje/Maccy",
+      description: "Lightweight clipboard manager for macOS",
+      topics: ["clipboard", "macos"],
+    },
+    "zh"
+  );
+  assert.ok(rows.some((r) => r.query === "clipboard" && r.source === S.SOURCE_KINDS.topic_related));
+  assert.ok(rows.some((r) => r.source === S.SOURCE_KINDS.same_owner));
+  assert.ok(!rows.some((r) => r.query === "p0deje/Maccy"));
+});
+
+test("parseModelExpansions keeps original and model rows", () => {
+  const rows = S.parseModelExpansions(
+    '{"zh":["剪贴板 历史"],"en":["clipboard history"],"notes":""}',
+    "剪贴板",
+    "zh"
+  );
+  assert.equal(rows[0].source, S.SOURCE_KINDS.original_query);
+  assert.ok(rows.some((r) => r.query === "clipboard history"));
+});
+
 test("budget cancel", () => {
   const b = new S.Budget(2);
   assert.equal(b.canStart(), true);

@@ -62,6 +62,7 @@ STEPS = [
         "test_*.py",
     ],
     ["node", "--test", str(ROOT / "extension/tests/test_shared.mjs")],
+    ["node", "--test", str(ROOT / "extension/tests/test_background.mjs")],
 ]
 
 

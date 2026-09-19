@@ -25,16 +25,16 @@ async function load() {
   document.getElementById("baseUrl").value = data.byok.baseUrl || "";
   document.getElementById("model").value = data.byok.model || "";
   document.getElementById("apiKey").value = data.byok.apiKey || "";
+  chrome.runtime.sendMessage({ type: "GET_PUBLIC_SETTINGS" }, (resp) => {
+    if (resp && resp.settings && resp.settings.storageIsolated === false) {
+      show("存储隔离失败，密钥不会保存。");
+    }
+  });
 }
 
 document.getElementById("form").addEventListener("submit", async (ev) => {
   ev.preventDefault();
-  const byok = {
-    baseUrl: document.getElementById("baseUrl").value.trim(),
-    model: document.getElementById("model").value.trim(),
-    apiKey: document.getElementById("apiKey").value,
-  };
-  await chrome.storage.local.set({
+  const settings = {
     readingLang: document.getElementById("readingLang").value,
     interests: document
       .getElementById("interests")
@@ -44,9 +44,27 @@ document.getElementById("form").addEventListener("submit", async (ev) => {
       .slice(0, 12),
     personalization: document.getElementById("personalization").checked,
     historyEnabled: document.getElementById("historyEnabled").checked,
-    byok,
+    byok: {
+      baseUrl: document.getElementById("baseUrl").value.trim(),
+      model: document.getElementById("model").value.trim(),
+      apiKey: document.getElementById("apiKey").value,
+    },
+  };
+  chrome.runtime.sendMessage({ type: "SAVE_SETTINGS", settings }, (resp) => {
+    if (chrome.runtime.lastError) {
+      show("保存失败。");
+      return;
+    }
+    if (resp && resp.code === "storage_isolation_failed") {
+      show("存储隔离失败，密钥未保存。语言与兴趣已保存。");
+      return;
+    }
+    if (!resp || resp.code !== "ok") {
+      show("保存失败：" + ((resp && resp.code) || "bad_response"));
+      return;
+    }
+    show("已保存。密钥未写入页面日志。");
   });
-  show("已保存。密钥未写入页面日志。");
 });
 
 document.getElementById("clear").addEventListener("click", async () => {

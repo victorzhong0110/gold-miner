@@ -4,7 +4,7 @@
 
 - 去掉 `apiKey` / token / 私有备注
 - 去掉 `private: true` 或名字像私有的仓库
-- 只保留 repo、purpose、source、language、content_version、processing_mode
+- 保留 `pageKind`、`query`、`repo`、`purpose`、`source`、`language`、`content_version`、`processing_mode`、`expansions`、`rawCandidates`（排序前候选），以便导入后能命中 SEARCH/EXPLORE 缓存
 
 实验步骤（**未运行**）：
 

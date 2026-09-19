@@ -16,6 +16,7 @@
 | `cancelled` | 用户取消 | 不安排后续；已发出请求标未知计费 |
 | `model_unavailable` | 404 模型或供应商维护 | 降级到无模型路径 |
 | `untrusted_input` | 页面/远端文本试图改端点或要密钥 | 丢弃指令；不改变配置 |
+| `storage_isolation_failed` | `chrome.storage.local.setAccessLevel` 缺失或抛错 | 不保存 API key；可保存非密钥设置；向选项页报错 |
 | `github_not_found` | 仓库 404 | 与「不相关」分开统计 |
 | `github_migrated` | 301/仓库迁移 | 记录规范地址 |
 | `owner_blocked` | 需要发起人 API 或真人会话 | 诚实标记；不伪造 |

@@ -15,7 +15,7 @@
   "rateLimited": { "message": "接口限流，请稍后再试" },
   "timeout": { "message": "超时。已发出的请求可能已计费。" },
   "modelUnavailable": { "message": "模型不可用，已降级为无模型搜索" },
-  "noModel": { "message": "未配置模型，仅使用规则扩展与公开搜索" },
+  "noModel": { "message": "本次未走模型路径，仅使用规则扩展与公开搜索" },
   "openOptions": { "message": "打开设置" },
   "clearLocal": { "message": "清除本地数据" },
   "disablePersonalization": { "message": "关闭个性化" },

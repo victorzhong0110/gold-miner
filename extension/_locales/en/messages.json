@@ -15,7 +15,7 @@
   "rateLimited": { "message": "Rate limited. Try again later." },
   "timeout": { "message": "Timed out. In-flight requests may already be billed." },
   "modelUnavailable": { "message": "Model unavailable; fell back to rule-based search" },
-  "noModel": { "message": "No model configured; using rules and public search only" },
+  "noModel": { "message": "Model path did not run; using rules and public search only" },
   "openOptions": { "message": "Open options" },
   "clearLocal": { "message": "Clear local data" },
   "disablePersonalization": { "message": "Disable personalization" },
