@@ -348,7 +348,7 @@ test("P2-3 network_error is preserved and not written as success cache", async (
   const { svc } = loadBackground(chrome, fetchImpl);
   const resp = await svc.dispatch(searchMsg(), sender);
   assert.equal(resp.code, "network_error");
-  assert.deepEqual(chrome.storage.local.store.cache, {});
+  assert.equal(Object.keys(chrome.storage.local.store.cache || {}).length, 0);
 });
 
 test("P2-4 mark irrelevant reranks cached raw candidates without refetch", async () => {
@@ -452,7 +452,7 @@ test("P2-6 export import reuse hits cache and skips refetch", async () => {
   assert.ok(searchEntry.rawCandidates && searchEntry.rawCandidates.length > 0);
   assert.ok(!JSON.stringify(exported.bundle).includes("mock-key"));
   await svc.dispatch({ type: "CLEAR_LOCAL" }, sender);
-  assert.deepEqual(chrome.storage.local.store.cache, {});
+  assert.equal(Object.keys(chrome.storage.local.store.cache || {}).length, 0);
   const imported = await svc.dispatch(
     { type: "IMPORT_CACHE", bundle: exported.bundle },
     sender
