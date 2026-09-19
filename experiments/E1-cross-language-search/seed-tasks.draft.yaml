@@ -94,8 +94,9 @@ freeze_rule: 运行评估前提交任务、种子、提示词/词表、字段配
 ## 进入冻结的条件（W2/W3 输入）
 
 1. W2 完成来源可用性检查（默认字段与 README 查询、失败与限流记录）。
-2. 按 `schemas/seed-set.schema.json` 逐条补齐 `repo`、`stars`（>= 50）、`readme_lang`、`hellogithub_issue` 或其他来源、`zh_description`、`query`、`query_lang`、`frozen_at`。
+2. 按 `schemas/seed-set.schema.json` 逐条补齐 `repo`、`stars`（**>= 0，不设下限**）、`readme_lang`、`source_kind`/`source_url`（HelloGitHub 可选且不得当唯一来源）、`purpose_evidence`、`query`、`query_lang`、核对时间。
 3. 开放任务作者确认未看种子答案，并记录判断者身份与盲测状态。
+4. 2026-09-19 已另存核对过的种子：`verified-seeds.jsonl`。本草案 `entries: []` 保持原状，避免把未冻结草案伪装成运行集。
 
 ## 未运行说明
 

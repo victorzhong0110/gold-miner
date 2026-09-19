@@ -1,0 +1,1 @@
+Maccy works on macOS Sonoma 14 or higher.

@@ -1,6 +1,7 @@
 # 黄金矿工当前待办
 
-更新：2026-09-17。依据：[v0.4](plan/v0.4.md)。
+更新：2026-09-19。当前执行入口：[v0.5 压缩计划](plan/v0.5-compressed-wp.md)。v0.4 工作包状态仍作历史索引。
+压缩 WP1–WP6 工程见 [2026-09-19-wp1-wp6-status.md](reports/2026-09-19-wp1-wp6-status.md)。E1/E2/E3 live 仍未运行。
 OpenCode GUI 推进更新：2026-09-18（分支 `opencode/gui-w1-w8`）。W1–W3 有产物；W4 未跑评估；W5 等发起人短会话；W6/W7 仅准备；W8 为未充分证据下的决策草稿。证据见 `experiments/E1-cross-language-search/W1-report.md`、`experiments/E1-cross-language-search/w2-source-check-2026-09-17.md`、`experiments/E1-cross-language-search/scripts/e1_minimal_runner.py`、`experiments/E1-cross-language-search/w4-first-round-status-2026-09-17.md`、`experiments/E2-open-ended-discovery/session-setup.md`、`docs/reports/w6-baseline-connectivity-2026-09-17.md`/`docs/reports/w7-metadata-e8-prep-2026-09-17.md`/`docs/reports/w8-first-round-decision-2026-09-17.md`。
 Owner-independent 更新 2026-09-17：新增 A-arm 批处理编排（`scripts/e1_batch.py` 干跑可用，B/C/M/D 需显式变体或模型故仍拒绝伪造）；W5 仍阻塞（无发起人短会话发生）；个人 API 侧（W3 模型侧、W6 模型探测、D 对照）仍阻塞（无本地个人配置，零新模型请求）；W4 仍未运行（eval 未冻结、无人工判定）。
 本文是可直接执行的工作索引；未创建对应 GitHub issues，未启动下面的实验与开发。

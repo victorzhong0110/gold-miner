@@ -1,0 +1,30 @@
+name: Trial feedback
+description: 试用反馈（不要粘贴密钥或私有仓库内容）
+title: "[feedback] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        不要粘贴 API key、cookie、私有仓库链接或私人笔记。
+  - type: dropdown
+    id: lang
+    attributes:
+      label: 阅读语言 / Reading language
+      options: [zh, en]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: 发生了什么 / What happened
+    validations:
+      required: true
+  - type: textarea
+    id: expect
+    attributes:
+      label: 你期望什么 / What you expected
+  - type: input
+    id: version
+    attributes:
+      label: 扩展版本（见 manifest version）

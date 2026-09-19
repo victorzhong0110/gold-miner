@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "type": "object",
+  "title": "E1 per-query hit row",
+  "required": ["run_id", "task_id", "arm", "repo", "rank", "source"],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "arm": {"type": "string", "enum": ["A", "B", "C", "M", "D"]},
+    "repo": {"type": "string", "pattern": "^[^/\\s]+/[^/\\s]+$"},
+    "rank": {"type": "integer", "minimum": 1},
+    "stars": {"type": "integer", "minimum": 0},
+    "matched_fields": {"type": "array", "items": {"type": "string"}},
+    "source": {"type": "string", "enum": ["fixture", "github_search", "owner-blocked"]}
+  }
+}
