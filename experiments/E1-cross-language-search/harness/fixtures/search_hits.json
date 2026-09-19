@@ -1,0 +1,135 @@
+{
+  "_comment": "Fixture GitHub Search payloads. source=fixture. Repo names are real public repos used only to exercise merge/rank. This is not a live E1 run.",
+  "剪贴板历史 工具": {
+    "items": [
+      {
+        "full_name": "EcoPasteHub/EcoPaste",
+        "stargazers_count": 7423,
+        "description": "跨平台的剪贴板管理工具",
+        "text_matches": [{"property": "description"}]
+      }
+    ]
+  },
+  "clipboard history tool": {
+    "items": [
+      {
+        "full_name": "p0deje/Maccy",
+        "stargazers_count": 21637,
+        "description": "Lightweight clipboard manager for macOS",
+        "text_matches": [{"property": "description"}]
+      }
+    ]
+  },
+  "clipboard history manager": {
+    "items": [
+      {
+        "full_name": "p0deje/Maccy",
+        "stargazers_count": 21637,
+        "description": "Lightweight clipboard manager for macOS",
+        "text_matches": [{"property": "name"}]
+      },
+      {
+        "full_name": "SUPERCILEX/gnome-clipboard-history",
+        "stargazers_count": 625,
+        "description": "Gnome Clipboard History",
+        "text_matches": [{"property": "description"}]
+      }
+    ]
+  },
+  "clipboard manager search paste": {
+    "items": [
+      {
+        "full_name": "SUPERCILEX/clipboard-history",
+        "stargazers_count": 487,
+        "description": "clipboard history",
+        "text_matches": [{"property": "name"}]
+      }
+    ]
+  },
+  "剪贴板 历史 记录 工具": {
+    "items": [
+      {
+        "full_name": "EcoPasteHub/EcoPaste",
+        "stargazers_count": 7423,
+        "description": "跨平台的剪贴板管理工具",
+        "text_matches": [{"property": "description"}]
+      },
+      {
+        "full_name": "zhoubowen-sky/LingDong",
+        "stargazers_count": 961,
+        "description": "文字剪贴板 is a feature but this is file transfer",
+        "text_matches": [{"property": "readme"}]
+      }
+    ]
+  },
+  "剪贴板 管理器 可搜索": {
+    "items": [
+      {
+        "full_name": "EcoPasteHub/EcoPaste",
+        "stargazers_count": 7423,
+        "description": "跨平台的剪贴板管理工具",
+        "text_matches": [{"property": "description"}]
+      }
+    ]
+  },
+  "clipboard history manager windows": {
+    "items": [
+      {
+        "full_name": "p0deje/Maccy",
+        "stargazers_count": 21637,
+        "description": "macOS only — fixture contrast",
+        "text_matches": [{"property": "description"}]
+      }
+    ]
+  },
+  "Windows 剪贴板历史 工具": {
+    "items": [
+      {
+        "full_name": "EcoPasteHub/EcoPaste",
+        "stargazers_count": 7423,
+        "description": "macOS and Windows",
+        "text_matches": [{"property": "description"}]
+      }
+    ]
+  },
+  "Windows 剪贴板 历史": {
+    "items": [
+      {
+        "full_name": "EcoPasteHub/EcoPaste",
+        "stargazers_count": 7423,
+        "description": "Windows",
+        "text_matches": [{"property": "description"}]
+      }
+    ]
+  },
+  "剪贴板 管理 历史记录": {
+    "items": [
+      {
+        "full_name": "zhoubowen-sky/LingDongWeb",
+        "stargazers_count": 29,
+        "description": "low-star fixture-only extra",
+        "text_matches": [{"property": "description"}]
+      }
+    ]
+  },
+  "windows clipboard history search": {
+    "items": [
+      {
+        "full_name": "p0deje/Maccy",
+        "stargazers_count": 21637,
+        "description": "macOS",
+        "text_matches": [{"property": "description"}]
+      }
+    ]
+  },
+  "windows clipboard manager native": {
+    "items": [
+      {
+        "full_name": "p0deje/Maccy",
+        "stargazers_count": 21637,
+        "description": "macOS",
+        "text_matches": [{"property": "description"}]
+      }
+    ]
+  }
+}

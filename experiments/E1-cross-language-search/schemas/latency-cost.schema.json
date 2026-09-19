@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "type": "object",
+  "required": ["run_id", "task_id", "arm", "elapsed_ms", "github_requests", "model_requests", "visible_cost"],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "arm": {"type": "string", "enum": ["A", "B", "C", "M", "D"]},
+    "elapsed_ms": {"type": "integer", "minimum": 0},
+    "github_requests": {"type": "integer", "minimum": 0},
+    "model_requests": {"type": "integer", "minimum": 0},
+    "visible_cost": {"type": "string"}
+  }
+}

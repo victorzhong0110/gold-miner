@@ -36,3 +36,14 @@
 源码计划开源，短期不以盈利为目的。模型调用由使用者自备 API，项目不承担公共推理费用。个人偏好优先本地保存，贡献共享内容需主动启用；没有共享译文的项目仍须有发现路径。
 
 先采用现成翻译作为强对照，仅为真实缺口补充能力。独立发现网站、全量爬取、大型推荐模型和公共模型代理不在首轮范围。
+
+## 2026-09-19 试验扩展（追加，不改上方历史段落）
+
+压缩 WP1–WP6 在本分支放入了可本地加载的未打包扩展，**仍不是产品效果结论**，E1/E2/E3 真实评估未运行。
+
+- 上手： [docs/guides/getting-started.md](docs/guides/getting-started.md)（Chrome 开发者模式加载 `extension/`）
+- 配置： [docs/guides/config.md](docs/guides/config.md)
+- 离线检查： [docs/engineering/offline-operator.md](docs/engineering/offline-operator.md)
+- 当前执行入口： [docs/plan/v0.5-compressed-wp.md](docs/plan/v0.5-compressed-wp.md)
+- 状态： [docs/reports/2026-09-19-wp1-wp6-status.md](docs/reports/2026-09-19-wp1-wp6-status.md)
+- 许可证仍待决定： [docs/decisions/0003-license.md](docs/decisions/0003-license.md)

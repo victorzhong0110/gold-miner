@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "type": "object",
+  "required": ["run_id", "task_id", "arm", "code"],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "arm": {"type": "string", "enum": ["A", "B", "C", "M", "D"]},
+    "code": {"type": "string", "minLength": 1},
+    "message": {"type": "string"}
+  }
+}
