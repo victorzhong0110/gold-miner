@@ -91,10 +91,30 @@ def parse_checklist(text):
 
 
 def git_commit_exists(sha: str) -> bool:
-    out = subprocess.run(["git", "cat-file", "-e", sha + "^{commit}"],
-                         cwd=str(REPO_ROOT),
-                         capture_output=True, text=True, timeout=15)
-    return out.returncode == 0
+    """True only if SHA is a commit *reachable from HEAD*.
+
+    A dangling or foreign-branch object can satisfy ``cat-file -e`` on a
+    fat local clone and still be missing from Actions' default shallow
+    checkout of this branch. Require ancestry so CI and main-line history
+    agree.
+    """
+    obj = subprocess.run(
+        ["git", "cat-file", "-e", sha + "^{commit}"],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    if obj.returncode != 0:
+        return False
+    anc = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", sha, "HEAD"],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    return anc.returncode == 0
 
 
 def git_show_blob(sha: str, relpath: str) -> str:
