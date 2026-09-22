@@ -99,6 +99,10 @@ class TestW4Run(unittest.TestCase):
         flagged = out["task_results"][0]["merged_candidates"]
         self.assertTrue(any(row["is_seed_target"] for row in flagged))
 
+    def test_cli_refuses_without_live(self):
+        code = w4.main(["--run-id", "x", "--out-dir", "/tmp/w4-not-live"])
+        self.assertEqual(code, 5)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

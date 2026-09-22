@@ -164,7 +164,7 @@ class TestW1RunSettings(unittest.TestCase):
         self.assertEqual(data["candidate_merge"]["per_query_top_n"], 30)
         self.assertEqual(data["candidate_merge"]["truncate_merged_top_n"], 30)
         self.assertEqual(data["judgment_window"]["human_check_top_k_per_group"], 5)
-        self.assertEqual(data["freeze"]["status"], "unfrozen-no-run")
+        self.assertEqual(data["freeze"]["status"], "pointers-recorded-not-yet-run")
         self.assertIn("recorded-not-used", data.get("reading_setup_status", ""))
         self.assertFalse(scan_secrets(read_text(SETTINGS)))
 
@@ -172,7 +172,7 @@ class TestW1RunSettings(unittest.TestCase):
         data = json.loads(read_text(SETTINGS))
         self.assertIsNone(data["model"].get("concrete_model_id"))
 
-    def test_all_freeze_markers_unfrozen(self):
+    def test_query_file_sha_blank_settings_point_at_materials(self):
         text = read_text(QUERIES)
         for key in (
             "eval_frozen_commit: null",
@@ -180,16 +180,19 @@ class TestW1RunSettings(unittest.TestCase):
             "seed_set_frozen_commit: null",
             "run_settings_commit: null",
         ):
-            self.assertIn(key, text, f"queries.yaml 缺少未冻结标记 {key}")
+            self.assertIn(key, text, f"queries.yaml 缺少未写入自身 SHA 的标记 {key}")
         data = json.loads(read_text(SETTINGS))
+        materials = "6010be0eee6d0e7f46ad851931741b81f741e0f0"
         for key in (
             "eval_frozen_commit",
             "prompts_frozen_commit",
             "seed_set_frozen_commit",
             "run_settings_commit",
         ):
-            self.assertIsNone(
-                data["freeze"].get(key), f"run-settings {key} 应为 null（未冻结）"
+            self.assertEqual(
+                data["freeze"].get(key),
+                materials,
+                f"run-settings {key} 应指向材料提交",
             )
 
 
