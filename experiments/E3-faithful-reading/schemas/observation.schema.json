@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "E3 observation",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "frag_id",
+    "lang_pair",
+    "source_text",
+    "source_url",
+    "categories",
+    "must_keep",
+    "tool",
+    "tool_version",
+    "translation_output",
+    "elapsed_ms",
+    "error_class",
+    "terminology_kept",
+    "polarity_kept",
+    "limit_kept",
+    "code_intact",
+    "discussion_kept",
+    "severe_mistranslation",
+    "changes_understanding",
+    "error_location",
+    "judge",
+    "judged_at"
+  ],
+  "properties": {
+    "frag_id": {"type": "string", "pattern": "^P-0[1-6]$"},
+    "lang_pair": {"enum": ["zh→en", "en→zh"]},
+    "translation_output": {"type": "string"},
+    "tool": {"const": "google-translate-gtx"},
+    "terminology_kept": {"enum": ["yes", "no", "不适用", "未运行"]},
+    "polarity_kept": {"enum": ["yes", "no", "不适用", "未运行"]},
+    "limit_kept": {"enum": ["yes", "no", "不适用", "未运行"]},
+    "code_intact": {"enum": ["yes", "no", "不适用", "未运行"]},
+    "discussion_kept": {"enum": ["yes", "no", "不适用", "未运行"]},
+    "severe_mistranslation": {"enum": ["yes", "no", "未运行"]},
+    "changes_understanding": {"enum": ["yes", "no", "未运行"]},
+    "error_location": {"type": "string"}
+  }
+}
