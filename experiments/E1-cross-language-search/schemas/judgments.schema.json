@@ -39,10 +39,11 @@
       "type": "string"
     },
     "novel_to_judge": {
-      "description": "对判定人是否首次见到。",
+      "description": "对判定人是否首次见到。协议第 4 节允许未知。首次运行前加入 unknown：回忆不适用或判定人不是人类使用者时记 unknown，不把 yes/no 补造成记忆。",
       "enum": [
         "yes",
-        "no"
+        "no",
+        "unknown"
       ],
       "type": "string"
     },

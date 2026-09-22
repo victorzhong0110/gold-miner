@@ -215,6 +215,7 @@ class TestJudgmentsSchema(unittest.TestCase):
         self.assertIn("reason", schema["properties"])
         self.assertIn("worth_following", schema["required"])
         self.assertIn("reason", schema["required"])
+        self.assertIn("unknown", schema["properties"]["novel_to_judge"]["enum"])
         self.assertFalse(schema.get("additionalProperties", True))
 
     def test_sample_valid(self):
