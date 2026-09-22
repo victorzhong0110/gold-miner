@@ -1,1 +1,62 @@
-{"$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "description": "依据 protocol.md 第 3 节种子集字段列表，一行一条。冻结后提交，不增删。", "properties": {"direction": {"description": "en2zh=目标为仅中文 README 的仓库；zh2en=目标为英文 README 的仓库。", "enum": ["en2zh", "zh2en"], "type": "string"}, "frozen_at": {"description": "冻结时间，RFC 3339。", "format": "date-time", "type": "string"}, "hellogithub_issue": {"description": "HelloGitHub 月刊期号。", "minimum": 1, "type": "integer"}, "query": {"description": "按第 3 节步骤 5 写的单条需求句，不抄仓库名。", "minLength": 1, "type": "string"}, "query_lang": {"description": "query 的语言。", "enum": ["zh", "en"], "type": "string"}, "readme_lang": {"description": "第 2 节分类器标签：zh_only=仅中文，bilingual=双语，en=英文，ja=含假名，ko=含韩文。", "enum": ["zh_only", "bilingual", "en", "ja", "ko"], "type": "string"}, "repo": {"description": "仓库全名 owner/repo，原样保存。", "pattern": "^[^/\\s]+/[^/\\s]+$", "type": "string"}, "seed_id": {"description": "种子标识。", "minLength": 1, "type": "string"}, "stars": {"description": "冻结时 stars 数，须 >= 50。", "minimum": 50, "type": "integer"}, "zh_description": {"description": "HelloGitHub 月刊中的中文介绍。", "minLength": 1, "type": "string"}}, "required": ["seed_id", "direction", "repo", "stars", "readme_lang", "hellogithub_issue", "zh_description", "query", "query_lang", "frozen_at"], "title": "E1 seed-set.jsonl 单行记录", "type": "object"}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "title": "E1 seed-set.jsonl 单行记录",
+  "description": "依据 protocol.md 第 2 节已知目标诊断。运行前把旧稿里「stars>=50 且必须有 hellogithub_issue」改成本结构：HelloGitHub 不能是唯一来源，低热度材料要留下，stars 原样记录、不作排除线。low_heat 只是本批记号（stars<100），不是产品结论。查询由来源短句反推，不把该短句写成用户需求证据。",
+  "type": "object",
+  "properties": {
+    "seed_id": {"type": "string", "minLength": 1},
+    "direction": {"type": "string", "enum": ["zh2en", "en2zh"]},
+    "repo": {"type": "string", "pattern": "^[^/\\s]+/[^/\\s]+$"},
+    "stars": {"type": "integer", "minimum": 0},
+    "low_heat": {
+      "type": "boolean",
+      "description": "本批记号：stars<100 为 true。不是排除条件。"
+    },
+    "readme_lang": {
+      "type": "string",
+      "enum": ["zh_only", "bilingual", "en", "ja", "ko"]
+    },
+    "readme_lang_version": {"type": "string", "minLength": 1},
+    "source_kind": {"type": "string", "enum": ["hellogithub", "topic_list"]},
+    "source_url": {"type": "string", "minLength": 1},
+    "source_blurb": {"type": "string", "minLength": 1},
+    "hellogithub_issue": {"type": "integer", "minimum": 1},
+    "discovered_at": {"type": "string", "format": "date-time"},
+    "query": {"type": "string", "minLength": 1},
+    "query_lang": {"type": "string", "enum": ["zh", "en"]},
+    "query_origin": {
+      "type": "string",
+      "const": "reverse_engineered_from_source_blurb"
+    },
+    "frozen_at": {"type": "string", "format": "date-time"},
+    "bias_note": {"type": "string", "minLength": 1}
+  },
+  "required": [
+    "seed_id",
+    "direction",
+    "repo",
+    "stars",
+    "low_heat",
+    "readme_lang",
+    "readme_lang_version",
+    "source_kind",
+    "source_url",
+    "source_blurb",
+    "discovered_at",
+    "query",
+    "query_lang",
+    "query_origin",
+    "frozen_at",
+    "bias_note"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {"source_kind": {"const": "hellogithub"}},
+        "required": ["source_kind"]
+      },
+      "then": {"required": ["hellogithub_issue"]}
+    }
+  ]
+}

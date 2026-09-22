@@ -1,0 +1,246 @@
+{
+  "run_id": "2026-09-22-w4-first",
+  "batch": "eval.batch_1+seed-set",
+  "materials_commit": "6010be0eee6d0e7f46ad851931741b81f741e0f0",
+  "freeze": {
+    "eval_frozen_commit": "6010be0eee6d0e7f46ad851931741b81f741e0f0",
+    "prompt_version": "prompts/ @ W1未冻结",
+    "prompts_frozen_commit": "6010be0eee6d0e7f46ad851931741b81f741e0f0",
+    "run_settings_commit": "6010be0eee6d0e7f46ad851931741b81f741e0f0",
+    "seed_set_frozen_commit": "6010be0eee6d0e7f46ad851931741b81f741e0f0",
+    "status": "pointers-recorded-not-yet-run"
+  },
+  "prompt_version": "prompts/ unused; glossary-mechanical-v1; model_requests=0",
+  "model": null,
+  "reading_setup": "reading-baseline.md v1",
+  "field_config": "default",
+  "started_at": "2026-09-22T01:43:35Z",
+  "finished_at": "2026-09-22T01:46:51Z",
+  "github_token_used": false,
+  "sleep_seconds": 7.0,
+  "model_requests": 0,
+  "d_status": "未运行",
+  "e9_status": "未展开",
+  "candidate_rows": 100,
+  "eval_arms": {
+    "A": {
+      "tasks": 20,
+      "tasks_ok": 20,
+      "tasks_partial": 0,
+      "tasks_blocked": 0,
+      "tasks_cancelled": 0,
+      "tasks_error": 0,
+      "attempted_requests": 20,
+      "successful_requests": 20,
+      "failed_requests": 0,
+      "cancelled_variants": 0,
+      "per_query_records": 68,
+      "merged_candidates": 68
+    },
+    "B": {
+      "tasks": 20,
+      "tasks_ok": 0,
+      "tasks_partial": 0,
+      "tasks_blocked": 20,
+      "tasks_cancelled": 0,
+      "tasks_error": 0,
+      "attempted_requests": 0,
+      "successful_requests": 0,
+      "failed_requests": 0,
+      "cancelled_variants": 0,
+      "per_query_records": 0,
+      "merged_candidates": 0
+    },
+    "C": {
+      "tasks": 20,
+      "tasks_ok": 0,
+      "tasks_partial": 0,
+      "tasks_blocked": 20,
+      "tasks_cancelled": 0,
+      "tasks_error": 0,
+      "attempted_requests": 0,
+      "successful_requests": 0,
+      "failed_requests": 0,
+      "cancelled_variants": 0,
+      "per_query_records": 0,
+      "merged_candidates": 0
+    },
+    "M": {
+      "tasks": 20,
+      "tasks_ok": 0,
+      "tasks_partial": 0,
+      "tasks_blocked": 20,
+      "tasks_cancelled": 0,
+      "tasks_error": 0,
+      "attempted_requests": 0,
+      "successful_requests": 0,
+      "failed_requests": 0,
+      "cancelled_variants": 0,
+      "per_query_records": 0,
+      "merged_candidates": 0
+    }
+  },
+  "eval_blocked_reasons": {
+    "A": [],
+    "B": [
+      "arm B coverage miss: task en2zh-eval-01 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task en2zh-eval-02 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task en2zh-eval-03 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task en2zh-eval-04 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task en2zh-eval-05 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task en2zh-eval-06 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task en2zh-eval-07 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task en2zh-eval-08 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task en2zh-eval-09 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task en2zh-eval-10 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task zh2en-eval-01 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task zh2en-eval-02 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task zh2en-eval-03 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task zh2en-eval-04 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task zh2en-eval-05 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task zh2en-eval-06 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task zh2en-eval-07 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task zh2en-eval-08 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task zh2en-eval-09 absent or empty in variants_by_task; refusing to fabricate",
+      "arm B coverage miss: task zh2en-eval-10 absent or empty in variants_by_task; refusing to fabricate"
+    ],
+    "C": [
+      "arm C coverage miss: task en2zh-eval-01 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task en2zh-eval-02 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task en2zh-eval-03 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task en2zh-eval-04 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task en2zh-eval-05 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task en2zh-eval-06 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task en2zh-eval-07 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task en2zh-eval-08 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task en2zh-eval-09 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task en2zh-eval-10 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task zh2en-eval-01 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task zh2en-eval-02 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task zh2en-eval-03 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task zh2en-eval-04 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task zh2en-eval-05 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task zh2en-eval-06 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task zh2en-eval-07 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task zh2en-eval-08 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task zh2en-eval-09 absent or empty in variants_by_task; refusing to fabricate",
+      "arm C coverage miss: task zh2en-eval-10 absent or empty in variants_by_task; refusing to fabricate"
+    ],
+    "M": [
+      "arm M coverage miss: task en2zh-eval-01 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task en2zh-eval-02 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task en2zh-eval-03 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task en2zh-eval-04 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task en2zh-eval-05 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task en2zh-eval-06 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task en2zh-eval-07 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task en2zh-eval-08 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task en2zh-eval-09 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task en2zh-eval-10 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task zh2en-eval-01 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task zh2en-eval-02 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task zh2en-eval-03 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task zh2en-eval-04 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task zh2en-eval-05 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task zh2en-eval-06 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task zh2en-eval-07 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task zh2en-eval-08 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task zh2en-eval-09 absent or empty in variants_by_task; refusing to fabricate",
+      "arm M coverage miss: task zh2en-eval-10 absent or empty in variants_by_task; refusing to fabricate"
+    ]
+  },
+  "seed_a": {
+    "tasks": 8,
+    "tasks_ok": 7,
+    "tasks_error": 1,
+    "attempted_requests": 8,
+    "successful_requests": 7,
+    "failed_requests": 1
+  },
+  "seed_hits_at_30": [
+    {
+      "task_id": "seed-zh2en-01",
+      "direction": "zh2en",
+      "target_repo": "marm00/cinema",
+      "rank_in_merged_top_30": null,
+      "hit_at_30": false,
+      "status": "ok"
+    },
+    {
+      "task_id": "seed-zh2en-02",
+      "direction": "zh2en",
+      "target_repo": "sunsations/speed_read",
+      "rank_in_merged_top_30": null,
+      "hit_at_30": false,
+      "status": "error"
+    },
+    {
+      "task_id": "seed-zh2en-03",
+      "direction": "zh2en",
+      "target_repo": "Dark-Kernel/tuisic",
+      "rank_in_merged_top_30": null,
+      "hit_at_30": false,
+      "status": "ok"
+    },
+    {
+      "task_id": "seed-zh2en-04",
+      "direction": "zh2en",
+      "target_repo": "tsirysndr/tunein-cli",
+      "rank_in_merged_top_30": null,
+      "hit_at_30": false,
+      "status": "ok"
+    },
+    {
+      "task_id": "seed-en2zh-01",
+      "direction": "en2zh",
+      "target_repo": "danvergara/dblab",
+      "rank_in_merged_top_30": null,
+      "hit_at_30": false,
+      "status": "ok"
+    },
+    {
+      "task_id": "seed-en2zh-02",
+      "direction": "en2zh",
+      "target_repo": "stephband/scribe",
+      "rank_in_merged_top_30": null,
+      "hit_at_30": false,
+      "status": "ok"
+    },
+    {
+      "task_id": "seed-en2zh-03",
+      "direction": "en2zh",
+      "target_repo": "mar10/wsgidav",
+      "rank_in_merged_top_30": null,
+      "hit_at_30": false,
+      "status": "ok"
+    },
+    {
+      "task_id": "seed-en2zh-04",
+      "direction": "en2zh",
+      "target_repo": "Yu-Core/SwashbucklerDiary",
+      "rank_in_merged_top_30": null,
+      "hit_at_30": false,
+      "status": "ok"
+    }
+  ],
+  "errors": {
+    "eval": {
+      "A": [],
+      "B": [],
+      "C": [],
+      "M": []
+    },
+    "seed": [
+      {
+        "task_id": "seed-zh2en-02",
+        "errors": [
+          {
+            "variant_index": 0,
+            "api_query": "在终端里把文章拆成逐词快速闪现来阅读的工具",
+            "error": "HTTPError: HTTP Error 403: rate limit exceeded"
+          }
+        ]
+      }
+    ]
+  }
+}

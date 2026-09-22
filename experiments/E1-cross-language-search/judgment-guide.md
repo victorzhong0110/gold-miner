@@ -15,7 +15,7 @@
 - `purpose_fit`：`yes` 符合 / `partial` 部分符合 / `no` 不符合。依据任务 `need` 句，不含仓库名先验。
 - `hard_conditions`：`satisfied` 满足 / `conflict` 冲突 / `unknown` 未知。未知不能算满足。
 - `kind`：`tool` 工具 / `library` 库 / `tutorial` 教程 / `list` 清单 / `mirror` 镜像 / `other` 其他。学习实现或示例按学习目的评价归入 `tutorial` 或 `other` 并在 `notes` 说明，不自动排除或通过。
-- `novel_to_judge`：`yes` / `no`。是否首次见到；回忆不确定时如实记，不补造。
+- `novel_to_judge`：`yes` / `no` / `unknown`。是否首次见到；回忆不确定、或判定人不是人类使用者时记 `unknown`，不把 yes/no 补造成记忆。`unknown` 在首次运行前加入，用来对齐协议第 4 节的「未知」。运行开始后本口径不再改。
 - `worth_following`：是否值得继续看。必填理由 `reason`：原话或明确标记的技术判断；真实使用者价值判断与技术判断分列。
 - `judge` / `judged_at`：判定人标识与 RFC 3339 时间。同一人构题和判断时照实披露；未实现盲测不写“盲测完成”。
 - `notes`：阅读受影响（工具失效）、原文定位、项目与子能力线索（同仓库不同能力可另记线索，但项目数按规范仓库去重）。
