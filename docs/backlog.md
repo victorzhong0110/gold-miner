@@ -1,8 +1,8 @@
 # 黄金矿工当前待办
 
 更新：2026-09-17。依据：[v0.4](plan/v0.4.md)。
-OpenCode GUI 推进更新：2026-09-18（分支 `opencode/gui-w1-w8`）。W1–W3 有产物；W4 未跑评估；W5 等发起人短会话；W6/W7 仅准备；W8 为未充分证据下的决策草稿。证据见 `experiments/E1-cross-language-search/W1-report.md`、`experiments/E1-cross-language-search/w2-source-check-2026-09-17.md`、`experiments/E1-cross-language-search/scripts/e1_minimal_runner.py`、`experiments/E1-cross-language-search/w4-first-round-status-2026-09-17.md`、`experiments/E2-open-ended-discovery/session-setup.md`、`docs/reports/w6-baseline-connectivity-2026-09-17.md`/`docs/reports/w7-metadata-e8-prep-2026-09-17.md`/`docs/reports/w8-first-round-decision-2026-09-17.md`。
-Owner-independent 更新 2026-09-17：新增 A-arm 批处理编排（`scripts/e1_batch.py` 干跑可用，B/C/M/D 需显式变体或模型故仍拒绝伪造）；W5 仍阻塞（无发起人短会话发生）；个人 API 侧（W3 模型侧、W6 模型探测、D 对照）仍阻塞（无本地个人配置，零新模型请求）；W4 仍未运行（eval 未冻结、无人工判定）。
+OpenCode GUI 推进更新：2026-09-18（分支 `opencode/gui-w1-w8`）。W1–W3 有产物；W4 的 2026-09-17 状态文件仍是未运行记录，2026-09-22 首轮见 `experiments/E1-cross-language-search/runs/2026-09-22-w4-first/report.md`；W5 等发起人短会话；W6/W7 仅准备；W8 为未充分证据下的决策草稿。证据见 `experiments/E1-cross-language-search/W1-report.md`、`experiments/E1-cross-language-search/w2-source-check-2026-09-17.md`、`experiments/E1-cross-language-search/scripts/e1_minimal_runner.py`、`experiments/E1-cross-language-search/w4-first-round-status-2026-09-17.md`、`experiments/E2-open-ended-discovery/session-setup.md`、`docs/reports/w6-baseline-connectivity-2026-09-17.md`/`docs/reports/w7-metadata-e8-prep-2026-09-17.md`/`docs/reports/w8-first-round-decision-2026-09-17.md`。
+Owner-independent 更新 2026-09-17：新增 A-arm 批处理编排（`scripts/e1_batch.py` 干跑可用，B/C/M/D 需显式变体或模型故仍拒绝伪造）。2026-09-22：W4 已有真实 A 组记录，B/C/M 因词表未覆盖而 blocked，见上述首轮报告。W5 仍阻塞（无发起人短会话发生）；个人 API 侧（W3 模型侧、W6 模型探测、D 对照）仍阻塞（无本地个人配置，零新模型请求）。
 本文是可直接执行的工作索引；未创建对应 GitHub issues，未启动下面的实验与开发。
 
 状态：完成 / 可开始 / 有依赖 / 条件性 / 暂缓。“可开始”不等于本次已经运行。每次完成工作包后，记录提交或报告路径，不能只改勾选。
@@ -15,7 +15,7 @@ Owner-independent 更新 2026-09-17：新增 A-arm 批处理编排（`scripts/e1
 | W1 | 完成（材料） | 固定阅读对照、写独立评估材料 | 现成工具、公开仓库、兴趣 | 设置记录；开放题与种子诊断分开；运行前冻结 |
 | W2 | 完成（探测） | 候选来源与配额检查 | GitHub 公开来源 | 默认字段/README 小探测、失败与未知；无凭据路径的边界 |
 | W3 | 完成（脚本） | 最小 E1 脚本与结构化记录 | W1/W2；模型部分需 W6 连接配置 | A/B/C/M 组、预算、来源、去重、取消与错误记录 |
-| W4 | 有依赖（未运行） | E1 首轮；必要时做 E9 | W3 和冻结材料 | 未运行：eval 未冻结、无人工判定；A-arm 编排干跑就绪，B/C/M 待显式变体或模型 |
+| W4 | 完成（首轮记录；B/C/M 未检索，跨语言增益不可归因） | E1 首轮；必要时做 E9 | W3 和冻结材料 | A 组 20 次成功；种子命中@30 在成功的 7 条里是 0，另 1 次 403；技术核对见 `experiments/E1-cross-language-search/runs/2026-09-22-w4-first/report.md`。有价值的新发现未运行。E9 未展开 |
 | W5 | 有依赖（仍阻塞：无发起人短会话） | E2a 人工候选价值实验 | W1；发起人短会话反馈 | 仍阻塞：尚无参与者/起点/候选/反馈/耗时；同等翻译、顺序记录等条件保持待运行 |
 | W6 | 部分（8 条仓库内片段为 smoke/冒烟集，对照协议已加，对照输出仍未运行；个人模型探测仍阻塞） | 现成翻译检查、个人模型最小请求 | 公开片段；请求部分需本地个人配置 | 公开基线冒烟已记；片段冻结见 `experiments/E3-faithful-reading/fragments-2026-09-17.md`（**smoke/冒烟 only**：核 excerpt＋label 管道，不是真实阅读场景覆盖；正式对照需另取真实项目材料，不编造伪项目片段），对照协议与空模板见 `experiments/E3-faithful-reading/translation-contrast-2026-09-18.md`（翻译输出未运行，工具版本未知）；模型端点/余额/延迟未知，零新模型请求，无费用 |
 | W7 | 部分（文案准备） | 元数据与许可交付准备、E8 复测 | 名称文案；应用设置需相应权限 | 文案及应用状态、许可证备选、真实搜索记录 |
