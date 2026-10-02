@@ -22,8 +22,9 @@
       "status": "verified",
       "evidence": "独立工作区、唯一写入者、基线与 PR 祖先已核对",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "engineering-only"
+      "merged": true,
+      "actual_acceptance": "engineering-only",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP1-02",
@@ -31,8 +32,9 @@
       "status": "verified",
       "evidence": "规范入口显式对齐；历史 v0.3/v0.4 未改",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "engineering-only"
+      "merged": true,
+      "actual_acceptance": "engineering-only",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP1-03",
@@ -40,8 +42,9 @@
       "status": "partial",
       "evidence": "HTTP 客户端与恢复回归已测；个人模型实测缺凭据",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP1-04",
@@ -49,8 +52,9 @@
       "status": "verified",
       "evidence": "e1_pipeline.py + test_e1_pipeline.py：保留原文、语言标签、预算和字段检查",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "engineering-only"
+      "merged": true,
+      "actual_acceptance": "engineering-only",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP1-05",
@@ -58,8 +62,9 @@
       "status": "partial",
       "evidence": "历史冻结材料已保留；正式比较须冻结具体模型与新代码 SHA",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP1-06",
@@ -67,8 +72,9 @@
       "status": "partial",
       "evidence": "E2 会话包、E3 真实片段已保留；正式多轮材料和实际会话待补",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP1-07",
@@ -76,8 +82,9 @@
       "status": "verified",
       "evidence": "统一离线套件含 E6/E8/内容脚本/源码与包一致性",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "engineering-only"
+      "merged": true,
+      "actual_acceptance": "engineering-only",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP2-01",
@@ -85,8 +92,9 @@
       "status": "partial",
       "evidence": "protocol、judgment-guide 已有标准；正式新批次须预登记具体模型",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP2-02",
@@ -94,8 +102,9 @@
       "status": "partial",
       "evidence": "A 组和 README 配对有历史 live 记录；B/C/M 尚未实测",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP2-03",
@@ -103,8 +112,9 @@
       "status": "pending-live",
       "evidence": "D 对照尚未运行，不能由 fixture 补齐",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP2-04",
@@ -112,8 +122,9 @@
       "status": "partial",
       "evidence": "blind_eval.py 已实现去重、遮蔽与回填；真人盲判尚未执行",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP2-05",
@@ -121,8 +132,9 @@
       "status": "pending-human",
       "evidence": "两对自检及 4–6 人会话未发生",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP2-06",
@@ -130,8 +142,9 @@
       "status": "partial",
       "evidence": "六条 gtx 输出与技术核对已保留；两种翻译界面对照待测",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP2-07",
@@ -139,8 +152,9 @@
       "status": "conditional",
       "evidence": "E9 只在增益诊断需要时执行；目前无正式比较可诊断",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP2-08",
@@ -148,8 +162,9 @@
       "status": "pending-evidence",
       "evidence": "已有未决定报告，不能从 A-only 结果推出跨语言增益",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP3-01",
@@ -157,8 +172,9 @@
       "status": "verified",
       "evidence": "整合 #2–#9；保留 #4 独有历史记录；R1/R2/R3 回归通过",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "engineering-only"
+      "merged": true,
+      "actual_acceptance": "engineering-only",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP3-02",
@@ -166,8 +182,9 @@
       "status": "partial",
       "evidence": "选项、真实模型调用、端点权限和连接超时已实现；Chrome 流程未测",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP3-03",
@@ -175,8 +192,9 @@
       "status": "partial",
       "evidence": "安全候选链接、中英界面、反馈即刻移除有 DOM 模拟验证；真浏览器待测",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP3-04",
@@ -184,8 +202,9 @@
       "status": "partial",
       "evidence": "topics、描述、兴趣与双语来源已接入并离线验证；获取效果待测",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP3-05",
@@ -193,8 +212,9 @@
       "status": "verified",
       "evidence": "受信存储、特权消息隔离、端点及导入链接回归通过",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "engineering-only"
+      "merged": true,
+      "actual_acceptance": "engineering-only",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP3-06",
@@ -202,8 +222,9 @@
       "status": "verified",
       "evidence": "取消、迟到回调、关闭、导航离开、重复事件、并发、清空数据回归通过",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "engineering-only"
+      "merged": true,
+      "actual_acceptance": "engineering-only",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP3-07",
@@ -211,8 +232,9 @@
       "status": "pending-environment",
       "evidence": "容器无 Chrome/Chromium 可执行文件，真机安装未运行",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP3-08",
@@ -220,8 +242,9 @@
       "status": "pending-human",
       "evidence": "首次外部安装需要真实参与者；未发送邀请",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP4-01",
@@ -229,8 +252,9 @@
       "status": "partial",
       "evidence": "开放获取来源已实现；价值不能由 fixture 推出",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP4-02",
@@ -238,8 +262,9 @@
       "status": "verified",
       "evidence": "探索余量实际引入其他来源；去重、已见过滤和作者上限有回归",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "engineering-only"
+      "merged": true,
+      "actual_acceptance": "engineering-only",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP4-03",
@@ -247,8 +272,9 @@
       "status": "pending-human",
       "evidence": "E2b 同池排序和新起点获取比较需要真实判定",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP4-04",
@@ -256,8 +282,9 @@
       "status": "partial",
       "evidence": "兴趣、反馈、开关及重置已验证；可选历史仅本地记录，未宣称用于推荐",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP4-05",
@@ -265,8 +292,9 @@
       "status": "verified",
       "evidence": "模型恢复/切换、24h 过期、README 内容指纹、无分隔符碰撞缓存键",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "engineering-only"
+      "merged": true,
+      "actual_acceptance": "engineering-only",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP4-06",
@@ -274,8 +302,9 @@
       "status": "verified",
       "evidence": "每任务最多4次 GitHub、最多1次模型；2个并发任务；取消、限流退避和清空回归",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "engineering-only"
+      "merged": true,
+      "actual_acceptance": "engineering-only",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP4-07",
@@ -283,8 +312,9 @@
       "status": "partial",
       "evidence": "实际发送次数与缓存命中计量已接入；真实模型成本/等待仍未知",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP5-01",
@@ -292,8 +322,9 @@
       "status": "verified",
       "evidence": "中英说明、0.1.1 试验包、确定性构建、版本与已知限制齐备",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "engineering-only"
+      "merged": true,
+      "actual_acceptance": "engineering-only",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP5-02",
@@ -301,8 +332,9 @@
       "status": "pending-human",
       "evidence": "10–20 名志愿者未招募；无邀请发送授权，未发送",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP5-03",
@@ -310,8 +342,9 @@
       "status": "pending-time",
       "evidence": "E7 一周日记未发生，不能在单次执行中压缩成真实一周",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP5-04",
@@ -319,8 +352,9 @@
       "status": "pending-evidence",
       "evidence": "已修工程缺陷；真实试用障碍与回访须由反馈产生",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP5-05",
@@ -328,8 +362,9 @@
       "status": "partial",
       "evidence": "导入—展示全链路与内容变化失效离线验证；第二浏览器未运行",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP5-06",
@@ -337,8 +372,9 @@
       "status": "partial",
       "evidence": "现有本地缓存包包含用途/来源/语言/版本/时间；正式双语发现条目尚待价值与来源核对",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP5-07",
@@ -346,8 +382,9 @@
       "status": "conditional",
       "evidence": "本地复用可测；公共托管/共享译文无节省证据，暂不扩大",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP6-01",
@@ -355,8 +392,9 @@
       "status": "partial",
       "evidence": "新失败情景回归通过；未用于开发的新题效果复测未执行",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP6-02",
@@ -364,8 +402,9 @@
       "status": "pending-decision",
       "evidence": "代码 MIT/Apache-2.0 与文档许可已有具体备选；未代选 LICENSE",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP6-03",
@@ -373,8 +412,9 @@
       "status": "partial",
       "evidence": "0.1.1 源码、ZIP、哈希与构建说明一致；实机未通过，不标 Beta",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP6-04",
@@ -382,8 +422,9 @@
       "status": "partial",
       "evidence": "历史 E8 检索与元数据草案已保留；应用元数据后三入口复测待执行",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP6-05",
@@ -391,8 +432,9 @@
       "status": "conditional",
       "evidence": "工作名沿用；没有足够混淆证据，不改仓库名",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP6-06",
@@ -400,8 +442,9 @@
       "status": "out-of-scope",
       "evidence": "可选商店上架未获授权，且用户对外预算为零",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP6-07",
@@ -409,8 +452,9 @@
       "status": "partial",
       "evidence": "分方向阶段报告已更新，搜索/探索/翻译效果尚未决定",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "not-complete"
+      "merged": true,
+      "actual_acceptance": "not-complete",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP6-08",
@@ -418,8 +462,23 @@
       "status": "verified",
       "evidence": "45 项状态、唯一负责人、源码/包/验证与明确阻塞已登记；不自动开新阶段",
       "owner": "Codex / current ChatGPT Work session",
-      "merged": false,
-      "actual_acceptance": "engineering-only"
+      "merged": true,
+      "actual_acceptance": "engineering-only",
+      "merge_scope": "recorded implementation/materials only; status remains authoritative"
     }
-  ]
+  ],
+  "main_merge_sha": "b93f89ee02841c25a9f9917345a4e5be77a9fb17",
+  "integrating_pr": "https://github.com/victorzhong0110/gold-miner/pull/10",
+  "source_sha": "8e54ab33f5792356e6288efd213defd5de977724",
+  "remote_pr_states": {
+    "2": "closed/merged",
+    "3": "closed/merged",
+    "4": "closed/merged",
+    "5": "closed/merged",
+    "6": "closed/merged",
+    "7": "closed/merged",
+    "8": "closed/merged",
+    "9": "closed/merged",
+    "10": "closed/merged"
+  }
 }
