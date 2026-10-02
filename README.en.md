@@ -13,7 +13,7 @@ Discover useful tools and code worth learning, in your own language, directly on
 3. Open a GitHub search or repository page. Click the extension icon to choose reading language and interests.
 4. Optionally enter your own OpenAI-compatible endpoint, model ID and key, and grant access to that endpoint. Without a model, limited glossary expansions and public search remain available.
 
-Cancel and close stop subsequent requests; requests already sent may incur charges. Preferences and keys stay local, and cache exports exclude keys. License selection remains pending; there is no store release.
+Cancel and close stop subsequent requests; requests already sent may incur charges. Preferences and keys stay local, and cache exports exclude keys. Own code and documentation use MIT; there is no store release.
 
 ## Develop
 
@@ -24,6 +24,8 @@ bash extension/scripts/build.sh
 
 The distribution is checked against every source file. `dist/build-manifest.json` records the source commit and ZIP hash. `e1_pipeline.py` under `experiments/E1-cross-language-search/scripts/` bridges generation and search; `blind_eval.py` prepares masked judgment sheets and joins completed judgments. Ordinary tests do not call paid APIs.
 
-[Phase report](docs/reports/2026-10-02-phase-review.md) · [WP1–WP6](docs/work-packages/README.md) · [Configuration](docs/guides/config.md) · [E1 protocol](experiments/E1-cross-language-search/protocol.md) · [E2 protocol](experiments/E2-open-ended-discovery/protocol.md) · [Research sources](docs/research/2026-09-17-translation-and-discovery.md) · [License options](docs/decisions/0003-license.md)
+[Phase report](docs/reports/2026-10-02-phase-review.md) · [WP1–WP6](docs/work-packages/README.md) · [Configuration](docs/guides/config.md) · [E1 protocol](experiments/E1-cross-language-search/protocol.md) · [E2 protocol](experiments/E2-open-ended-discovery/protocol.md) · [Research sources](docs/research/2026-09-17-translation-and-discovery.md) · [License decision](docs/decisions/0003-license.md)
 
 No public model proxy or inference subsidy. No minimum-star exclusion. Existing translation is the baseline; custom translation needs demonstrated gaps. A separate website, full GitHub crawl and large recommendation-model training are outside this phase.
+
+Own code and documentation are licensed under [MIT](LICENSE); external material retains its original terms ([notices](THIRD_PARTY_NOTICES.md)). Owner actions: [stage checklist](docs/guides/owner-stage-checklist.md).

@@ -24,3 +24,28 @@ jobs:
           node-version: "20"
       - name: Offline suite (no secrets, no network calls in tests)
         run: python3 scripts/run_offline_suite.py
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: extension/tests/browser/package-lock.json
+      - name: Install pinned browser test dependency
+        working-directory: extension/tests/browser
+        run: npm ci
+      - name: Install Chromium
+        working-directory: extension/tests/browser
+        run: npx playwright install --with-deps chromium
+      - name: Actual MV3 browser acceptance with fixture network
+        working-directory: extension/tests/browser
+        run: xvfb-run -a npm test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-acceptance
+          path: extension/tests/browser/browser-results.json
+          if-no-files-found: warn

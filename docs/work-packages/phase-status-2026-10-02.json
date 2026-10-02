@@ -41,7 +41,7 @@
       "title": "真实模型客户端和配置",
       "status": "partial",
       "evidence": "HTTP 客户端与恢复回归已测；个人模型实测缺凭据",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -61,7 +61,7 @@
       "title": "冻结评估材料",
       "status": "partial",
       "evidence": "历史冻结材料已保留；正式比较须冻结具体模型与新代码 SHA",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -71,7 +71,7 @@
       "title": "准备 E2/E3 正式材料",
       "status": "partial",
       "evidence": "E2 会话包、E3 真实片段已保留；正式多轮材料和实际会话待补",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -91,7 +91,7 @@
       "title": "预先登记判断标准",
       "status": "partial",
       "evidence": "protocol、judgment-guide 已有标准；正式新批次须预登记具体模型",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -101,7 +101,7 @@
       "title": "运行 E1 A/B/C/M",
       "status": "partial",
       "evidence": "A 组和 README 配对有历史 live 记录；B/C/M 尚未实测",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -111,7 +111,7 @@
       "title": "运行强对照 D",
       "status": "pending-live",
       "evidence": "D 对照尚未运行，不能由 fixture 补齐",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -121,7 +121,7 @@
       "title": "盲判和增量分析",
       "status": "partial",
       "evidence": "blind_eval.py 已实现去重、遮蔽与回填；真人盲判尚未执行",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -131,7 +131,7 @@
       "title": "运行 E2a",
       "status": "pending-human",
       "evidence": "两对自检及 4–6 人会话未发生",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -141,7 +141,7 @@
       "title": "运行 E3 基线",
       "status": "partial",
       "evidence": "六条 gtx 输出与技术核对已保留；两种翻译界面对照待测",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -161,7 +161,7 @@
       "title": "首轮决策",
       "status": "pending-evidence",
       "evidence": "已有未决定报告，不能从 A-only 结果推出跨语言增益",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -181,7 +181,7 @@
       "title": "完成首次使用流程",
       "status": "partial",
       "evidence": "选项、真实模型调用、端点权限和连接超时已实现；Chrome 流程未测",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -191,7 +191,7 @@
       "title": "原页面搜索与预览",
       "status": "partial",
       "evidence": "安全候选链接、中英界面、反馈即刻移除有 DOM 模拟验证；真浏览器待测",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -201,7 +201,7 @@
       "title": "仓库页探索",
       "status": "partial",
       "evidence": "topics、描述、兴趣与双语来源已接入并离线验证；获取效果待测",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -231,7 +231,7 @@
       "title": "实机验收",
       "status": "pending-environment",
       "evidence": "容器无 Chrome/Chromium 可执行文件，真机安装未运行",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -241,7 +241,7 @@
       "title": "首次外部安装",
       "status": "pending-human",
       "evidence": "首次外部安装需要真实参与者；未发送邀请",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -251,7 +251,7 @@
       "title": "开放候选来源",
       "status": "partial",
       "evidence": "开放获取来源已实现；价值不能由 fixture 推出",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -271,7 +271,7 @@
       "title": "E2b 自动推荐验证",
       "status": "pending-human",
       "evidence": "E2b 同池排序和新起点获取比较需要真实判定",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -281,7 +281,7 @@
       "title": "轻量个性化",
       "status": "partial",
       "evidence": "兴趣、反馈、开关及重置已验证；可选历史仅本地记录，未宣称用于推荐",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -311,7 +311,7 @@
       "title": "成本等待报告",
       "status": "partial",
       "evidence": "实际发送次数与缓存命中计量已接入；真实模型成本/等待仍未知",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -331,7 +331,7 @@
       "title": "招募与首次体验",
       "status": "pending-human",
       "evidence": "10–20 名志愿者未招募；无邀请发送授权，未发送",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -340,8 +340,8 @@
       "id": "WP5-03",
       "title": "持续使用 E7",
       "status": "pending-time",
-      "evidence": "E7 一周日记未发生，不能在单次执行中压缩成真实一周",
-      "owner": "Codex / current ChatGPT Work session",
+      "evidence": "E7 逐日日记验证/汇总工具已测；实际一周、本人解释与回访留给发起人",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -351,7 +351,7 @@
       "title": "优先修使用障碍",
       "status": "pending-evidence",
       "evidence": "已修工程缺陷；真实试用障碍与回访须由反馈产生",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -361,7 +361,7 @@
       "title": "第二环境复用 E5",
       "status": "partial",
       "evidence": "导入—展示全链路与内容变化失效离线验证；第二浏览器未运行",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -369,11 +369,11 @@
     {
       "id": "WP5-06",
       "title": "最小发现条目",
-      "status": "partial",
-      "evidence": "现有本地缓存包包含用途/来源/语言/版本/时间；正式双语发现条目尚待价值与来源核对",
+      "status": "verified",
+      "evidence": "规范双语发现 JSONL 已落地；自有 README 来源版本可核对，生成未人工审查、未知项与贡献关闭均显式记录；stage_records.py 验证",
       "owner": "Codex / current ChatGPT Work session",
       "merged": true,
-      "actual_acceptance": "not-complete",
+      "actual_acceptance": "format/source material only; usefulness not evaluated",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
@@ -391,7 +391,7 @@
       "title": "新材料复测与稳定性",
       "status": "partial",
       "evidence": "新失败情景回归通过；未用于开发的新题效果复测未执行",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -399,11 +399,11 @@
     {
       "id": "WP6-02",
       "title": "许可证与开源准备",
-      "status": "pending-decision",
-      "evidence": "代码 MIT/Apache-2.0 与文档许可已有具体备选；未代选 LICENSE",
+      "status": "verified",
+      "evidence": "发起人已选择统一 MIT；LICENSE、第三方来源边界和分发包声明落地",
       "owner": "Codex / current ChatGPT Work session",
       "merged": true,
-      "actual_acceptance": "not-complete",
+      "actual_acceptance": "owner decision + engineering",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
@@ -411,7 +411,7 @@
       "title": "Beta交付",
       "status": "partial",
       "evidence": "0.1.1 源码、ZIP、哈希与构建说明一致；实机未通过，不标 Beta",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -421,7 +421,7 @@
       "title": "E8 搜到黄金矿工",
       "status": "partial",
       "evidence": "历史 E8 检索与元数据草案已保留；应用元数据后三入口复测待执行",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -451,7 +451,7 @@
       "title": "三个月决策",
       "status": "partial",
       "evidence": "分方向阶段报告已更新，搜索/探索/翻译效果尚未决定",
-      "owner": "Codex / current ChatGPT Work session",
+      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -480,5 +480,14 @@
     "8": "closed/merged",
     "9": "closed/merged",
     "10": "closed/merged"
+  },
+  "current_owner_instruction": "2026-10-02: leave decisions and personal operations to owner",
+  "owner_checklist": "docs/guides/owner-stage-checklist.md",
+  "browser_automation": "implemented; CI execution pending; local Chromium download blocked",
+  "license_decision": {
+    "license": "MIT",
+    "scope": "own code and documentation",
+    "decided_by": "owner",
+    "date": "2026-10-02"
   }
 }
