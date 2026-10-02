@@ -79,9 +79,16 @@ class TestLoadQueries(unittest.TestCase):
             for f in ("id", "direction", "type", "query", "need", "written_at"):
                 self.assertIn(f, task)
 
-    def test_eval_gate_unfrozen(self):
+    def test_eval_gate_repo_settings_frozen_synthetic_unfrozen(self):
         settings = batch.load_run_settings(SETTINGS)
-        self.assertFalse(batch.is_eval_frozen(settings))
+        self.assertTrue(batch.is_eval_frozen(settings))
+        unfrozen = {"freeze": {k: None for k in (
+            "eval_frozen_commit",
+            "prompts_frozen_commit",
+            "seed_set_frozen_commit",
+            "run_settings_commit",
+        )}}
+        self.assertFalse(batch.is_eval_frozen(unfrozen))
 
 
 class TestBuildAVariants(unittest.TestCase):
@@ -228,14 +235,27 @@ class TestCliGates(unittest.TestCase):
         return code, buf.getvalue()
 
     def test_eval_unfrozen_refused(self):
-        code, out = self._run_main(
-            "--queries", str(QUERIES),
-            "--run-settings", str(SETTINGS),
-            "--batch", "eval.batch_1",
-            "--arm", "A",
-            "--run-id", "dry",
-            "--out-dir", "/tmp/e1-dry",
-        )
+        import tempfile
+
+        settings = batch.load_run_settings(SETTINGS)
+        settings["freeze"] = {
+            "eval_frozen_commit": None,
+            "prompts_frozen_commit": None,
+            "seed_set_frozen_commit": None,
+            "run_settings_commit": None,
+            "status": "unfrozen-no-run",
+        }
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "settings.json"
+            path.write_text(json.dumps(settings), encoding="utf-8")
+            code, out = self._run_main(
+                "--queries", str(QUERIES),
+                "--run-settings", str(path),
+                "--batch", "eval.batch_1",
+                "--arm", "A",
+                "--run-id", "dry",
+                "--out-dir", "/tmp/e1-dry",
+            )
         self.assertEqual(code, 3)
         self.assertIn("未冻结", out)
 

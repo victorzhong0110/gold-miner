@@ -1,0 +1,25 @@
+{
+  "run_id": "2026-09-22-w6-e3",
+  "fragment_count": 6,
+  "frozen_at": "2026-09-22T02:05:13Z",
+  "tool": "google-translate-gtx",
+  "tool_version": "未知",
+  "endpoint_host": "translate.googleapis.com",
+  "baseline_tool": "沉浸式翻译",
+  "baseline_tool_status": "未运行",
+  "chrome_ui_status": "未运行",
+  "paid_model_requests": 0,
+  "self_built_translation": "未运行",
+  "judge": "w6-technical-check",
+  "judge_kind": "技术核对，不是语言使用者体验",
+  "severe_frag_ids": ["P-01", "P-04", "P-05"],
+  "no_severe_frag_ids": ["P-02", "P-03", "P-06"],
+  "tool_ping": {
+    "note": "冻结这 6 条之前，用无关短句看接口是否可通。它不是片段判定。",
+    "source_text": "连接探测",
+    "translation_output": "connection detection",
+    "http_status": 200
+  },
+  "github_search_api": "未使用",
+  "decision": "本批观察不写入继续、缩小或暂停。那是 W8。"
+}

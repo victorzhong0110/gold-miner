@@ -17,8 +17,8 @@
 - 片段全部取自本仓库已提交的公开文件（下述 `materials_commit` 时刻的内容），无需网络、无需凭据即可核对。
 - 翻译对照（现成工具 vs 原文）未运行：未调用沉浸式翻译、Chrome 内置翻译或任何模型；工具版本号实测、等待与费用记录均为未知。
 - 阅读基线沿用 `reading-baseline.md` v1（沉浸式翻译双语对照模式为基线、Chrome 内置翻译为降级项）；本文件不改变该基线。
-- `materials_commit: 2be593765150adb15b92c2093505d48ecbcf769a`（创建时 `git rev-parse HEAD` 实测，非编造；仅标识片段出处提交，不构成 eval 冻结）。
-- 冻结语义：本 SHA 为片段出处冻结，创建后故意不再跟随 HEAD；校验以 `git cat-file -e` 存在性加 `git show SHA:路径` 逐字核对为准。引用源文件有改动时另起新日期文件，不得直接改本文件 SHA 或引用行。
+- `materials_commit: 8d7b951eaa56bf8a26f99dac14b8175a62b52c09`（2026-09-19 重钉：该提交在本分支 / `main` 历史上，且 8 条摘录与行号在该 tree 上逐字对齐。原先写下的 `2be593765150adb15b92c2093505d48ecbcf769a` 只存在于 `opencode/gui-w1-w8`，不是 main 祖先，CI 浅克隆也拿不到，不能再当冻结出处。摘录正文与行号未改。不构成 eval 冻结）。
+- 冻结语义：本 SHA 为片段出处冻结，故意不跟随 HEAD；校验要求 SHA 是 **HEAD 祖先**（`git merge-base --is-ancestor`）且 `git show SHA:路径` 逐字对齐。引用源文件有改动时另起新日期文件，不得改摘录行。仅当原 SHA 不在默认历史 / CI 不可及时，允许只改 `materials_commit` 到仍含同一摘录的可达提交。
 - 付费调用计数：0。密钥扫描：本文件无 `sk-` / `ghp_` / `github_pat_` 模式（见测试）。
 
 ## 1 片段（共 8 条冒烟条目，两方向 × 术语/否定/限制/代码/讨论关系）

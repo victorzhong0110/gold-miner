@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+TASK_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+exec python3 "$TASK_ROOT/scripts/build_extension.py" "$@"

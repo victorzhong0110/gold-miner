@@ -1,40 +1,29 @@
 # Gold Miner 黄金矿工
 
-Cross-language GitHub project discovery and open-ended exploration. Find useful tools, niche solutions and code worth learning in your own language. Chinese and English first; a Chrome extension working within GitHub pages is the intended product.
+Discover useful tools and code worth learning, in your own language, directly on GitHub. The Chrome MV3 trial extension supports Chinese/English search, related repository exploration, interests and feedback, and local cache reuse. Model APIs are bring-your-own-key.
 
-[中文](README.md)
+[中文](README.md) · [Getting started](docs/guides/getting-started.md) · [Work-package status](docs/work-packages/STATUS.md)
 
-**Planning and validation stage. There is no installable extension and no product-effectiveness result yet.** This update adds the v0.4 action plan, discussion sources, revised E1 search protocol and new E2 exploration protocol. Neither experiment nor a personal model API call has been run in this update.
+**Version 0.1.1 is an engineering trial.** Automated regressions pass. Chrome installation, cross-language gains, human exploration and continued usage remain unverified. Historical native-search, README-field and six gtx translation records do not establish product effectiveness.
 
-## Start here
+## Use
 
-Most detailed documents are currently in Chinese.
+1. Clone this repository or unzip the [0.1.1 trial package](dist/gold-miner-extension-0.1.1.zip).
+2. Enable Developer mode at `chrome://extensions`, then load `extension/` or the extracted folder. Chrome 102 or later.
+3. Open a GitHub search or repository page. Click the extension icon to choose reading language and interests.
+4. Optionally enter your own OpenAI-compatible endpoint, model ID and key, and grant access to that endpoint. Without a model, limited glossary expansions and public search remain available.
 
-- [Action plan v0.4](docs/plan/v0.4.md): confirmed constraints, work that can start now, conditional engineering, all experiments, rough effort, open decisions and stop conditions.
-- [Translation, discovery and recommendations](docs/research/2026-09-17-translation-and-discovery.md): replacement risk from general AI, ideas inspired by TikTok, language-related feedback bias, reusable discovery entries and responses to the Claude review.
-- [Current backlog](docs/backlog.md): status, order and dependencies. These entries have not been opened as GitHub issues.
+Cancel and close stop subsequent requests; requests already sent may incur charges. Preferences and keys stay local, and cache exports exclude keys. License selection remains pending; there is no store release.
 
-## Next steps
+## Develop
 
-1. Fix the reading baseline, prepare evaluation materials separate from development tasks, and check real candidate sources.
-2. Compare native search, simple translation, cross-language expansion and same-language expansion with matched budgets.
-3. Give both browsing conditions the same translation support. First explore whether a few manually assisted recommendations are valuable, then test an automatic method.
-4. Build only the extension capabilities supported by evidence, and test onboarding, configuration, cost, natural browsing and reuse.
+```bash
+python3 scripts/run_offline_suite.py
+bash extension/scripts/build.sh
+```
 
-Search and open-ended discovery have separate decision paths. The proportion of Chinese-only READMEs is not a go/no-go gate. The working name remains Gold Miner / 黄金矿工; improve bilingual purpose metadata and retest discoverability before deciding whether a rename is necessary.
+The distribution is checked against every source file. `dist/build-manifest.json` records the source commit and ZIP hash. `e1_pipeline.py` under `experiments/E1-cross-language-search/scripts/` bridges generation and search; `blind_eval.py` prepares masked judgment sheets and joins completed judgments. Ordinary tests do not call paid APIs.
 
-## Protocols and references
+[Phase report](docs/reports/2026-10-02-phase-review.md) · [WP1–WP6](docs/work-packages/README.md) · [Configuration](docs/guides/config.md) · [E1 protocol](experiments/E1-cross-language-search/protocol.md) · [E2 protocol](experiments/E2-open-ended-discovery/protocol.md) · [Research sources](docs/research/2026-09-17-translation-and-discovery.md) · [License options](docs/decisions/0003-license.md)
 
-- [E1 cross-language search](experiments/E1-cross-language-search/protocol.md) and [task file](experiments/E1-cross-language-search/queries.yaml). Only development tasks currently exist; evaluation is not frozen.
-- [E2 open-ended discovery](experiments/E2-open-ended-discovery/protocol.md). Full interaction naturalness will be tested later in E4.
-- [Engineering checks](docs/engineering/prerequisites.md) and [model configuration](docs/decisions/0002-model-endpoint-config.md).
-- [First E8 discoverability probe](experiments/E8-discoverability/2026-09-17-probe.md) and [follow-up template](experiments/E8-discoverability/template.md).
-- [Name and metadata](docs/decisions/0001-project-name.md); [license options](docs/decisions/0003-license.md). The specific license has not yet been added.
-- [EhViewer research](docs/research/ehviewer-cross-language-search.md): concept mappings and the distinction between code and dataset reuse.
-- Historical [v0.3](docs/plan/v0.3.md) and [Claude review](docs/reviews/2026-09-17-v0.3-review.md). The current execution order is in v0.4.
-
-## Boundaries
-
-The project intends to be open source and has no short-term monetization goal. Each user brings their own model API; the project does not fund public inference or run a shared model proxy. Preferences stay local by default; sharing is opt-in. Repositories without cached translations must still have a discovery path.
-
-Good existing translation is part of the baseline. Custom translation is justified only by observed gaps. A separate discovery website, full GitHub crawl and large recommendation-model training are outside the first experiment.
+No public model proxy or inference subsidy. No minimum-star exclusion. Existing translation is the baseline; custom translation needs demonstrated gaps. A separate website, full GitHub crawl and large recommendation-model training are outside this phase.

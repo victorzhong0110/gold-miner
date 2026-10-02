@@ -91,10 +91,30 @@ def parse_checklist(text):
 
 
 def git_commit_exists(sha: str) -> bool:
-    out = subprocess.run(["git", "cat-file", "-e", sha + "^{commit}"],
-                         cwd=str(REPO_ROOT),
-                         capture_output=True, text=True, timeout=15)
-    return out.returncode == 0
+    """True only if SHA is a commit *reachable from HEAD*.
+
+    A dangling or foreign-branch object can satisfy ``cat-file -e`` on a
+    fat local clone and still be missing from Actions' default shallow
+    checkout of this branch. Require ancestry so CI and main-line history
+    agree.
+    """
+    obj = subprocess.run(
+        ["git", "cat-file", "-e", sha + "^{commit}"],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    if obj.returncode != 0:
+        return False
+    anc = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", sha, "HEAD"],
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    return anc.returncode == 0
 
 
 def git_show_blob(sha: str, relpath: str) -> str:
@@ -125,19 +145,13 @@ class TestChecklistExists(unittest.TestCase):
             self.assertTrue(f["lang"].startswith(("zh", "en")), fid)
 
 
-class TestQuotesMatchSource(unittest.TestCase):
-    def test_quotes_are_substrings_of_cited_line_ranges(self):
+class TestSourcesAvailable(unittest.TestCase):
+    def test_cited_source_paths_still_exist(self):
+        # Quotes and line ranges refer to materials_commit, not today's README.
+        # TestHonestyMarkers.test_quotes_match_frozen_commit_blobs checks every quote.
         frags = parse_checklist(CHECKLIST.read_text(encoding="utf-8"))
         for fid, f in sorted(frags.items()):
-            src = REPO_ROOT / f["file"]
-            self.assertTrue(src.is_file(), "%s cites missing file %s" % (fid, f["file"]))
-            lines = src.read_text(encoding="utf-8").splitlines()
-            self.assertLessEqual(f["end"], len(lines),
-                                 "%s line range exceeds %s (%d lines)" % (fid, f["file"], len(lines)))
-            window = "\n".join(lines[f["start"] - 1:f["end"]])
-            for q in f["quotes"]:
-                self.assertIn(q, window, "%s quote not in %s L%d-%d: %r"
-                              % (fid, f["file"], f["start"], f["end"], q[:60]))
+            self.assertTrue((REPO_ROOT / f["file"]).is_file(), fid)
 
 
 class TestCoverage(unittest.TestCase):

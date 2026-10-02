@@ -1,0 +1,1 @@
+That worked, thanks! I added com.adobe.indesign-interchange to Maccy's preferences and it ignores Indesign copies now.

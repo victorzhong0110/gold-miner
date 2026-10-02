@@ -1,0 +1,57 @@
+{
+  "package": "W7",
+  "prepared_on": "2026-09-22",
+  "status": "draft-not-applied",
+  "applied_to_github": false,
+  "repo": {
+    "owner": "victorzhong0110",
+    "name": "gold-miner",
+    "full_name": "victorzhong0110/gold-miner",
+    "rename": false
+  },
+  "decisions": {
+    "0001": "待决策",
+    "0003": "待决策",
+    "working_name_kept": "黄金矿工 / Gold Miner",
+    "note": "工作名沿用黄金矿工 / Gold Miner。改名、副标题和许可证都未在本轮决定。决策 0001、0003 仍是待决策。"
+  },
+  "description": {
+    "field": "GitHub 只有一个 description。下面的 text 是中英合写草案，不是已经发布的两条简介。",
+    "text": "黄金矿工 Gold Miner：用自己的语言发现、阅读和探索 GitHub 项目。Cross-language GitHub project discovery and exploration; Chrome extension planned, Chinese/English first, bring your own API.",
+    "zh": "黄金矿工 Gold Miner：用自己的语言发现、阅读和探索 GitHub 项目。",
+    "en": "Cross-language GitHub project discovery and exploration; Chrome extension planned, Chinese/English first, bring your own API.",
+    "char_count": 166,
+    "max_chars": 350,
+    "source": "docs/decisions/0001-project-name.md",
+    "states_extension_planned": true,
+    "claims_installable_extension": false
+  },
+  "topics": [
+    "chrome-extension",
+    "browser-extension",
+    "github",
+    "cross-language",
+    "cross-lingual-search",
+    "project-discovery",
+    "readme-translation",
+    "chinese",
+    "english",
+    "bring-your-own-key"
+  ],
+  "topic_limits": {
+    "max_count": 20,
+    "max_length": 50,
+    "source": "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/classifying-your-repository-with-topics"
+  },
+  "limits_note": "topics 上限来自上述 GitHub 文档（2026-09-22 查阅）：小写字母、数字和连字符，每个不超过 50 字符，总数不超过 20。description 的 350 字符上限来自公开仓库 JSON Schema 的 description.maxLength。本轮没有调用 GitHub 接口，应用前仍要按当时接口核对。",
+  "license": {
+    "decision": "待决策",
+    "file_added": false,
+    "options_path": "experiments/E8-discoverability/license-options.md",
+    "decision_record": "docs/decisions/0003-license.md"
+  },
+  "remote_metadata_read": "未运行",
+  "e8_retest": "未运行",
+  "queries_path": "experiments/E8-discoverability/entry-queries.jsonl",
+  "retest_record": "experiments/E8-discoverability/2026-09-22-retest-prepared.md"
+}

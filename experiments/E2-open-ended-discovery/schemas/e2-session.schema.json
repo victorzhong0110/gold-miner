@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "session_id",
+    "pair",
+    "condition",
+    "participant",
+    "reading_lang",
+    "status"
+  ],
+  "properties": {
+    "session_id": {"type": "string", "minLength": 1},
+    "pair": {"type": "string", "enum": ["P1", "P2"]},
+    "condition": {"type": "string", "enum": ["A", "B"]},
+    "participant": {"type": "string", "minLength": 1},
+    "reading_lang": {"type": "string", "enum": ["zh", "en"]},
+    "status": {"type": "string", "enum": ["未运行", "owner-blocked", "recorded"]},
+    "start_url": {"type": "string"},
+    "interests": {"type": "array", "items": {"type": "string"}},
+    "reason_quote": {"type": "string"},
+    "prep_minutes": {"type": ["number", "null"]},
+    "visible_cost": {"type": ["string", "null"]}
+  }
+}

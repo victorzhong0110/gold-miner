@@ -1,1 +1,201 @@
-{"$schema": "https://json-schema.org/draft/2020-12/schema", "additionalProperties": false, "description": "依据 protocol.md 第 3 节种子集字段列表，一行一条。冻结后提交，不增删。", "properties": {"direction": {"description": "en2zh=目标为仅中文 README 的仓库；zh2en=目标为英文 README 的仓库。", "enum": ["en2zh", "zh2en"], "type": "string"}, "frozen_at": {"description": "冻结时间，RFC 3339。", "format": "date-time", "type": "string"}, "hellogithub_issue": {"description": "HelloGitHub 月刊期号。", "minimum": 1, "type": "integer"}, "query": {"description": "按第 3 节步骤 5 写的单条需求句，不抄仓库名。", "minLength": 1, "type": "string"}, "query_lang": {"description": "query 的语言。", "enum": ["zh", "en"], "type": "string"}, "readme_lang": {"description": "第 2 节分类器标签：zh_only=仅中文，bilingual=双语，en=英文，ja=含假名，ko=含韩文。", "enum": ["zh_only", "bilingual", "en", "ja", "ko"], "type": "string"}, "repo": {"description": "仓库全名 owner/repo，原样保存。", "pattern": "^[^/\\s]+/[^/\\s]+$", "type": "string"}, "seed_id": {"description": "种子标识。", "minLength": 1, "type": "string"}, "stars": {"description": "冻结时 stars 数，须 >= 50。", "minimum": 50, "type": "integer"}, "zh_description": {"description": "HelloGitHub 月刊中的中文介绍。", "minLength": 1, "type": "string"}}, "required": ["seed_id", "direction", "repo", "stars", "readme_lang", "hellogithub_issue", "zh_description", "query", "query_lang", "frozen_at"], "title": "E1 seed-set.jsonl 单行记录", "type": "object"}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "依据 protocol.md 第 2 节已知目标诊断字段。一行一条。不设 stars 下限。HelloGitHub 可选，不得当唯一来源。",
+  "properties": {
+    "seed_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "zh2en",
+        "en2zh"
+      ]
+    },
+    "type": {
+      "description": "与开放题同一类型词。",
+      "enum": [
+        "term",
+        "uncovered",
+        "ambiguous",
+        "negation",
+        "long"
+      ],
+      "type": "string"
+    },
+    "repo": {
+      "type": "string",
+      "pattern": "^[^/\\s]+/[^/\\s]+$"
+    },
+    "stars": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "stars_checked_at": {
+      "description": "stars 快照时间，RFC 3339。",
+      "format": "date-time",
+      "type": "string"
+    },
+    "readme_lang": {
+      "type": "string",
+      "enum": [
+        "zh_only",
+        "bilingual",
+        "en",
+        "ja",
+        "ko"
+      ]
+    },
+    "source_kind": {
+      "type": "string",
+      "enum": [
+        "community_doc",
+        "github_readme",
+        "github_search_api",
+        "hellogithub",
+        "topic_list",
+        "w2_probe"
+      ]
+    },
+    "source_url": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hellogithub_issue": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "purpose_evidence": {
+      "description": "用途与能力证据摘录（来自 description 或 README，不是编造）。",
+      "minLength": 1,
+      "type": "string"
+    },
+    "query": {
+      "type": "string",
+      "minLength": 1
+    },
+    "query_lang": {
+      "type": "string",
+      "enum": [
+        "zh",
+        "en"
+      ]
+    },
+    "bias": {
+      "description": "必须披露：由介绍反推查询。",
+      "type": "string"
+    },
+    "verified_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "verification_method": {
+      "description": "如何核对仓库存在与 stars。",
+      "minLength": 1,
+      "type": "string"
+    },
+    "low_heat": {
+      "type": "boolean",
+      "description": "本批记号：stars<100 为 true。不是排除条件。"
+    },
+    "readme_lang_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_blurb": {
+      "type": "string",
+      "minLength": 1
+    },
+    "discovered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "query_origin": {
+      "type": "string",
+      "const": "reverse_engineered_from_source_blurb"
+    },
+    "frozen_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "bias_note": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "title": "E1 verified seed-set.jsonl 单行记录",
+  "type": "object",
+  "anyOf": [
+    {
+      "required": [
+        "seed_id",
+        "direction",
+        "type",
+        "repo",
+        "stars",
+        "stars_checked_at",
+        "readme_lang",
+        "source_kind",
+        "source_url",
+        "purpose_evidence",
+        "query",
+        "query_lang",
+        "bias",
+        "verified_at",
+        "verification_method"
+      ]
+    },
+    {
+      "required": [
+        "seed_id",
+        "direction",
+        "repo",
+        "stars",
+        "low_heat",
+        "readme_lang",
+        "readme_lang_version",
+        "source_kind",
+        "source_url",
+        "source_blurb",
+        "discovered_at",
+        "query",
+        "query_lang",
+        "query_origin",
+        "frozen_at",
+        "bias_note"
+      ]
+    }
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "source_kind": {
+            "const": "hellogithub"
+          }
+        },
+        "required": [
+          "source_kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "hellogithub_issue"
+        ]
+      }
+    }
+  ],
+  "required": [
+    "direction",
+    "query",
+    "query_lang",
+    "readme_lang",
+    "repo",
+    "seed_id",
+    "source_kind",
+    "source_url",
+    "stars"
+  ]
+}

@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+    branches: [main, "cursor/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # E3 smoke pin is an ancestor commit (not HEAD). Default depth=1
+          # cannot git-show that tree.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Offline suite (no secrets, no network calls in tests)
+        run: python3 scripts/run_offline_suite.py

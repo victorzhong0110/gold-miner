@@ -1,6 +1,6 @@
 # E3 现成工具翻译对照协议与观察模板（2026-09-18，对照输出未运行）
 
-对应：`fragments-2026-09-17.md`（片段冻结，`materials_commit: 2be593765150adb15b92c2093505d48ecbcf769a`）、
+对应：`fragments-2026-09-17.md`（片段冻结，`materials_commit` 现为 `8d7b951eaa56bf8a26f99dac14b8175a62b52c09`；2026-09-19 从不可达的 `2be5937…` 重钉，摘录未改）、
 `docs/plan/v0.4.md` W6 与第 5 节 E3 行、
 `experiments/E1-cross-language-search/reading-baseline.md` v1、
 `docs/engineering/prerequisites.md` 第 6 节“自建翻译启用时”行、
