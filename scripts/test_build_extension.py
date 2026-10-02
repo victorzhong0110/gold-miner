@@ -16,10 +16,18 @@ class BuildTests(unittest.TestCase):
                 for name, digest in first['source_files_sha256'].items():
                     self.assertEqual(z.read('gold-miner-extension/' + name), (ROOT / 'extension' / name).read_bytes())
                     self.assertEqual(hashlib.sha256(z.read('gold-miner-extension/' + name)).hexdigest(), digest)
+                for name, digest in first['license_files_sha256'].items():
+                    data = (ROOT / name).read_bytes()
+                    self.assertEqual(z.read('gold-miner-extension/' + name), data)
+                    self.assertEqual(hashlib.sha256(data).hexdigest(), digest)
                 self.assertFalse(any('/tests/' in name for name in z.namelist()))
     def test_checked_in_dist_matches_source(self):
         manifest = json.loads((ROOT / 'dist/build-manifest.json').read_text())
         with ZipFile(ROOT / 'dist' / manifest['archive']) as z:
+            for name, digest in manifest['license_files_sha256'].items():
+                data = (ROOT / name).read_bytes()
+                self.assertEqual(hashlib.sha256(data).hexdigest(), digest)
+                self.assertEqual(data, z.read('gold-miner-extension/' + name))
             for name, digest in manifest['source_files_sha256'].items():
                 data = (ROOT / 'extension' / name).read_bytes()
                 self.assertEqual(hashlib.sha256(data).hexdigest(), digest, name)

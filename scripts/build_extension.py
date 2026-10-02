@@ -19,6 +19,7 @@ def build(source=ROOT / 'extension', output=ROOT / 'dist', source_sha=None):
     if unpacked.exists(): shutil.rmtree(unpacked)
     unpacked.mkdir(parents=True)
     hashes = {}
+    license_files = {name: (ROOT / name).read_bytes() for name in ('LICENSE', 'THIRD_PARTY_NOTICES.md')}
     archive = output / f'gold-miner-extension-{version}.zip'
     with ZipFile(archive, 'w', ZIP_DEFLATED) as z:
         for path in files:
@@ -30,7 +31,14 @@ def build(source=ROOT / 'extension', output=ROOT / 'dist', source_sha=None):
             info.compress_type = ZIP_DEFLATED
             info.external_attr = 0o100644 << 16
             z.writestr(info, data)
+        for name, data in license_files.items():
+            (unpacked / name).write_bytes(data)
+            info = ZipInfo('gold-miner-extension/' + name, (2026, 1, 1, 0, 0, 0))
+            info.compress_type = ZIP_DEFLATED
+            info.external_attr = 0o100644 << 16
+            z.writestr(info, data)
     manifest = {'version': version, 'source_sha': source_sha, 'source_files_sha256': hashes,
+                'license': 'MIT', 'license_files_sha256': {name: hashlib.sha256(data).hexdigest() for name, data in license_files.items()},
                 'archive': archive.name, 'archive_sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),
                 'browser_installation': 'not-run', 'release_status': 'experimental-not-beta'}
     (output / 'build-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')

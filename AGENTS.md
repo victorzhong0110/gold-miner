@@ -4,7 +4,7 @@
 2. 扩展开工闸门（2026-09-19 发起人压缩计划覆盖旧 H1 禁令）：**本分支已落地 WP1 协议清理、材料与离线 harness 后，允许编写 Chrome MV3 扩展（含 manifest、content script、service worker）**。商店上架仍不在首轮范围。H1（跨语言搜索增益）仍未用真实评估运行验证；扩展是可加载试验包，不是已验证产品效果。
 3. 没有商店上架包；本地加载的未打包扩展见 `extension/`。未做真实使用者会话时不得写产品效果结论。
 4. 项目名称待决策，见 docs/decisions/0001。工作名沿用黄金矿工 / Gold Miner。
-5. 许可证待决策，见 docs/decisions/0003。可有草案提案，不得把草案写成已决定。不得添加声称已生效的根目录 `LICENSE`。
+5. 2026-10-02 发起人已明确选择统一 MIT；根目录 LICENSE 适用于自有代码和文档。第三方引文和译文沿用原来源许可，见 docs/decisions/0003 和 THIRD_PARTY_NOTICES.md。
 6. 模型可以起草文案和检查脚本。
 7. 不得改仓库名。
 8. 不得把「建议」写成已决定。
@@ -16,7 +16,7 @@
 14. 候选与判定用 JSONL。
 15. 字段以 [experiments/E1-cross-language-search/protocol.md](experiments/E1-cross-language-search/protocol.md) **第 5 节**为准（运行/候选/判断/成本）。第 7 节是继续/缩小/暂停规则，不是记录字段表。
 16. 改文件前先列出将改路径。
-17. 只改任务指定的文件。本压缩任务允许改 WP1–WP6 范围内的协议、材料、harness、扩展、试用包与报告；仍不得改 `docs/plan/v0.3.md`、仓库名、根目录 `LICENSE`。
+17. 只改任务指定的文件。本压缩任务允许改 WP1–WP6 范围内的协议、材料、harness、扩展、试用包与报告；仍不得改 `docs/plan/v0.3.md`、仓库名。许可证按第 5 条已生效决定维护。
 18. 后续计划另起 `docs/plan/v0.5-compressed-wp.md` 及以后版本；不覆盖 v0.3。
 19. 不把 API key 写入源码、README、JSONL、译文包、缓存导出或 issue 模板。
 20. 脚本用环境变量 `GITHUB_TOKEN`、`OPENAI_BASE_URL`、`OPENAI_MODEL`、`OPENAI_API_KEY`。扩展 BYOK 只存在使用者本机存储。

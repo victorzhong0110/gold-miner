@@ -180,7 +180,7 @@ function loadBackground(chrome, fetchImpl, extra) {
   return { ctx, svc, S: ctx.GoldMinerShared };
 }
 
-const sender = { id: "gold-miner-test" };
+const sender = { id: "gold-miner-test", url: "chrome-extension://gold-miner-test/src/options.html" };
 
 function searchMsg(overrides) {
   return Object.assign(
@@ -616,4 +616,19 @@ test('actual request counters separate cache hits and GitHub calls', async () =>
   const cached = await svc.dispatch(searchMsg(), sender);
   assert.equal(cached.cost.github_requests, 0);
   assert.equal(cached.cost.cache_hits, 1);
+});
+
+
+test('actual options tab can save/export/reset while other contexts cannot', async () => {
+  const chrome = createMockChrome(), {svc} = loadBackground(chrome, githubOkFetch());
+  const optionsTab = {...sender, tab: {id: 12, url: sender.url}};
+  assert.equal((await svc.dispatch({type:'SAVE_SETTINGS', settings:{readingLang:'en', interests:['rss']}}, optionsTab)).code, 'ok');
+  assert.equal(chrome.storage.local.store.readingLang, 'en');
+  assert.equal((await svc.dispatch({type:'EXPORT_CACHE'}, optionsTab)).code, 'ok');
+  assert.equal((await svc.dispatch({type:'CLEAR_LOCAL'}, optionsTab)).code, 'ok');
+  for (const url of ['chrome-extension://other/src/options.html', 'chrome-extension://gold-miner-test/src/content.js', 'https://github.com/src/options.html', '']) {
+    const rejected = {...sender, url};
+    assert.equal((await svc.dispatch({type:'SAVE_SETTINGS', settings:{readingLang:'zh'}}, rejected)).code,'untrusted_input');
+  }
+  assert.equal(chrome.storage.local.store.readingLang, 'en');
 });

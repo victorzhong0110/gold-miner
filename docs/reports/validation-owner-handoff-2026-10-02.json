@@ -1,0 +1,25 @@
+{
+  "source_sha": "bb9fadb9263d3a35dcbabd75acd836c3efe48c04",
+  "command": "python3 scripts/run_offline_suite.py",
+  "status": "passed",
+  "python_tests": 251,
+  "node_tests": 46,
+  "model_live": "owner operation / not-run",
+  "human_trial": "owner operation / not-run",
+  "browser_ci": {
+    "status": "passed",
+    "checks": 8,
+    "run_id": 37026709955,
+    "evidence_kind": "chromium-with-fixture-network",
+    "report": "docs/reports/browser-acceptance-2026-10-02.json"
+  },
+  "license": "owner-selected MIT for own code and docs",
+  "build_manifest": "dist/build-manifest.json",
+  "version": "0.1.2",
+  "prior_count_correction": "Earlier manual totals omitted the singular E5 test; baseline log contains 244 Python tests, new run contains 251.",
+  "first_browser_run": {
+    "run_id": 37025365162,
+    "status": "failed on options UI save",
+    "fix": "Authorize exact own extension options URL even when Chrome supplies sender.tab; reject privileged messages from all other contexts"
+  }
+}

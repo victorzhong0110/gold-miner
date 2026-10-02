@@ -563,7 +563,7 @@ if (typeof importScripts === "function") {
         return { code: "untrusted_input" };
       }
       const privileged = ["SAVE_SETTINGS", "CLEAR_LOCAL", "EXPORT_CACHE", "IMPORT_CACHE"];
-      if (sender.tab && privileged.includes(message.type)) return {code: "untrusted_input"};
+      if (privileged.includes(message.type) && !S.isOptionsSender(sender, chromeApi.runtime.id)) return {code: "untrusted_input"};
       if (message.type === "SEARCH" || message.type === "EXPLORE") {
         const id = sender.id + ":" + (sender.tab ? sender.tab.id : "options") + ":" + (message.jobId || Date.now());
         if (inflight.has(id) || inflight.size >= 2) return {code: "busy"};

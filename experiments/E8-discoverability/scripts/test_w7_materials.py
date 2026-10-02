@@ -55,14 +55,18 @@ class W7MaterialsTest(unittest.TestCase):
             ],
         )
 
-    def test_license_page_keeps_options_undecided(self):
+    def test_historical_options_and_current_owner_decision(self):
         text = (E8 / "license-options.md").read_text(encoding="utf-8")
         self.assertIn("待决策", text)
         self.assertIn("没有在仓库根目录添加 `LICENSE`", text)
         self.assertIn("建议不是决定", text)
         self.assertNotIn("已决定采用", text)
         self.assertNotIn("本轮决定采用", text)
-        self.assertFalse((ROOT / "LICENSE").exists())
+        self.assertIn("MIT License", (ROOT / "LICENSE").read_text())
+        decision = (ROOT / "docs/decisions/0003-license.md").read_text()
+        self.assertIn("统一 MIT", decision)
+        self.assertIn("已决定", decision)
+        self.assertIn("第三方", (ROOT / "THIRD_PARTY_NOTICES.md").read_text())
         self.assertFalse((ROOT / "NOTICE").exists())
 
     def test_retest_record_says_not_run(self):
