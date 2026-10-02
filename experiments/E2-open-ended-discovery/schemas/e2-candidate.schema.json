@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "already_known",
+    "conditions",
+    "expected_use",
+    "generated_reason",
+    "known_assessed_when",
+    "method_version",
+    "observer_observation",
+    "opened",
+    "query",
+    "rank",
+    "reason_quote",
+    "repo",
+    "session_id",
+    "shown",
+    "source_url",
+    "unknowns",
+    "worth_follow"
+  ],
+  "properties": {
+    "query": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "reason_quote": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "expected_use": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "observer_observation": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "generated_reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repo": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9-]{0,38}/(?!(?:\\.|\\.\\.)$)[A-Za-z0-9_.-]{1,100}$"
+    },
+    "source_url": {
+      "type": "string",
+      "pattern": "^https://github\\.com/"
+    },
+    "method_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rank": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "shown": {
+      "type": "boolean"
+    },
+    "already_known": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "known_assessed_when": {
+      "enum": [
+        "before",
+        "after-recall",
+        "unknown"
+      ]
+    },
+    "opened": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "worth_follow": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

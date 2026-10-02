@@ -4,11 +4,11 @@
 
 [English](README.en.md) · [10 分钟上手](docs/guides/getting-started.md) · [45 项工作包状态](docs/work-packages/STATUS.md)
 
-**当前版本 0.1.2，工程试验包。** 251 项 Python、46 项扩展回归及 [8 项 Chromium fixture 验收](docs/reports/browser-acceptance-2026-10-02.json) 通过；本人 Chrome 安装、跨语言增益、真人探索和持续使用尚未验收。已有 A 组搜索、README 字段配对及六条 gtx 翻译记录，不能由它们推出产品有效。
+**当前版本 0.1.3，工程试验包。** 267 项 Python、53 项扩展回归通过；[0.1.3 的9项 Chromium fixture 验收](docs/reports/browser-acceptance-2026-10-03.json) 全部通过；本人 Chrome 安装、跨语言增益、真人探索和持续使用尚未验收。已有 A 组搜索、README 字段配对及六条 gtx 翻译记录，不能由它们推出产品有效。
 
 ## 使用
 
-1. 克隆本仓库，或解压 [0.1.2 试验包](dist/gold-miner-extension-0.1.2.zip)。
+1. 克隆本仓库，或解压 [0.1.3 试验包](dist/gold-miner-extension-0.1.3.zip)。
 2. 在 `chrome://extensions` 开启开发者模式，加载 `extension/` 或解压后的目录。Chrome 102 及以上。
 3. 打开 GitHub 搜索或仓库页。点击扩展图标进入设置，选择阅读语言和兴趣。
 4. 可选配置自己的 OpenAI 兼容 API 端点、模型和密钥，并授权该端点。留空时使用有限词表和公开搜索。
@@ -37,3 +37,5 @@ bash extension/scripts/build.sh
 项目不提供公共模型代理或推理补贴。不设 stars 排除下限；先使用现成翻译，是否补充翻译能力由真实缺口决定。独立网站、全量 GitHub 抓取和大型推荐模型不在本阶段范围。
 
 需要发起人完成的配置、实际体验和判断见 [本阶段操作清单](docs/guides/owner-stage-checklist.md)。
+
+E2 完整会话/候选记录见 [记录说明](experiments/E2-open-ended-discovery/recording.md)，验证命令支持 session、candidate、diary 和 discovery，不代填真人结果。

@@ -1,6 +1,6 @@
 # 本阶段交给发起人的操作与决定
 
-2026-10-02。统一 MIT 已按你的选择落实。以下事项需要你的账户、体验、参与者或判断；
+更新于2026-10-03。统一 MIT 已按你的选择落实。以下事项需要你的账户、体验、参与者或判断；
 自动测试和合并代码不能代替它们。没有要求你重新审查工程细节或重复批准已授权合并。
 
 | 顺序 | 你的操作 | 记录与完成标准 |
@@ -14,7 +14,9 @@
 
 ```sh
 python3 scripts/stage_records.py discovery experiments/E5-local-reuse/discovery-entries.jsonl
-python3 scripts/stage_records.py diary /path/to/your-local-diary.jsonl
+python3 scripts/stage_records.py diary /path/to/your-local-diary.jsonl --timezone Asia/Taipei
+python3 scripts/stage_records.py session /path/to/your-local-sessions.jsonl
+python3 scripts/stage_records.py candidate /path/to/your-local-candidates.jsonl
 ```
 
 最小发现条目已提供规范地址、双语用途、别名、类型、条件、来源文件/提交/时间、
@@ -23,3 +25,7 @@ python3 scripts/stage_records.py diary /path/to/your-local-diary.jsonl
 
 你完成实际操作后交回去除密钥和私人信息的错误现象、JSONL 和判断，后续工程修复
 可以据此继续；不需要用猜测或空白表单冒充已运行结果。
+
+E2 完整字段及操作说明见 [记录说明](../../experiments/E2-open-ended-discovery/recording.md)。结构验证会保留未知、排除 fixture 的真人计数，并标记不完整/条件不一致的配对；不能代替你的真实判断。
+
+E3 已补 [三轮短摘录上下文与代码材料](../../experiments/E3-faithful-reading/context-pack-2026-10-03.md)；正式比较前由你冻结选定范围和工具。两种条件须使用相同的原语言 quote、代码及 authored_context，不把作者说明当成机器译文；整页或图像比较须另行登记范围。

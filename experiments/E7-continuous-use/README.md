@@ -10,10 +10,12 @@ action（seen/saved/tried/learned/revisited/no-opportunity/not-used）、repo
 （实际分钟，不知道填 null）、visible_cost（实际可见费用说明，不知道填 null）。
 
 ```sh
-python3 scripts/stage_records.py diary /path/to/your-local-diary.jsonl
+python3 scripts/stage_records.py diary /path/to/your-local-diary.jsonl --timezone Asia/Taipei --timezone Asia/Taipei
 ```
 
 工具检查未来日期、重复记录、字段和意外凭据，汇总实际记录日期与动作。
 seven_day_coverage 只表示至少七个真实日期覆盖七天，不是七日留存率，也不能证明效果。
 最终必须回访本人，区分收藏、实际使用、学习、再访问和不用的原因。
 没有记录不生成空白「已运行」结果。脚本测试的日记全部是 fixture。
+
+跨时区运行时用 --timezone Asia/Taipei（或实际观察者时区）指定日历日期，避免 UTC 的午夜边界把本地今天误判为未来；未指定则使用执行机器本地日期。

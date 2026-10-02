@@ -632,3 +632,72 @@ test('actual options tab can save/export/reset while other contexts cannot', asy
   }
   assert.equal(chrome.storage.local.store.readingLang, 'en');
 });
+
+test('concurrent feedback preserves both seen projects', async () => {
+  const chrome = createMockChrome(), {svc} = loadBackground(chrome, githubOkFetch());
+  await Promise.all([
+    svc.dispatch({type:'FEEDBACK', repo:'owner/one', action:'seen'}, sender),
+    svc.dispatch({type:'FEEDBACK', repo:'owner/two', action:'irrelevant'}, sender),
+  ]);
+  assert.deepEqual(JSON.parse(JSON.stringify(chrome.storage.local.store.feedback)), {'owner/one':'seen', 'owner/two':'irrelevant'});
+  assert.deepEqual(new Set(chrome.storage.local.store.seen), new Set(['owner/one','owner/two']));
+});
+
+test('clear waits for an already accepted feedback write', async () => {
+  const chrome = createMockChrome(), {svc} = loadBackground(chrome, githubOkFetch());
+  const gate = deferred(), entered = deferred(), set = chrome.storage.local.set.bind(chrome.storage.local);
+  let delayed = false;
+  chrome.storage.local.set = async patch => {
+    if (patch.feedback && Object.keys(patch.feedback).length && !delayed) {
+      delayed = true; entered.resolve(); await gate.promise;
+    }
+    await set(patch);
+  };
+  const feedback = svc.dispatch({type:'FEEDBACK', repo:'owner/one', action:'seen'}, sender);
+  await entered.promise;
+  const clear = svc.dispatch({type:'CLEAR_LOCAL'}, sender);
+  gate.resolve(); await Promise.all([feedback, clear]);
+  assert.equal(chrome.storage.local.store.seen.length, 0);
+  assert.equal(Object.keys(chrome.storage.local.store.feedback).length, 0);
+});
+
+test('two concurrent cache imports preserve both bundles', async () => {
+  const chrome = createMockChrome(), {svc} = loadBackground(chrome, githubOkFetch());
+  const bundle = query => ({format:'gold-miner-cache-v1', entries:[{
+    pageKind:'SEARCH',query,purpose:query,language:'zh',content_version:'v1',
+    processing_mode:'rules',created_at:new Date().toISOString(),rawCandidates:[]
+  }]});
+  await Promise.all(['one','two'].map(query => svc.dispatch({type:'IMPORT_CACHE',bundle:bundle(query)},sender)));
+  assert.deepEqual(new Set(Object.values(chrome.storage.local.store.cache).map(x=>x.query)), new Set(['one','two']));
+});
+
+test('failed feedback write does not poison the next mutation', async () => {
+  const chrome = createMockChrome(), {svc} = loadBackground(chrome, githubOkFetch());
+  const set = chrome.storage.local.set.bind(chrome.storage.local); let fail = true;
+  chrome.storage.local.set = async patch => {
+    if (patch.feedback && fail) {fail = false; throw new Error('fixture storage failure');}
+    await set(patch);
+  };
+  await assert.rejects(svc.dispatch({type:'FEEDBACK',repo:'owner/one',action:'seen'},sender));
+  assert.equal((await svc.dispatch({type:'FEEDBACK',repo:'owner/two',action:'seen'},sender)).code,'ok');
+  assert.deepEqual(chrome.storage.local.store.seen,['owner/two']);
+});
+
+test('concurrent exploration keeps both opted-in history records', async () => {
+  const chrome = createMockChrome({store:{historyEnabled:true}}), {svc} = loadBackground(chrome, githubOkFetch());
+  await Promise.all(['one','two'].map((name,i) => svc.dispatch({type:'EXPLORE',jobId:'history-'+i,
+    pageUrl:'https://github.com/owner/'+name,contentVersion:'v1',limit:3},sender)));
+  assert.deepEqual(new Set(chrome.storage.local.store.pageHistory),new Set(['owner/one','owner/two']));
+});
+
+test('repeated import never grows the cache past its 100-entry budget', async () => {
+  const chrome = createMockChrome(), {svc} = loadBackground(chrome, githubOkFetch());
+  const bundle = start => ({format:'gold-miner-cache-v1',entries:Array.from({length:100},(_,i)=>({
+    pageKind:'SEARCH',query:'fixture-'+(start+i),language:'zh',content_version:'v1',
+    processing_mode:'rules',created_at:new Date().toISOString(),rawCandidates:[]
+  }))});
+  await svc.dispatch({type:'IMPORT_CACHE',bundle:bundle(0)},sender);
+  await svc.dispatch({type:'IMPORT_CACHE',bundle:bundle(100)},sender);
+  assert.equal(Object.keys(chrome.storage.local.store.cache).length,100);
+  assert.equal((await svc.dispatch({type:'EXPORT_CACHE'},sender)).bundle.entries.length,100);
+});

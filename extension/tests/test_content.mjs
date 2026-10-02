@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import test from 'node:test';
 const source = name => fs.readFileSync(new URL('../src/' + name, import.meta.url), 'utf8');
 
-function page() {
+function page(feedbackCode = 'ok') {
   const sent = [], callbacks = [], events = {};
   class Element {
     constructor(tag) {this.tag = tag; this.children = []; this.listeners = {}; this._text = '';}
@@ -26,12 +26,12 @@ function page() {
     addEventListener: (name, cb) => {events[name] = cb;},
   };
   const location = {href: 'https://github.com/search?q=clipboard', pathname: '/search', search: '?q=clipboard'};
-  const chrome = {runtime: {sendMessage(msg, cb) {sent.push(msg); if (msg.type === 'GET_PUBLIC_SETTINGS') cb({settings: {readingLang: 'en'}}); else if (msg.type === 'SEARCH' || msg.type === 'EXPLORE') callbacks.push(cb); else if (cb) cb({code: 'ok'});}}};
+  const chrome = {runtime: {sendMessage(msg, cb) {sent.push(msg); if (msg.type === 'GET_PUBLIC_SETTINGS') cb({settings: {readingLang: 'en'}}); else if (msg.type === 'SEARCH' || msg.type === 'EXPLORE') callbacks.push(cb); else if (cb) cb({code: msg.type === 'FEEDBACK' ? feedbackCode : 'ok'});}}};
   const context = {document, location, chrome, URL, URLSearchParams, console, Date, Math, setInterval: cb => {events.poll = cb;}, history: {pushState() {}, replaceState() {}}, window: {addEventListener: (name, cb) => {events[name] = cb;}}};
   context.globalThis = context;
   vm.runInNewContext(source('shared.js'), context);
   vm.runInNewContext(source('content.js'), context);
-  return {sent, callbacks, body, all, document, location, events};
+  return {sent, callbacks, body, all, document, location, events, setFeedbackResponse: code => {feedbackCode = code;}};
 }
 const result = {code: 'ok', candidates: [{repo: 'safe/repo', html_url: 'javascript:alert(1)', description: 'fixture'}], hasModel: false};
 
@@ -75,4 +75,16 @@ test('README changes alter contentVersion and refresh the task', () => {
   const searches = p.sent.filter(m => m.type === 'SEARCH');
   assert.equal(searches.length, 2);
   assert.notEqual(searches[1].contentVersion, version);
+});
+
+
+test('failed feedback preserves candidate and a successful retry removes it', () => {
+  const p = page('bad_response'); p.callbacks[0](result);
+  const button = p.all().find(n => n.tag === 'button' && n.textContent === 'Seen');
+  button.listeners.click();
+  assert.equal(p.all().filter(n => n.tag === 'a').length,1);
+  assert.equal(button.disabled,false);
+  assert.match(p.body.textContent,/Feedback was not saved/);
+  p.setFeedbackResponse('ok');button.listeners.click();
+  assert.equal(p.all().filter(n => n.tag === 'a').length,0);
 });

@@ -4,7 +4,7 @@
 
 ## 中文
 
-1. 克隆本仓库，或解压 `dist/gold-miner-extension-0.1.2.zip`。
+1. 克隆本仓库，或解压 `dist/gold-miner-extension-0.1.3.zip`。
 2. Chrome 打开 `chrome://extensions`，打开「开发者模式」。
 3. 「加载已解压的扩展程序」，选仓库里的 `extension/` 目录（或解压后的 `gold-miner-extension/`）。
 4. 打开 https://github.com/search?q=clipboard+history 或任意仓库页。
@@ -19,7 +19,7 @@ Chromium 的8项自动 fixture 验收已通过，见 docs/reports/browser-accept
 
 ## English
 
-1. Clone the repo or unzip `dist/gold-miner-extension-0.1.2.zip`.
+1. Clone the repo or unzip `dist/gold-miner-extension-0.1.3.zip`.
 2. Chrome 102+ → `chrome://extensions` → Developer mode.
 3. Load unpacked → choose `extension/` (or the unzipped folder).
 4. Open a GitHub search or repository page.

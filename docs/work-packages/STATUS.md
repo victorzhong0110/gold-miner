@@ -63,3 +63,13 @@ R1（模型缓存恢复）、R2（取消终态）、R3（导入链接）已修�
 Chromium 首跑发现真实设置页消息带有 sender.tab，旧权限判断使保存被拒绝；0.1.2 按自有扩展 URL 授权设置页，拒绝内容脚本及其他页面特权消息。新增回归后离线复验：251 Python + 46 Node；浏览器第二轮待跑。此前 243 Python 统计漏掉 E5 的单项测试，原日志实际为 244，历史原日志保留。
 
 最新浏览器证据：[8项真实 Chromium fixture 验收](../reports/browser-acceptance-2026-10-02.json)，[CI 37026709955](https://github.com/victorzhong0110/gold-miner/actions/runs/37026709955) 全部通过。0.1.2 修复已通过；前述「待跑」为首跑/修复时的历史状态。当前续作交付为 [PR12](https://github.com/victorzhong0110/gold-miner/pull/12)，合并状态以该 GitHub 记录为准。剩余个人操作与决策只按 [发起人清单](../guides/owner-stage-checklist.md) 进行，不虚构完成。
+
+## 2026-10-03 续作
+
+[PR12](https://github.com/victorzhong0110/gold-miner/pull/12) 已合并，合并 main 为
+96318eab0c4f7d90f75bcf27b4073cb4307c7d25。本轮在此基线上复现并修复四个并发写入问题，
+增加失败反馈可重试界面、完整 E2 会话/候选 schema 与验证工具，以及日记观察者时区。
+[具体报告](../reports/2026-10-03-storage-and-records.md)。新版 0.1.3 离线267 Python + 53 Node 通过，
+新增浏览器并发验收已通过，9项检查全绿（[记录](../reports/browser-acceptance-2026-10-03.json)）。真人记录与效果判断未发生；E3 三轮短摘录上下文、代码注释和双向原文材料已补齐（不含整页/图像档案）；实际冻结、翻译和评判未运行。
+
+当前续作交付为 [PR13](https://github.com/victorzhong0110/gold-miner/pull/13)，合并状态以 GitHub 记录为准。0.1.3 源码、安装包及浏览器生产脚本哈希已核对一致；需要发起人亲自操作和决定的范围保持不变。

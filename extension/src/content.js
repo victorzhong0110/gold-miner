@@ -162,15 +162,27 @@
       const whySafe = S.rejectUntrustedDirective(c.why || "");
       why.textContent = S.t(lang, "why") + ": " + whySafe.text;
       li.appendChild(why);
+      let feedbackError = null;
       const actions = document.createElement("div");
       ["interested", "irrelevant", "seen"].forEach((act) => {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.textContent = S.t(lang, act);
         btn.addEventListener("click", () => {
-          chrome.runtime.sendMessage({ type: "FEEDBACK", repo: c.repo, action: act }, () => {
+          btn.disabled = true;
+          chrome.runtime.sendMessage({ type: "FEEDBACK", repo: c.repo, action: act }, (resp) => {
+            if (chrome.runtime.lastError || !resp || resp.code !== "ok") {
+              btn.disabled = false;
+              if (!feedbackError) {
+                feedbackError = document.createElement("p");
+                feedbackError.className = "gm-status";
+                li.appendChild(feedbackError);
+              }
+              feedbackError.textContent = S.t(lang, "feedbackFailed");
+              return;
+            }
+            if (feedbackError) { feedbackError.remove(); feedbackError = null; }
             if (act === "seen" || act === "irrelevant") li.remove();
-            else btn.disabled = true;
           });
         });
         actions.appendChild(btn);
