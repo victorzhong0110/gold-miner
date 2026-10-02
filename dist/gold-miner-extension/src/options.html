@@ -31,8 +31,8 @@
         </label>
         <fieldset>
           <legend>BYOK</legend>
-          <label>OPENAI_BASE_URL <input id="baseUrl" type="url" placeholder="https://api.minimax.cn/v1" /></label>
-          <label>OPENAI_MODEL <input id="model" type="text" placeholder="MiniMax-M3" /></label>
+          <label>OPENAI_BASE_URL <input id="baseUrl" type="url" placeholder="https://your-provider.example/v1" /></label>
+          <label>OPENAI_MODEL <input id="model" type="text" placeholder="your-model-id" /></label>
           <label>OPENAI_API_KEY <input id="apiKey" type="password" autocomplete="off" /></label>
         </fieldset>
         <div class="actions">
@@ -46,6 +46,7 @@
       </form>
       <pre id="status"></pre>
     </main>
+    <script src="shared.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

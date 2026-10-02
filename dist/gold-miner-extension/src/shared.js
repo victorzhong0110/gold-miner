@@ -18,6 +18,8 @@
       seen: "见过",
       loading: "加载中…",
       cancel: "取消",
+      cancelled: "已取消",
+      busy: "已有任务正在处理，请稍后重试",
       rateLimited: "接口限流，请稍后再试",
       timeout: "超时。已发出的请求可能已计费。",
       modelUnavailable: "模型不可用，已降级为无模型搜索",
@@ -39,6 +41,8 @@
       seen: "Seen",
       loading: "Loading…",
       cancel: "Cancel",
+      cancelled: "Cancelled",
+      busy: "Tasks are busy. Try again shortly.",
       rateLimited: "Rate limited. Try again later.",
       timeout: "Timed out. In-flight requests may already be billed.",
       modelUnavailable: "Model unavailable; fell back to rule-based search",
@@ -95,7 +99,8 @@
   function canonicalRepo(fullName) {
     if (typeof fullName !== "string") return "";
     const parts = fullName.trim().split("/");
-    if (parts.length !== 2) return "";
+    if (parts.length !== 2 || !/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/.test(parts[0]) ||
+        !/^[A-Za-z0-9_.-]{1,100}$/.test(parts[1]) || [".", ".."].includes(parts[1])) return "";
     return (parts[0] + "/" + parts[1]).toLowerCase();
   }
 
@@ -190,10 +195,16 @@
       .map((c) => ({ item: c, score: scoreCandidate(c, ctx) }))
       .filter((x) => x.score > -200)
       .sort((a, b) => b.score - a.score);
-    const n = Math.max(1, Math.round(scored.length * residual));
-    const head = scored.slice(0, Math.max(0, scored.length - n));
-    const tail = scored.slice(Math.max(0, scored.length - n));
-    const mixed = ctx.personalization === false ? scored : head.concat(tail);
+    const limit = Math.max(1, Math.min(20, ctx.limit || 5));
+    const n = Math.min(limit - 1, Math.max(0, Math.round(limit * residual)));
+    // Reserve slots for another source; do not concatenate the unchanged ranking.
+    const primary = scored.slice(0, Math.max(1, limit - n));
+    const sources = new Set(primary.map((x) => x.item.source));
+    const diverse = scored.slice(primary.length).filter((x) => !sources.has(x.item.source));
+    const selected = diverse.slice(0, n);
+    const selectedItems = new Set(selected.map((x) => x.item));
+    const mixed = ctx.personalization === false || !n ? scored :
+      primary.concat(selected, scored.slice(primary.length).filter((x) => !selectedItems.has(x.item)));
     const capped = applyOwnerCap(
       mixed.map((x) =>
         Object.assign({}, x.item, {
@@ -218,8 +229,8 @@
       parts.contentVersion || "none",
       parts.language || "zh",
       parts.processingMode || "rules",
-      sanitizeRemoteText(parts.query || "").slice(0, 80),
-    ].join("|");
+      sanitizeRemoteText(parts.query || ""),
+    ].map((x) => encodeURIComponent(x)).join("|");
   }
 
   function Budget(maxRequests) {
@@ -294,7 +305,7 @@
 
   function sanitizeCandidateList(list) {
     const out = [];
-    for (const c of list || []) {
+    for (const c of (Array.isArray(list) ? list : []).slice(0, 200)) {
       if (!c || typeof c !== "object") continue;
       if (c.private_note || c.apiKey || c.token || c.OPENAI_API_KEY) continue;
       if (c.private === true) continue;
@@ -306,8 +317,8 @@
         repo: c.repo || c.full_name,
         stars: Number(c.stars) || 0,
         description: purpose.text,
-        html_url: typeof c.html_url === "string" ? c.html_url : "",
-        source: c.source || "unknown",
+        html_url: "https://github.com/" + repo,
+        source: sanitizeRemoteText(c.source || "unknown"),
         purpose: purpose.text,
         why: why.text,
         queryUsed: sanitizeRemoteText(c.queryUsed || ""),
@@ -319,7 +330,7 @@
   function sanitizeExpansions(list) {
     const out = [];
     const seen = new Set();
-    for (const exp of list || []) {
+    for (const exp of (Array.isArray(list) ? list : []).slice(0, 4)) {
       if (!exp) continue;
       const q = sanitizeRemoteText(exp.query || "");
       if (!q || looksLikeInstruction(q) || seen.has(q)) continue;
@@ -346,7 +357,7 @@
       exported_at: bundle && bundle.exported_at,
       entries: [],
     };
-    const entries = (bundle && bundle.entries) || [];
+    const entries = Array.isArray(bundle && bundle.entries) ? bundle.entries.slice(0, 100) : [];
     for (const e of entries) {
       if (!e || typeof e !== "object") continue;
       if (e.private_note || e.apiKey || e.token || e.OPENAI_API_KEY) continue;
@@ -366,7 +377,8 @@
         source: e.source || "unknown",
         language: e.language || "",
         content_version: e.content_version || "",
-        processing_mode: e.processing_mode || "",
+        processing_mode: e.processing_mode === "model" ? "model" : "rules",
+        created_at: e.created_at || "",
         expansions: sanitizeExpansions(e.expansions),
         rawCandidates: sanitizeCandidateList(e.rawCandidates || e.candidates),
       });
@@ -394,7 +406,8 @@
         source: e.source || "bundle",
         language: e.language || "",
         content_version: e.content_version || "",
-        processing_mode: e.processing_mode || "rules",
+        processing_mode: e.processing_mode === "model" ? "model" : "rules",
+        created_at: e.created_at || "",
         expansions: sanitizeExpansions(e.expansions),
         rawCandidates: sanitizeCandidateList(e.rawCandidates || e.candidates),
       },
@@ -461,7 +474,7 @@
     return out;
   }
 
-  function buildExploreQueries(meta, lang) {
+  function buildExploreQueries(meta, lang, interests) {
     meta = meta || {};
     const out = [];
     for (const topic of (meta.topics || []).slice(0, 3)) {
@@ -484,6 +497,11 @@
         lang: "en",
         source: SOURCE_KINDS.same_owner,
       });
+    }
+    if (interests && interests.length) {
+      const extra = interests.slice(0, 1).map((word) => ({query: sanitizeRemoteText(word), lang: lang || "en", source: SOURCE_KINDS.interest_query}));
+      const bilingual = out.length ? expandQueries(out[0].query, "en", []).slice(1, 2) : [];
+      out.splice(1, 0, ...extra, ...bilingual);
     }
     const seen = new Set();
     return out
@@ -572,10 +590,21 @@
     return out;
   }
 
+  function endpointUrl(base) {
+    try {
+      const u = new URL(base);
+      if (u.username || u.password || u.search || u.hash) return "";
+      if (u.protocol !== "https:" && !(u.protocol === "http:" && u.hostname === "127.0.0.1")) return "";
+      return u.href.replace(/\/$/, "");
+    } catch { return ""; }
+  }
+
   function allowedMessage(sender) {
-    if (!sender) return false;
-    if (sender.id && root.chrome && root.chrome.runtime && sender.id !== root.chrome.runtime.id) {
-      return false;
+    if (!sender || !sender.id) return false;
+    if (root.chrome && root.chrome.runtime && sender.id !== root.chrome.runtime.id) return false;
+    if (sender.tab) {
+      try { if (new URL(sender.url || sender.tab.url).origin !== "https://github.com") return false; }
+      catch { return false; }
     }
     return true;
   }
@@ -609,5 +638,6 @@
     buildExploreQueries,
     parseModelExpansions,
     allowedMessage,
+    endpointUrl,
   };
 })(typeof globalThis !== "undefined" ? globalThis : this);

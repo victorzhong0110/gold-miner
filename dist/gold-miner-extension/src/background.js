@@ -40,6 +40,10 @@ if (typeof importScripts === "function") {
     const clearDelay = opts.clearTimeout || root.clearTimeout;
     const inflight = new Map();
     let isolationState = "pending";
+    let isolationPromise;
+    let cacheWrites = Promise.resolve();
+    let dataEpoch = 0;
+    let githubBackoffUntil = 0;
 
     function isolationOk() {
       return isolationState === "ok";
@@ -55,6 +59,11 @@ if (typeof importScripts === "function") {
     }
 
     async function lockStorage() {
+      if (!isolationPromise) isolationPromise = isolateStorage();
+      return isolationPromise;
+    }
+
+    async function isolateStorage() {
       if (isolationState !== "pending") return isolationOk();
       const setter =
         chromeApi.storage &&
@@ -90,6 +99,7 @@ if (typeof importScripts === "function") {
         feedback: {},
         cache: {},
         pageHistory: [],
+        modelRevision: 0,
       });
     }
 
@@ -137,7 +147,8 @@ if (typeof importScripts === "function") {
       return Boolean(byok.apiKey && byok.baseUrl && byok.model);
     }
 
-    async function githubJson(url, token, timeoutMs) {
+    async function githubJson(url, token, timeoutMs, job) {
+      if (Date.now() < githubBackoffUntil) return { code: "rate_limited", data: null };
       if (!httpFetch) return { code: "network_error", data: null };
       const headers = {
         Accept: "application/vnd.github+json",
@@ -145,12 +156,18 @@ if (typeof importScripts === "function") {
       };
       if (token) headers.Authorization = "Bearer " + token;
       const ctrl = new AbortController();
-      const timer = delay(function () {
-        ctrl.abort();
-      }, timeoutMs || 12000);
+      const abort = () => ctrl.abort();
+      if (job) job.controller.signal.addEventListener("abort", abort, { once: true });
+      const timer = delay(abort, timeoutMs || 12000);
       try {
+        if (job) job.githubRequests += 1;
         const resp = await httpFetch(url, { headers: headers, signal: ctrl.signal });
-        if (resp.status === 429) return { code: "rate_limited", data: null };
+        const header = (name) => resp.headers && resp.headers.get ? resp.headers.get(name) : null;
+        if (resp.status === 429 || (resp.status === 403 && header("x-ratelimit-remaining") === "0")) {
+          const retry = Number(header("retry-after"));
+          githubBackoffUntil = Date.now() + Math.max(60000, Math.min(3600000, (retry || 60) * 1000));
+          return { code: "rate_limited", data: null };
+        }
         if (resp.status === 404) return { code: "github_not_found", data: null };
         if (!resp.ok) return { code: "bad_response", data: null, httpStatus: resp.status };
         const data = await resp.json();
@@ -160,10 +177,11 @@ if (typeof importScripts === "function") {
         return { code: "network_error", data: null };
       } finally {
         clearDelay(timer);
+        if (job) job.controller.signal.removeEventListener("abort", abort);
       }
     }
 
-    async function githubSearch(query, token) {
+    async function githubSearch(query, token, job) {
       const q = S.sanitizeRemoteText(query);
       if (!q || S.looksLikeInstruction(q)) {
         return { code: "untrusted_input", items: [] };
@@ -172,9 +190,10 @@ if (typeof importScripts === "function") {
         "https://api.github.com/search/repositories?q=" +
         encodeURIComponent(q) +
         "&per_page=8";
-      const packed = await githubJson(url, token, 12000);
+      const packed = await githubJson(url, token, 12000, job);
       if (packed.code !== "ok") return { code: packed.code, items: [] };
-      const items = ((packed.data && packed.data.items) || []).map(function (it) {
+      if (!packed.data || !Array.isArray(packed.data.items)) return {code: "bad_response", items: []};
+      const items = packed.data.items.filter(it => it && typeof it === "object").map(function (it) {
         return {
           repo: it.full_name,
           stars: it.stargazers_count || 0,
@@ -185,11 +204,11 @@ if (typeof importScripts === "function") {
       return { code: "ok", items: items };
     }
 
-    async function githubRepoMeta(fullName, token) {
+    async function githubRepoMeta(fullName, token, job) {
       const repo = S.canonicalRepo(fullName);
       if (!repo) return { code: "untrusted_input", repo: null };
       const url = "https://api.github.com/repos/" + repo;
-      const packed = await githubJson(url, token, 12000);
+      const packed = await githubJson(url, token, 12000, job);
       if (packed.code !== "ok") return { code: packed.code, repo: null };
       const data = packed.data || {};
       return {
@@ -206,16 +225,20 @@ if (typeof importScripts === "function") {
       };
     }
 
-    async function defaultModelHttp(byok, original, lang) {
+    async function defaultModelHttp(byok, original, lang, job) {
       if (!httpFetch) throw new Error("network_error");
-      const url = String(byok.baseUrl || "").replace(/\/$/, "") + "/chat/completions";
+      const base = S.endpointUrl(byok.baseUrl);
+      if (!base) throw new Error("invalid_endpoint");
+      if (chromeApi.permissions && !await chromeApi.permissions.contains({origins: [new URL(base).origin + "/*"]})) throw new Error("endpoint_permission_required");
+      const url = base + "/chat/completions";
       const ctrl = new AbortController();
-      const timer = delay(function () {
-        ctrl.abort();
-      }, 12000);
+      const abort = () => ctrl.abort();
+      if (job) job.controller.signal.addEventListener("abort", abort, { once: true });
+      const timer = delay(abort, 12000);
       try {
         const resp = await httpFetch(url, {
           method: "POST",
+          redirect: "error",
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer " + byok.apiKey,
@@ -245,10 +268,11 @@ if (typeof importScripts === "function") {
         return S.parseModelExpansions(content || "", original, lang);
       } finally {
         clearDelay(timer);
+        if (job) job.controller.signal.removeEventListener("abort", abort);
       }
     }
 
-    async function runModelExpansions(original, lang, interests, byok) {
+    async function runModelExpansions(original, lang, interests, byok, job) {
       const fallback = S.expandQueries(original, lang, interests);
       if (typeof modelClient === "function") {
         try {
@@ -257,6 +281,7 @@ if (typeof importScripts === "function") {
             lang: lang,
             byok: byok,
             interests: interests,
+            signal: job.controller.signal,
           });
           if (rows && rows.length) {
             return { usedModel: true, expansions: rows };
@@ -274,7 +299,7 @@ if (typeof importScripts === "function") {
         return { usedModel: false, expansions: fallback };
       }
       try {
-        const rows = await defaultModelHttp(byok, original, lang);
+        const rows = await defaultModelHttp(byok, original, lang, job);
         if (rows && rows.length) {
           return { usedModel: true, expansions: rows };
         }
@@ -299,14 +324,17 @@ if (typeof importScripts === "function") {
     }
 
     function findCached(state, pageKind, originalQuery, attemptModel, contentVersion) {
-      const modes = attemptModel ? ["model", "rules"] : ["rules"];
+      const modes = attemptModel ? ["model"] : ["rules"];
       for (let i = 0; i < modes.length; i++) {
         const mode = modes[i];
         const key = S.cacheKey(
           cacheParts(state, pageKind, originalQuery, mode, contentVersion)
         );
         const entry = state.cache && state.cache[key];
-        if (entry && (entry.rawCandidates || entry.candidates)) {
+        const age = entry && entry.created_at ? Date.now() - Date.parse(entry.created_at) : Infinity;
+        if (entry && age >= 0 && age < 86400000 &&
+            (mode !== "model" || entry.model_revision === state.modelRevision) &&
+            (entry.rawCandidates || entry.candidates)) {
           return { key: key, entry: entry, mode: mode };
         }
       }
@@ -314,7 +342,7 @@ if (typeof importScripts === "function") {
     }
 
     function rankForDisplay(raw, state, request) {
-      return S.rerank(raw || [], {
+      return S.rerank(S.sanitizeCandidateList(raw), {
         interests: state.personalization ? state.interests : [],
         seen: state.seen,
         feedback: state.feedback,
@@ -342,10 +370,11 @@ if (typeof importScripts === "function") {
       });
     }
 
-    async function runJob(jobId, request) {
+    async function runJob(jobId, request, job) {
       const state = await loadState();
-      const budget = new S.Budget(4);
-      inflight.set(jobId, budget);
+      const budget = job.budget;
+      const cancelledResult = () => ({jobId, code: "cancelled", candidates: [], rawCandidates: [], expansions: [], hasModel: false});
+      if (budget.cancelled) return cancelledResult();
       const original = S.sanitizeRemoteText(request.originalQuery || "");
       const interests = state.personalization ? state.interests : [];
       let expansions = [];
@@ -354,7 +383,6 @@ if (typeof importScripts === "function") {
 
       if (request.kind === "EXPLORE" && request.pageRepo) {
         if (!budget.canStart()) {
-          inflight.delete(jobId);
           return {
             jobId: jobId,
             originalQuery: original,
@@ -366,9 +394,9 @@ if (typeof importScripts === "function") {
           };
         }
         budget.mark();
-        const meta = await githubRepoMeta(request.pageRepo, undefined);
+        const meta = await githubRepoMeta(request.pageRepo, undefined, job);
+        if (budget.cancelled) return cancelledResult();
         if (meta.code !== "ok") {
-          inflight.delete(jobId);
           return {
             jobId: jobId,
             originalQuery: original,
@@ -379,14 +407,17 @@ if (typeof importScripts === "function") {
             hasModel: false,
           };
         }
-        expansions = S.buildExploreQueries(meta.repo, request.lang || state.readingLang);
+        expansions = S.buildExploreQueries(meta.repo, request.lang || state.readingLang, interests);
       } else {
+        job.modelRequests = willAttemptModel(state) ? 1 : 0;
         const modelResult = await runModelExpansions(
           original,
           request.lang || state.readingLang,
           interests,
-          state.byok
+          state.byok,
+          job
         );
+        if (budget.cancelled) return cancelledResult();
         expansions = modelResult.expansions;
         usedModel = modelResult.usedModel;
         if (modelResult.degrade) degrade = modelResult.degrade;
@@ -397,7 +428,8 @@ if (typeof importScripts === "function") {
         const exp = expansions[i];
         if (!budget.canStart()) break;
         budget.mark();
-        const result = await githubSearch(exp.query, undefined);
+        const result = await githubSearch(exp.query, undefined, job);
+        if (budget.cancelled) return cancelledResult();
         if (result.code !== "ok") {
           if (SEARCH_FAIL.has(result.code)) {
             degrade = result.code;
@@ -408,7 +440,7 @@ if (typeof importScripts === "function") {
         }
         collected.push.apply(collected, collectFromSearch(result.items, exp, original));
       }
-      inflight.delete(jobId);
+      if (budget.cancelled) return cancelledResult();
       const ranked = rankForDisplay(collected, state, request);
       return {
         jobId: jobId,
@@ -420,13 +452,29 @@ if (typeof importScripts === "function") {
         rawCandidates: collected,
         code: degrade,
         hasModel: usedModel,
+        cost: {github_requests: job.githubRequests, model_requests: job.modelRequests, tokens: "unknown", fees: "unknown", elapsed_ms: Date.now() - job.startedAt},
       };
     }
 
-    async function persistCacheEntry(state, key, entry) {
-      const cache = Object.assign({}, state.cache);
-      cache[key] = entry;
-      await chromeApi.storage.local.set({ cache: cache });
+    async function persistCacheEntry(state, key, entry, job) {
+      const write = cacheWrites.then(async () => {
+        if (job.budget.cancelled || job.epoch !== dataEpoch) return;
+        const latest = await loadState();
+        if (job.budget.cancelled || job.epoch !== dataEpoch) return;
+        const cache = Object.assign({}, latest.cache);
+        cache[key] = entry;
+        const keys = Object.keys(cache);
+        for (const old of keys.slice(0, Math.max(0, keys.length - 100))) delete cache[old];
+        await chromeApi.storage.local.set({cache});
+        if (job.budget.cancelled) {
+          const current = await loadState();
+          const cleaned = Object.assign({}, current.cache);
+          if (JSON.stringify(cleaned[key]) === JSON.stringify(entry)) delete cleaned[key];
+          await chromeApi.storage.local.set({cache: cleaned});
+        }
+      });
+      cacheWrites = write.catch(() => {});
+      await write;
     }
 
     function makeCacheEntry(state, request, result, contentVersion) {
@@ -439,19 +487,22 @@ if (typeof importScripts === "function") {
         language: state.readingLang,
         content_version: contentVersion || "dom-1",
         processing_mode: result.hasModel ? "model" : "rules",
+        model_revision: state.modelRevision,
+        created_at: new Date().toISOString(),
         expansions: result.expansions,
         rawCandidates: result.rawCandidates || [],
       };
     }
 
-    async function handleSearchOrExplore(message) {
-      const jobId = message.jobId || String(Date.now());
+    async function handleSearchOrExplore(message, job) {
+      const jobId = job.id;
       const pageRepo = parseRepoFromUrl(message.pageUrl || "");
       const originalQuery =
         message.originalQuery ||
         parseQueryFromUrl(message.pageUrl || "") ||
         pageRepo;
       const state = await loadState();
+      if (job.budget.cancelled) return {code: "cancelled", jobId, candidates: []};
       const attemptModel = message.type === "SEARCH" && willAttemptModel(state);
       const hit = findCached(
         state,
@@ -473,6 +524,7 @@ if (typeof importScripts === "function") {
           candidates: ranked,
           expansions: hit.entry.expansions || [],
           hasModel: hit.mode === "model",
+          cost: {github_requests: 0, model_requests: 0, cache_hits: 1},
         };
       }
       const result = await runJob(jobId, {
@@ -481,9 +533,9 @@ if (typeof importScripts === "function") {
         pageRepo: pageRepo,
         lang: state.readingLang,
         limit: message.limit || 5,
-      });
+      }, job);
       const searchFailed = SEARCH_FAIL.has(result.code);
-      if (!searchFailed && result.code !== "budget_exhausted") {
+      if (!searchFailed && ["ok", "model_unavailable"].includes(result.code) && !job.budget.cancelled) {
         const mode = result.hasModel ? "model" : "rules";
         const key = S.cacheKey(
           cacheParts(state, message.type, originalQuery, mode, message.contentVersion)
@@ -491,13 +543,15 @@ if (typeof importScripts === "function") {
         await persistCacheEntry(
           state,
           key,
-          makeCacheEntry(state, { kind: message.type, pageRepo: pageRepo }, result, message.contentVersion)
+          makeCacheEntry(state, { kind: message.type, pageRepo: pageRepo }, result, message.contentVersion),
+          job
         );
         if (state.historyEnabled && pageRepo) {
           const hist = (state.pageHistory || []).concat([pageRepo]).slice(-30);
           await chromeApi.storage.local.set({ pageHistory: hist });
         }
       }
+      if (job.budget.cancelled) return {code: "cancelled", jobId, candidates: []};
       return result;
     }
 
@@ -507,6 +561,22 @@ if (typeof importScripts === "function") {
       }
       if (!message || !TRUSTED_TYPES.has(message.type)) {
         return { code: "untrusted_input" };
+      }
+      const privileged = ["SAVE_SETTINGS", "CLEAR_LOCAL", "EXPORT_CACHE", "IMPORT_CACHE"];
+      if (sender.tab && privileged.includes(message.type)) return {code: "untrusted_input"};
+      if (message.type === "SEARCH" || message.type === "EXPLORE") {
+        const id = sender.id + ":" + (sender.tab ? sender.tab.id : "options") + ":" + (message.jobId || Date.now());
+        if (inflight.has(id) || inflight.size >= 2) return {code: "busy"};
+        const job = {id: message.jobId || id, budget: new S.Budget(4), controller: new AbortController(), epoch: dataEpoch, githubRequests: 0, modelRequests: 0, startedAt: Date.now()};
+        inflight.set(id, job);
+        try { return await handleSearchOrExplore(message, job); }
+        finally { inflight.delete(id); }
+      }
+      if (message.type === "CANCEL") {
+        const id = sender.id + ":" + (sender.tab ? sender.tab.id : "options") + ":" + message.jobId;
+        const job = inflight.get(id);
+        if (job) { job.budget.cancel(); job.controller.abort(); }
+        return {code: "cancelled"};
       }
       await lockStorage();
       if (message.type === "GET_PUBLIC_SETTINGS") {
@@ -530,6 +600,10 @@ if (typeof importScripts === "function") {
           historyEnabled: Boolean(incoming.historyEnabled),
         };
         const byokIn = incoming.byok || {};
+        if (byokIn.baseUrl && !S.endpointUrl(byokIn.baseUrl)) return {code: "invalid_endpoint"};
+        const previous = await loadState();
+        const changed = JSON.stringify(previous.byok) !== JSON.stringify(byokIn);
+        patch.modelRevision = previous.modelRevision + (changed ? 1 : 0);
         const hasKey = Boolean(byokIn.apiKey);
         if (hasKey && !isolated) {
           await chromeApi.storage.local.set(patch);
@@ -545,15 +619,10 @@ if (typeof importScripts === "function") {
         await chromeApi.storage.local.set(patch);
         return { code: "ok", isolated: isolated };
       }
-      if (message.type === "CANCEL") {
-        const b = inflight.get(message.jobId);
-        if (b) b.cancel();
-        return { code: "cancelled" };
-      }
       if (message.type === "FEEDBACK") {
         const state = await loadState();
         const repo = S.canonicalRepo(message.repo || "");
-        if (!repo) return { code: "bad_response" };
+        if (!repo || !["seen", "interested", "irrelevant"].includes(message.action)) return { code: "bad_response" };
         const fb = Object.assign({}, state.feedback);
         fb[repo] = message.action;
         const seen = new Set(state.seen);
@@ -565,6 +634,9 @@ if (typeof importScripts === "function") {
         return { code: "ok" };
       }
       if (message.type === "CLEAR_LOCAL") {
+        dataEpoch += 1;
+        for (const job of inflight.values()) { job.budget.cancel(); job.controller.abort(); }
+        await cacheWrites;
         await chromeApi.storage.local.set({
           seen: [],
           feedback: {},
@@ -582,6 +654,8 @@ if (typeof importScripts === "function") {
         return { code: "ok", bundle: bundle };
       }
       if (message.type === "IMPORT_CACHE") {
+        if (!message.bundle || message.bundle.format !== "gold-miner-cache-v1" || !Array.isArray(message.bundle.entries) || message.bundle.entries.length > 100) return {code: "bad_response"};
+        await cacheWrites;
         const incoming = S.sanitizeExport(message.bundle || {});
         const state = await loadState();
         const cache = Object.assign({}, state.cache);
@@ -593,9 +667,6 @@ if (typeof importScripts === "function") {
         }
         await chromeApi.storage.local.set({ cache: cache });
         return { code: "ok", imported: imported };
-      }
-      if (message.type === "SEARCH" || message.type === "EXPLORE") {
-        return handleSearchOrExplore(message);
       }
       return { code: "bad_response" };
     }
@@ -635,5 +706,8 @@ if (typeof importScripts === "function") {
     const svc = createBackground();
     svc.attachListeners();
     svc.lockStorage();
+    if (root.chrome.action && root.chrome.action.onClicked) {
+      root.chrome.action.onClicked.addListener(() => root.chrome.runtime.openOptionsPage());
+    }
   }
 })(typeof globalThis !== "undefined" ? globalThis : this);

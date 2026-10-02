@@ -6,6 +6,8 @@
   const ROOT_ID = "gold-miner-root";
   let navGen = 0;
   let attached = false;
+  let activeJob = null;
+  let lastPage = "";
 
   function pageKind() {
     const path = location.pathname;
@@ -29,8 +31,18 @@
   }
 
   function contentVersion() {
-    const about = document.querySelector("title");
-    return S.sanitizeRemoteText((about && about.textContent) || location.pathname).slice(0, 80);
+    // Fingerprint visible README and about text, never just the page title.
+    const nodes = document.querySelectorAll("article.markdown-body, .repository-content .markdown-body, .BorderGrid");
+    const text = Array.from(nodes).map((n) => n.textContent || "").join("\n").slice(0, 100000);
+    let hash = 2166136261;
+    for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 16777619);
+    return "page-v2-" + (hash >>> 0).toString(16);
+  }
+
+  function cancelActive() {
+    navGen += 1;
+    if (activeJob) chrome.runtime.sendMessage({ type: "CANCEL", jobId: activeJob });
+    activeJob = null;
   }
 
   function langFromSettings(settings) {
@@ -71,6 +83,7 @@
     close.type = "button";
     close.textContent = S.t(lang, "close");
     close.addEventListener("click", () => {
+      cancelActive();
       el.remove();
     });
     h.appendChild(close);
@@ -86,9 +99,20 @@
       cancel.addEventListener("click", () => {
         chrome.runtime.sendMessage({ type: "CANCEL", jobId: state.jobId });
         state.status = "cancelled";
+        state.code = "cancelled";
+        state.candidates = [];
+        activeJob = null;
         render(state);
       });
       box.appendChild(cancel);
+      el.appendChild(box);
+      return;
+    }
+
+    if (state.status === "cancelled") {
+      const p = document.createElement("p");
+      p.textContent = S.t(lang, "cancelled");
+      box.appendChild(p);
       el.appendChild(box);
       return;
     }
@@ -116,9 +140,11 @@
 
     const list = document.createElement("ul");
     for (const c of state.candidates || []) {
+      const repo = S.canonicalRepo(c.repo);
+      if (!repo) continue;
       const li = document.createElement("li");
       const a = document.createElement("a");
-      a.href = c.html_url || "https://github.com/" + c.repo;
+      a.href = "https://github.com/" + repo;
       a.textContent = c.repo;
       a.rel = "noreferrer noopener";
       li.appendChild(a);
@@ -142,7 +168,10 @@
         btn.type = "button";
         btn.textContent = S.t(lang, act);
         btn.addEventListener("click", () => {
-          chrome.runtime.sendMessage({ type: "FEEDBACK", repo: c.repo, action: act });
+          chrome.runtime.sendMessage({ type: "FEEDBACK", repo: c.repo, action: act }, () => {
+            if (act === "seen" || act === "irrelevant") li.remove();
+            else btn.disabled = true;
+          });
         });
         actions.appendChild(btn);
       });
@@ -156,6 +185,7 @@
   function run(kind) {
     const myGen = ++navGen;
     const jobId = "job-" + myGen + "-" + Date.now();
+    activeJob = jobId;
     chrome.runtime.sendMessage({ type: "GET_PUBLIC_SETTINGS" }, (settingsResp) => {
       if (myGen !== navGen) return;
       const settings = (settingsResp && settingsResp.settings) || {};
@@ -180,14 +210,15 @@
         limit: kind === "explore" ? 3 : 5,
       };
       chrome.runtime.sendMessage(msg, (resp) => {
-        if (myGen !== navGen) return;
+        if (myGen !== navGen || state.status === "cancelled") return;
+        activeJob = null;
         if (chrome.runtime.lastError) {
           state.status = "error";
           state.code = "bad_response";
           render(state);
           return;
         }
-        state.status = "ready";
+        state.status = resp && resp.code === "cancelled" ? "cancelled" : "ready";
         state.code = (resp && resp.code) || "bad_response";
         state.candidates = (resp && resp.candidates) || [];
         state.originalQuery = (resp && resp.originalQuery) || state.originalQuery;
@@ -204,6 +235,10 @@
   }
 
   function onNavigate() {
+    const signature = location.href + "|" + contentVersion();
+    if (signature === lastPage) return;
+    lastPage = signature;
+    cancelActive();
     clearRoot();
     const kind = pageKind();
     if (kind === "other") return;
@@ -217,6 +252,8 @@
     document.addEventListener("turbo:load", onNavigate);
     document.addEventListener("turbo:render", onNavigate);
     window.addEventListener("popstate", onNavigate);
+    // GitHub pushState runs in the page world; a content-world override is insufficient.
+    setInterval(() => { if (location.href !== lastPage.split("|")[0]) onNavigate(); }, 500);
     const push = history.pushState;
     history.pushState = function () {
       const ret = push.apply(this, arguments);

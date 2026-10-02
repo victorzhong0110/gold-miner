@@ -50,6 +50,13 @@ document.getElementById("form").addEventListener("submit", async (ev) => {
       apiKey: document.getElementById("apiKey").value,
     },
   };
+  if (settings.byok.baseUrl) {
+    const endpoint = GoldMinerShared.endpointUrl(settings.byok.baseUrl);
+    if (!endpoint) { show("端点无效 / Invalid endpoint"); return; }
+    const granted = await chrome.permissions.request({origins: [new URL(endpoint).origin + "/*"]});
+    if (!granted) { show("未授予端点权限 / Endpoint permission denied"); return; }
+    settings.byok.baseUrl = endpoint;
+  }
   chrome.runtime.sendMessage({ type: "SAVE_SETTINGS", settings }, (resp) => {
     if (chrome.runtime.lastError) {
       show("保存失败。");
@@ -75,6 +82,7 @@ document.getElementById("clear").addEventListener("click", async () => {
 
 document.getElementById("export").addEventListener("click", () => {
   chrome.runtime.sendMessage({ type: "EXPORT_CACHE" }, (resp) => {
+    if (chrome.runtime.lastError || !resp || resp.code !== "ok") { show("导出失败 / Export failed"); return; }
     const blob = new Blob([JSON.stringify(resp.bundle, null, 2)], {
       type: "application/json",
     });
@@ -82,6 +90,7 @@ document.getElementById("export").addEventListener("click", () => {
     a.href = URL.createObjectURL(blob);
     a.download = "gold-miner-cache.json";
     a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     show("已导出。包内无密钥、无私有备注。");
   });
 });
@@ -93,6 +102,7 @@ document.getElementById("importBtn").addEventListener("click", () => {
 document.getElementById("importFile").addEventListener("change", async (ev) => {
   const file = ev.target.files && ev.target.files[0];
   if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { show("文件超过 2 MB / File exceeds 2 MB"); return; }
   const text = await file.text();
   let bundle;
   try {
@@ -102,7 +112,8 @@ document.getElementById("importFile").addEventListener("change", async (ev) => {
     return;
   }
   chrome.runtime.sendMessage({ type: "IMPORT_CACHE", bundle }, (resp) => {
-    show("导入条目：" + (resp && resp.imported));
+    if (chrome.runtime.lastError || !resp || resp.code !== "ok") { show("导入失败 / Import failed"); return; }
+    show("导入条目 / Imported entries: " + resp.imported);
   });
 });
 
@@ -113,13 +124,19 @@ document.getElementById("probe").addEventListener("click", async () => {
     show("未运行 / owner-blocked：没有 API key。");
     return;
   }
-  if (!/^https?:\/\//.test(byok.baseUrl || "")) {
+  if (!GoldMinerShared.endpointUrl(byok.baseUrl)) {
     show("invalid_endpoint");
     return;
   }
+  const endpoint = GoldMinerShared.endpointUrl(byok.baseUrl);
+  if (!await chrome.permissions.contains({origins: [new URL(endpoint).origin + "/*"]})) { show("请先保存并授权端点 / Save and grant endpoint access first"); return; }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12000);
   try {
     const resp = await fetch(byok.baseUrl.replace(/\/$/, "") + "/chat/completions", {
       method: "POST",
+      redirect: "error",
+      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + byok.apiKey,
@@ -133,7 +150,7 @@ document.getElementById("probe").addEventListener("click", async () => {
     show(redact("http " + resp.status + " " + (resp.ok ? "ok" : "failed"), byok.apiKey));
   } catch (err) {
     show(redact("network_error " + (err && err.name), byok.apiKey));
-  }
+  } finally { clearTimeout(timer); }
 });
 
 load();

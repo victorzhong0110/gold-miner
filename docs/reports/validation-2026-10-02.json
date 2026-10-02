@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-02",
+  "tested_source_sha": "8e54ab33f5792356e6288efd213defd5de977724",
+  "command": "python3 scripts/run_offline_suite.py",
+  "python_tests": 243,
+  "extension_tests": 45,
+  "result": "passed",
+  "network_calls_in_tests": 0,
+  "chrome_installation": "not-run",
+  "live_model": "not-run",
+  "human_sessions": "not-run",
+  "log_sha256": "0f552bc997ccfa714f15620ee6582f2474d1f9ae3899c16a1587fbb6435707e8",
+  "build": {
+    "version": "0.1.1",
+    "source_sha": "8e54ab33f5792356e6288efd213defd5de977724",
+    "source_files_sha256": {
+      "_locales/en/messages.json": "e0bbe1d8ba04d3dc2bbed1a9f6cbd71067b4126913059e78cfb497a236d88f56",
+      "_locales/zh_CN/messages.json": "979a3b9146f1c5d1fe3ed68803ac84d92c91d1e4f9bee98abe5feff0fe7c7699",
+      "manifest.json": "33c21c163f3736071c94b3f67dee3b9406992ad4256d5f1e9c5ef1c809fe455e",
+      "src/background.js": "1e5ab94002e213f6b18fc505089b1d53bb85dfb84bf6b4f70d9c6f553562b048",
+      "src/content.css": "16401b0519bd86ea98d71beb77e26a65e47397f787ebc6fd3fd0b940b1341f32",
+      "src/content.js": "557fdc7db9c55898f44f4bc324456ec30a434d08e0e309e90523f7c5f0aaf9cd",
+      "src/options.css": "a384e5b0daec84329cd6d60d7f6880cc050e26ac0a84e771045fd8ca86a234c4",
+      "src/options.html": "c667986d64faa2a74dbf783307e812b2675a2fea5c15dfa208eda50b60402f46",
+      "src/options.js": "99702764befef5d68a48d19d6d3531f8d688ab6a17d254a7cc2be45dfbd75428",
+      "src/shared.js": "ac425e47baead7262db3379f9dfa987a5834bd5eb61cb51b9a5f362a620174d0"
+    },
+    "archive": "gold-miner-extension-0.1.1.zip",
+    "archive_sha256": "d61aa3e1cf33eca312ee328971f4e629c9454e52318a0aaa965234b3130ede08",
+    "browser_installation": "not-run",
+    "release_status": "experimental-not-beta"
+  }
+}
