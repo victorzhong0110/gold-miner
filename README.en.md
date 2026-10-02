@@ -4,7 +4,7 @@ Discover useful tools and code worth learning, in your own language, directly on
 
 [中文](README.md) · [Getting started](docs/guides/getting-started.md) · [Work-package status](docs/work-packages/STATUS.md)
 
-**Version 0.1.2 is an engineering trial.** Automated regressions pass. Chrome installation, cross-language gains, human exploration and continued usage remain unverified. Historical native-search, README-field and six gtx translation records do not establish product effectiveness.
+**Version 0.1.2 is an engineering trial.** 251 Python and 46 extension regressions plus [8 Chromium fixture checks](docs/reports/browser-acceptance-2026-10-02.json) pass. Personal Chrome installation, live cross-language gains, human exploration and continued usage remain unverified. Historical native-search, README-field and six gtx translation records do not establish product effectiveness.
 
 ## Use
 

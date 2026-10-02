@@ -66,3 +66,5 @@ DOM 回归使用模拟节点与消息回调，验证取消、关闭、离开页�
 MIT 已按明确决定落地。双语发现条目及 E7 日记验证/汇总工具新增 7 项回归测试；日记测试全部为 fixture，未虚构参与者。Chromium 验收使用实际 MV3/两个配置目录及 fixture 网络，运行结果由 CI 保存；本地浏览器下载失败，未记成通过。个人模型、正式冻结、实际使用/盲判/回访、元数据和方向判断按 [发起人清单](../guides/owner-stage-checklist.md) 留给本人。
 
 Chromium 首跑 CI 37025365162 的实际设置页保存失败，揭示 sender.tab 不能代表内容脚本。0.1.2 修复为仅自有扩展 options.html 可以执行特权消息，并增加模拟回归；浏览器第二轮待跑。当前日志统计为 251 Python + 46 Node，旧手工 243 漏掉单项 E5 测试（实际 244）。
+
+第二轮 [CI 37026709955](https://github.com/victorzhong0110/gold-miner/actions/runs/37026709955) 离线与浏览器均通过；[原始浏览器结果](browser-acceptance-2026-10-02.json) 的8项实际 Chromium fixture 检查全部成功。首次保存缺陷已验证修复；第二配置目录 UI 导入后0额外请求，内容变化后重新获取。模型请求0、live GitHub API请求0。人的安装、使用价值、正式比较与一周回访仍未发生，因此不升级为已验证产品效果/Beta。交付 PR12 的实际合并状态见 GitHub。

@@ -6,7 +6,13 @@
   "node_tests": 46,
   "model_live": "owner operation / not-run",
   "human_trial": "owner operation / not-run",
-  "browser_ci": "pending",
+  "browser_ci": {
+    "status": "passed",
+    "checks": 8,
+    "run_id": 37026709955,
+    "evidence_kind": "chromium-with-fixture-network",
+    "report": "docs/reports/browser-acceptance-2026-10-02.json"
+  },
   "license": "owner-selected MIT for own code and docs",
   "build_manifest": "dist/build-manifest.json",
   "version": "0.1.2",

@@ -4,7 +4,7 @@
 
 [English](README.en.md) · [10 分钟上手](docs/guides/getting-started.md) · [45 项工作包状态](docs/work-packages/STATUS.md)
 
-**当前版本 0.1.2，工程试验包。** 自动化回归通过；Chrome 实际安装、跨语言增益、真人探索和持续使用尚未验收。已有 A 组搜索、README 字段配对及六条 gtx 翻译记录，不能由它们推出产品有效。
+**当前版本 0.1.2，工程试验包。** 251 项 Python、46 项扩展回归及 [8 项 Chromium fixture 验收](docs/reports/browser-acceptance-2026-10-02.json) 通过；本人 Chrome 安装、跨语言增益、真人探索和持续使用尚未验收。已有 A 组搜索、README 字段配对及六条 gtx 翻译记录，不能由它们推出产品有效。
 
 ## 使用
 

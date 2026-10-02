@@ -6,9 +6,9 @@
 
 R1（模型缓存恢复）、R2（取消终态）、R3（导入链接）已修复并有连续操作回归。验证入口：`python3 scripts/run_offline_suite.py`。构建入口：`bash extension/scripts/build.sh`；产物与源码逐文件校验，源码 SHA 和 ZIP 哈希在 `dist/build-manifest.json`。
 
-实现、离线验证、提交与合并不代表真实产品效果验收。**整个阶段尚未全部验收**：个人模型凭据、真实 Chrome 安装、真人会话/盲判/持续使用仍缺。MIT 已由发起人选择并落地。DOM 模拟不是 Chrome 实机。状态 `verified` 表示相应工程子项经离线验证，其余子项分别列明缺口。
+实现、离线验证、提交与合并不代表真实产品效果验收。**整个阶段尚未全部验收**：个人模型凭据、本人 Chrome 安装与真人会话/盲判/持续使用仍缺。MIT 已由发起人选择并落地。Chromium fixture 自动验收已通过；它不等于真人安装或 GitHub 实际效果。状态 `verified` 表示相应工程子项经离线验证，其余子项分别列明缺口。
 
-最新机器记录：[phase-status-2026-10-02.json](phase-status-2026-10-02.json)。阶段报告：[2026-10-02-phase-review.md](../reports/2026-10-02-phase-review.md)。远端已核对：[#10](https://github.com/victorzhong0110/gold-miner/pull/10) 在 CI 通过后合并，合并提交 `b93f89ee02841c25a9f9917345a4e5be77a9fb17`；#2–#9 已全部 closed/merged，当前没有遗留开放 PR。合并后 main 复验 243 项 Python + 45 项 Node 通过；合并状态不改变表中未完成的实际验收。
+最新机器记录：[phase-status-2026-10-02.json](phase-status-2026-10-02.json)。阶段报告：[2026-10-02-phase-review.md](../reports/2026-10-02-phase-review.md)。远端已核对：[#10](https://github.com/victorzhong0110/gold-miner/pull/10) 在 CI 通过后合并，合并提交 `b93f89ee02841c25a9f9917345a4e5be77a9fb17`；#2–#9 已全部 closed/merged，当时没有遗留开放 PR。合并后 main 复验 243 项 Python + 45 项 Node 通过；合并状态不改变表中未完成的实际验收。
 
 | ID | 任务 | 状态 | 本轮证据或未完成原因 |
 |---|---|---|---|
@@ -28,12 +28,12 @@ R1（模型缓存恢复）、R2（取消终态）、R3（导入链接）已修�
 | WP2-07 | 必要时 E9 诊断 | conditional | E9 只在增益诊断需要时执行；目前无正式比较可诊断 |
 | WP2-08 | 首轮决策 | pending-evidence | 已有未决定报告，不能从 A-only 结果推出跨语言增益 |
 | WP3-01 | 审查整合现有扩展 | verified | 整合 #2–#9；保留 #4 独有历史记录；R1/R2/R3 回归通过 |
-| WP3-02 | 完成首次使用流程 | partial | 选项、真实模型调用、端点权限和连接超时已实现；Chrome 流程未测 |
-| WP3-03 | 原页面搜索与预览 | partial | 安全候选链接、中英界面、反馈即刻移除有 DOM 模拟验证；真浏览器待测 |
-| WP3-04 | 仓库页探索 | partial | topics、描述、兴趣与双语来源已接入并离线验证；获取效果待测 |
+| WP3-02 | 完成首次使用流程 | partial | Chromium 设置页保存/语言/兴趣通过；sender.tab 真实缺陷已修；个人 BYOK 配置和提供商实测留给发起人 |
+| WP3-03 | 原页面搜索与预览 | partial | 真实 Chromium 内容脚本和规范链接通过；DOM/HTTP 为 fixture，真实 GitHub 与个人价值待验收 |
+| WP3-04 | 仓库页探索 | partial | Chromium 仓库探索与页面导航通过；来源为 fixture，实际获取价值留给真人 |
 | WP3-05 | 安全边界与导入链接 | verified | 受信存储、特权消息隔离、端点及导入链接回归通过 |
 | WP3-06 | 导航与任务生命周期 | verified | 取消、迟到回调、关闭、导航离开、重复事件、并发、清空数据回归通过 |
-| WP3-07 | 实机验收 | pending-environment | 容器无 Chrome/Chromium 可执行文件，真机安装未运行 |
+| WP3-07 | 实机验收 | partial | 真实 Chromium MV3 自动加载、选项/内容脚本/存储隔离等8项通过；个人 Chrome 安装与真人体验留给发起人 |
 | WP3-08 | 首次外部安装 | pending-human | 首次外部安装需要真实参与者；未发送邀请 |
 | WP4-01 | 开放候选来源 | partial | 开放获取来源已实现；价值不能由 fixture 推出 |
 | WP4-02 | 规则排序与多样性 | verified | 探索余量实际引入其他来源；去重、已见过滤和作者上限有回归 |
@@ -46,12 +46,12 @@ R1（模型缓存恢复）、R2（取消终态）、R3（导入链接）已修�
 | WP5-02 | 招募与首次体验 | pending-human | 10–20 名志愿者未招募；无邀请发送授权，未发送 |
 | WP5-03 | 持续使用 E7 | pending-time | E7 一周日记未发生，不能在单次执行中压缩成真实一周 |
 | WP5-04 | 优先修使用障碍 | pending-evidence | 已修工程缺陷；真实试用障碍与回访须由反馈产生 |
-| WP5-05 | 第二环境复用 E5 | partial | 导入—展示全链路与内容变化失效离线验证；第二浏览器未运行 |
+| WP5-05 | 第二环境复用 E5 | partial | 两个独立 Chromium 配置目录的 UI 导出/导入、0额外请求命中及内容变化重新获取通过；真实数据成本复用留给发起人 |
 | WP5-06 | 最小发现条目 | verified | 双语 JSONL、规范地址、来源提交/文件、生成状态、未知项和关闭的贡献开关已验证；实际价值未评估 |
 | WP5-07 | 共享与翻译条件分支 | conditional | 本地复用可测；公共托管/共享译文无节省证据，暂不扩大 |
 | WP6-01 | 新材料复测与稳定性 | partial | 新失败情景回归通过；未用于开发的新题效果复测未执行 |
 | WP6-02 | 许可证与开源准备 | verified | 发起人选择统一 MIT；根 LICENSE、第三方声明和分发包许可已落实 |
-| WP6-03 | Beta交付 | partial | 0.1.2 源码、ZIP、哈希与构建说明一致；实机未通过，不标 Beta |
+| WP6-03 | Beta交付 | partial | 0.1.2 源码/ZIP/许可哈希一致，Chromium fixture 自动验收通过；真人试用未验收，仍为试验包 |
 | WP6-04 | E8 搜到黄金矿工 | partial | 历史 E8 检索与元数据草案已保留；应用元数据后三入口复测待执行 |
 | WP6-05 | 名称和入口判断 | conditional | 工作名沿用；没有足够混淆证据，不改仓库名 |
 | WP6-06 | 可选商店上架 | out-of-scope | 可选商店上架未获授权，且用户对外预算为零 |
@@ -61,3 +61,5 @@ R1（模型缓存恢复）、R2（取消终态）、R3（导入链接）已修�
 本轮续作：MIT 决定已落实，E7 记录工具及 WP5-06 双语发现条目已完成。实际 Chromium fixture 自动验收已加入 CI，尚待本轮远端运行；不等于真人安装或实际效果。需你决定和亲自操作的事项见 [操作清单](../guides/owner-stage-checklist.md)。
 
 Chromium 首跑发现真实设置页消息带有 sender.tab，旧权限判断使保存被拒绝；0.1.2 按自有扩展 URL 授权设置页，拒绝内容脚本及其他页面特权消息。新增回归后离线复验：251 Python + 46 Node；浏览器第二轮待跑。此前 243 Python 统计漏掉 E5 的单项测试，原日志实际为 244，历史原日志保留。
+
+最新浏览器证据：[8项真实 Chromium fixture 验收](../reports/browser-acceptance-2026-10-02.json)，[CI 37026709955](https://github.com/victorzhong0110/gold-miner/actions/runs/37026709955) 全部通过。0.1.2 修复已通过；前述「待跑」为首跑/修复时的历史状态。当前续作交付为 [PR12](https://github.com/victorzhong0110/gold-miner/pull/12)，合并状态以该 GitHub 记录为准。剩余个人操作与决策只按 [发起人清单](../guides/owner-stage-checklist.md) 进行，不虚构完成。
