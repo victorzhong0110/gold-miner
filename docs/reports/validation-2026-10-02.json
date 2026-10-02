@@ -29,5 +29,14 @@
     "archive_sha256": "d61aa3e1cf33eca312ee328971f4e629c9454e52318a0aaa965234b3130ede08",
     "browser_installation": "not-run",
     "release_status": "experimental-not-beta"
+  },
+  "post_merge": {
+    "tested_main_sha": "b93f89ee02841c25a9f9917345a4e5be77a9fb17",
+    "python_tests": 243,
+    "extension_tests": 45,
+    "result": "passed",
+    "ci_run": "https://github.com/victorzhong0110/gold-miner/actions/runs/37021609289",
+    "pr10_merged": true,
+    "prior_prs_2_to_9": "all closed/merged"
   }
 }

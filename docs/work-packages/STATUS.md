@@ -8,7 +8,7 @@ R1（模型缓存恢复）、R2（取消终态）、R3（导入链接）已修�
 
 实现、离线验证、提交与合并不代表真实产品效果验收。**整个阶段尚未全部验收**：个人模型凭据、真实 Chrome 安装、真人会话/盲判/持续使用和许可决定仍缺。DOM 模拟不是 Chrome 实机。状态 `verified` 表示相应工程子项经离线验证，其余子项分别列明缺口。
 
-最新机器记录：[phase-status-2026-10-02.json](phase-status-2026-10-02.json)。阶段报告：[2026-10-02-phase-review.md](../reports/2026-10-02-phase-review.md)。远端 PR/合并状态将在收口后同步。
+最新机器记录：[phase-status-2026-10-02.json](phase-status-2026-10-02.json)。阶段报告：[2026-10-02-phase-review.md](../reports/2026-10-02-phase-review.md)。远端已核对：[#10](https://github.com/victorzhong0110/gold-miner/pull/10) 在 CI 通过后合并，合并提交 `b93f89ee02841c25a9f9917345a4e5be77a9fb17`；#2–#9 已全部 closed/merged，当前没有遗留开放 PR。合并后 main 复验 243 项 Python + 45 项 Node 通过；合并状态不改变表中未完成的实际验收。
 
 | ID | 任务 | 状态 | 本轮证据或未完成原因 |
 |---|---|---|---|
