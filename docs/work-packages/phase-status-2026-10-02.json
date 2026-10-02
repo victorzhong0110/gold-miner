@@ -489,5 +489,8 @@
     "scope": "own code and documentation",
     "decided_by": "owner",
     "date": "2026-10-02"
-  }
+  },
+  "continuation_source_sha": "537fe004683bb247c66009b920ebcc220ce3d79e",
+  "continuation_branch": "work/owner-handoff-2026-10-02",
+  "continuation_merge_status": "pending CI and merge"
 }

@@ -1,0 +1,12 @@
+{
+  "source_sha": "537fe004683bb247c66009b920ebcc220ce3d79e",
+  "command": "python3 scripts/run_offline_suite.py",
+  "status": "passed",
+  "python_tests": 251,
+  "node_tests": 45,
+  "model_live": "owner operation / not-run",
+  "human_trial": "owner operation / not-run",
+  "browser_ci": "pending",
+  "license": "owner-selected MIT for own code and docs",
+  "build_manifest": "dist/build-manifest.json"
+}

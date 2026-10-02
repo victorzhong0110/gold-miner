@@ -1,6 +1,6 @@
 {
   "version": "0.1.1",
-  "source_sha": "8e54ab33f5792356e6288efd213defd5de977724",
+  "source_sha": "537fe004683bb247c66009b920ebcc220ce3d79e",
   "source_files_sha256": {
     "_locales/en/messages.json": "e0bbe1d8ba04d3dc2bbed1a9f6cbd71067b4126913059e78cfb497a236d88f56",
     "_locales/zh_CN/messages.json": "979a3b9146f1c5d1fe3ed68803ac84d92c91d1e4f9bee98abe5feff0fe7c7699",
@@ -13,8 +13,13 @@
     "src/options.js": "99702764befef5d68a48d19d6d3531f8d688ab6a17d254a7cc2be45dfbd75428",
     "src/shared.js": "ac425e47baead7262db3379f9dfa987a5834bd5eb61cb51b9a5f362a620174d0"
   },
+  "license": "MIT",
+  "license_files_sha256": {
+    "LICENSE": "5019b107413e4eedfb45662f69575f6f03b723b7b97be48bf8eff3363fbef033",
+    "THIRD_PARTY_NOTICES.md": "bf036dfb9a685d9d265f36dd388dd56c1c55f8c1595901fb44be8abd435fc2ec"
+  },
   "archive": "gold-miner-extension-0.1.1.zip",
-  "archive_sha256": "d61aa3e1cf33eca312ee328971f4e629c9454e52318a0aaa965234b3130ede08",
+  "archive_sha256": "b0842400ae2877c29242b20d114b80ecc7eafa8ee9635649ea4fe9ab38f5b26d",
   "browser_installation": "not-run",
   "release_status": "experimental-not-beta"
 }
