@@ -4,11 +4,11 @@ Discover useful tools and code worth learning, in your own language, directly on
 
 [中文](README.md) · [Getting started](docs/guides/getting-started.md) · [Work-package status](docs/work-packages/STATUS.md)
 
-**Version 0.1.1 is an engineering trial.** Automated regressions pass. Chrome installation, cross-language gains, human exploration and continued usage remain unverified. Historical native-search, README-field and six gtx translation records do not establish product effectiveness.
+**Version 0.1.2 is an engineering trial.** Automated regressions pass. Chrome installation, cross-language gains, human exploration and continued usage remain unverified. Historical native-search, README-field and six gtx translation records do not establish product effectiveness.
 
 ## Use
 
-1. Clone this repository or unzip the [0.1.1 trial package](dist/gold-miner-extension-0.1.1.zip).
+1. Clone this repository or unzip the [0.1.2 trial package](dist/gold-miner-extension-0.1.2.zip).
 2. Enable Developer mode at `chrome://extensions`, then load `extension/` or the extracted folder. Chrome 102 or later.
 3. Open a GitHub search or repository page. Click the extension icon to choose reading language and interests.
 4. Optionally enter your own OpenAI-compatible endpoint, model ID and key, and grant access to that endpoint. Without a model, limited glossary expansions and public search remain available.

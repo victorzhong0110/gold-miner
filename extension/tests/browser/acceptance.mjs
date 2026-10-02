@@ -18,7 +18,7 @@ async function check(name, fn) {
   await fn(); results.push({name, status:'passed', evidence_kind:'chromium-with-fixture-network'});
 }
 try {
-  await fs.cp(path.join(root, 'extension'), ext, {recursive:true});
+  await fs.cp(path.join(root, 'extension'), ext, {recursive:true, filter: source => !source.includes(path.sep + 'tests')});
   for (const name of ['src/background.js','src/shared.js','src/content.js','src/options.js']) {
     const source = await fs.readFile(path.join(root,'extension',name));
     assert.deepEqual(await fs.readFile(path.join(ext,name)), source);
@@ -46,7 +46,8 @@ try {
     options.on('pageerror', e => errors.push(e.message));
     await options.goto(`chrome-extension://${id}/src/options.html`);
     await options.waitForFunction(() => typeof chrome?.runtime?.sendMessage === 'function');
-    await options.evaluate(() => chrome.runtime.sendMessage({type:'GET_PUBLIC_SETTINGS'}));
+    const publicReply = await options.evaluate(() => chrome.runtime.sendMessage({type:'GET_PUBLIC_SETTINGS'}));
+    assert.equal(publicReply.code, 'ok', 'options context must reach worker');
     return {context, worker, options};
   }
   async function calls(worker) { return worker.evaluate(() => globalThis.__fixtureCalls.length); }
@@ -57,7 +58,8 @@ try {
     await a.options.selectOption('#readingLang','en');
     await a.options.fill('#interests','clipboard, rss');
     await a.options.click('#save');
-    await a.options.waitForFunction(() => document.querySelector('#status').textContent.includes('已保存'));
+    await a.options.waitForFunction(() => document.querySelector('#status').textContent.length > 0);
+    assert((await a.options.locator('#status').textContent()).includes('已保存'), 'settings UI response: ' + await a.options.locator('#status').textContent());
     const state = await a.worker.evaluate(() => chrome.storage.local.get(['readingLang','interests']));
     assert.equal(state.readingLang,'en'); assert.deepEqual(state.interests,['clipboard','rss']);
   });
