@@ -410,7 +410,7 @@
       "id": "WP6-03",
       "title": "Beta交付",
       "status": "partial",
-      "evidence": "0.1.3 修复存储并发与反馈失败界面；新版 ZIP 将按已存在源码提交构建，浏览器CI待跑；仍为试验包",
+      "evidence": "0.1.3 源码/ZIP/许可哈希一致，9项Chromium fixture验收通过；真人试用未验收，仍为试验包",
       "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
@@ -479,16 +479,19 @@
     "7": "closed/merged",
     "8": "closed/merged",
     "9": "closed/merged",
-    "10": "closed/merged"
+    "10": "closed/merged",
+    "12": "closed/merged"
   },
   "current_owner_instruction": "2026-10-02: leave decisions and personal operations to owner",
   "owner_checklist": "docs/guides/owner-stage-checklist.md",
   "browser_automation": {
     "status": "passed",
-    "run_id": 37026709955,
-    "checks": 8,
-    "report": "docs/reports/browser-acceptance-2026-10-02.json",
-    "scope": "actual Chromium; fixture DOM/network; 2 independent profiles; no human session"
+    "run_id": 37056784869,
+    "checks": 9,
+    "report": "docs/reports/browser-acceptance-2026-10-03.json",
+    "scope": "actual Chromium; fixture DOM/network; 2 independent profiles; no human session",
+    "tested_pr_head_sha": "08bd4783b86521510bea196f72ece5465091b551",
+    "production_scripts_match_package": true
   },
   "license_decision": {
     "license": "MIT",
@@ -499,7 +502,7 @@
   "continuation_source_sha": "e92d008c1600c0a1d9ad2bd2e555b08f70fd8f9a",
   "continuation_branch": "work/stage-records-and-storage-2026-10-03",
   "trial_version": "0.1.3",
-  "continuation_delivery": "pending PR and CI",
+  "continuation_delivery": "https://github.com/victorzhong0110/gold-miner/pull/13 (canonical GitHub merge state)",
   "previous_handoff": {
     "pr": 12,
     "merge_sha": "96318eab0c4f7d90f75bcf27b4073cb4307c7d25",
@@ -511,7 +514,7 @@
   "current_work_branch": "work/stage-records-and-storage-2026-10-03",
   "storage_ordering": {
     "offline": "passed",
-    "browser": "pending CI",
+    "browser": "passed",
     "scope": "feedback, settings, cache, import, clear, opted-in history"
   },
   "e2_recording": {

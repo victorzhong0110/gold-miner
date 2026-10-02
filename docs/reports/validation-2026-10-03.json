@@ -9,7 +9,14 @@
   "network_calls_in_tests": 0,
   "live_model": "not-run",
   "human_sessions": "not-run",
-  "browser_acceptance": "pending CI",
+  "browser_acceptance": {
+    "status": "passed",
+    "checks": 9,
+    "report": "browser-acceptance-2026-10-03.json",
+    "run_id": 37056784869,
+    "scope": "actual Chromium with fixture DOM/network; no human/live model evaluation",
+    "production_scripts_match_package": true
+  },
   "concurrency_regressions_failed_before_fix": 4,
   "log_sha256": "415b361af9ee959dacf0869a35d89ed3a9fc6b9575bc8377564c0ae7f4b8c66d",
   "build": {

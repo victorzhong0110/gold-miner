@@ -1,6 +1,6 @@
 # 本阶段交给发起人的操作与决定
 
-2026-10-02。统一 MIT 已按你的选择落实。以下事项需要你的账户、体验、参与者或判断；
+更新于2026-10-03。统一 MIT 已按你的选择落实。以下事项需要你的账户、体验、参与者或判断；
 自动测试和合并代码不能代替它们。没有要求你重新审查工程细节或重复批准已授权合并。
 
 | 顺序 | 你的操作 | 记录与完成标准 |
@@ -14,7 +14,7 @@
 
 ```sh
 python3 scripts/stage_records.py discovery experiments/E5-local-reuse/discovery-entries.jsonl
-python3 scripts/stage_records.py diary /path/to/your-local-diary.jsonl --timezone Asia/Taipei --timezone Asia/Taipei
+python3 scripts/stage_records.py diary /path/to/your-local-diary.jsonl --timezone Asia/Taipei
 python3 scripts/stage_records.py session /path/to/your-local-sessions.jsonl
 python3 scripts/stage_records.py candidate /path/to/your-local-candidates.jsonl
 ```

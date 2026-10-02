@@ -4,7 +4,7 @@ Discover useful tools and code worth learning, in your own language, directly on
 
 [中文](README.md) · [Getting started](docs/guides/getting-started.md) · [Work-package status](docs/work-packages/STATUS.md)
 
-**Version 0.1.3 is an engineering trial.** 267 Python and 53 extension regressions pass. New 0.1.3 browser concurrency checks await CI; [the prior 0.1.2 Chromium fixture checks](docs/reports/browser-acceptance-2026-10-02.json) passed. Personal Chrome installation, live cross-language gains, human exploration and continued usage remain unverified. Historical native-search, README-field and six gtx translation records do not establish product effectiveness.
+**Version 0.1.3 is an engineering trial.** 267 Python and 53 extension regressions pass. [All nine 0.1.3 Chromium fixture checks](docs/reports/browser-acceptance-2026-10-03.json) pass, including concurrent storage ordering. Personal Chrome installation, live cross-language gains, human exploration and continued usage remain unverified. Historical native-search, README-field and six gtx translation records do not establish product effectiveness.
 
 ## Use
 
