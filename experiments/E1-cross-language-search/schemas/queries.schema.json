@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "type": "object",
+  "title": "E1 generated or original query row",
+  "required": ["run_id", "task_id", "arm", "variant_query", "variant_lang", "api_query", "source"],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "arm": {"type": "string", "enum": ["A", "B", "C", "M", "D"]},
+    "variant_query": {"type": "string", "minLength": 1},
+    "variant_lang": {"type": "string", "enum": ["zh", "en"]},
+    "api_query": {"type": "string", "minLength": 1},
+    "source": {"type": "string", "enum": ["original", "fixture", "model", "owner-blocked"]}
+  }
+}

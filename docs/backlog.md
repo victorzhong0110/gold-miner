@@ -1,9 +1,10 @@
 # 黄金矿工当前待办
 
-更新：2026-09-17。依据：[v0.4](plan/v0.4.md)。
+更新：2026-09-17。状态行复核：2026-09-22。依据：[v0.4](plan/v0.4.md)。
 OpenCode GUI 推进更新：2026-09-18（分支 `opencode/gui-w1-w8`）。W1–W3 有产物；W4 未跑评估；W5 等发起人短会话；W6/W7 仅准备；W8 为未充分证据下的决策草稿。证据见 `experiments/E1-cross-language-search/W1-report.md`、`experiments/E1-cross-language-search/w2-source-check-2026-09-17.md`、`experiments/E1-cross-language-search/scripts/e1_minimal_runner.py`、`experiments/E1-cross-language-search/w4-first-round-status-2026-09-17.md`、`experiments/E2-open-ended-discovery/session-setup.md`、`docs/reports/w6-baseline-connectivity-2026-09-17.md`/`docs/reports/w7-metadata-e8-prep-2026-09-17.md`/`docs/reports/w8-first-round-decision-2026-09-17.md`。
 Owner-independent 更新 2026-09-17：新增 A-arm 批处理编排（`scripts/e1_batch.py` 干跑可用，B/C/M/D 需显式变体或模型故仍拒绝伪造）；W5 仍阻塞（无发起人短会话发生）；个人 API 侧（W3 模型侧、W6 模型探测、D 对照）仍阻塞（无本地个人配置，零新模型请求）；W4 仍未运行（eval 未冻结、无人工判定）。
-本文是可直接执行的工作索引；未创建对应 GitHub issues，未启动下面的实验与开发。
+2026-09-22 证据在未合并分支，不在本文件所在的主分支工作区：W4 PR #5 的 A 组检索与代理判定已写入 `runs/2026-09-22-w4-first/`，B/C/M 请求为 0，D 与 E9 未运行；W6 PR #7 的 gtx 六条译文与技术核对已写入，个人模型未运行；W7 PR #6 只准备元数据，E8 复测未运行；W5 仍无会话。W8 见 `docs/reports/w8-first-round-decision-2026-09-22.md`，搜索、推荐、翻译均为未决定。09-17 草稿保留。
+本文是可直接执行的工作索引。未创建对应 GitHub issues。主分支工作区不包含上述运行目录。
 
 状态：完成 / 可开始 / 有依赖 / 条件性 / 暂缓。“可开始”不等于本次已经运行。每次完成工作包后，记录提交或报告路径，不能只改勾选。
 
@@ -15,11 +16,11 @@ Owner-independent 更新 2026-09-17：新增 A-arm 批处理编排（`scripts/e1
 | W1 | 完成（材料） | 固定阅读对照、写独立评估材料 | 现成工具、公开仓库、兴趣 | 设置记录；开放题与种子诊断分开；运行前冻结 |
 | W2 | 完成（探测） | 候选来源与配额检查 | GitHub 公开来源 | 默认字段/README 小探测、失败与未知；无凭据路径的边界 |
 | W3 | 完成（脚本） | 最小 E1 脚本与结构化记录 | W1/W2；模型部分需 W6 连接配置 | A/B/C/M 组、预算、来源、去重、取消与错误记录 |
-| W4 | 有依赖（未运行） | E1 首轮；必要时做 E9 | W3 和冻结材料 | 未运行：eval 未冻结、无人工判定；A-arm 编排干跑就绪，B/C/M 待显式变体或模型 |
-| W5 | 有依赖（仍阻塞：无发起人短会话） | E2a 人工候选价值实验 | W1；发起人短会话反馈 | 仍阻塞：尚无参与者/起点/候选/反馈/耗时；同等翻译、顺序记录等条件保持待运行 |
-| W6 | 部分（8 条仓库内片段为 smoke/冒烟集，对照协议已加，对照输出仍未运行；个人模型探测仍阻塞） | 现成翻译检查、个人模型最小请求 | 公开片段；请求部分需本地个人配置 | 公开基线冒烟已记；片段冻结见 `experiments/E3-faithful-reading/fragments-2026-09-17.md`（**smoke/冒烟 only**：核 excerpt＋label 管道，不是真实阅读场景覆盖；正式对照需另取真实项目材料，不编造伪项目片段），对照协议与空模板见 `experiments/E3-faithful-reading/translation-contrast-2026-09-18.md`（翻译输出未运行，工具版本未知）；模型端点/余额/延迟未知，零新模型请求，无费用 |
-| W7 | 部分（文案准备） | 元数据与许可交付准备、E8 复测 | 名称文案；应用设置需相应权限 | 文案及应用状态、许可证备选、真实搜索记录 |
-| W8 | 草稿（证据不足；2026-09-18 已加 W6 证据追记，结论不变） | 首轮投入决策 | W4/W5，参考 W6 | 搜索/推荐/翻译分别继续、缩小或暂停，写出未验证项；2026-09-18 追记见 `docs/reports/w8-first-round-decision-2026-09-17.md` §5（片段冻结＋对照协议已落地，对照输出仍未运行，模型探测仍阻塞） |
+| W4 | 部分（未合并 PR #5：A 组已检索；B/C/M 请求 0；D、E9 未运行） | E1 首轮；必要时做 E9 | W3 和冻结材料 | 证据在 `cursor/w4-e1-first-round-4e4f` 的 `experiments/E1-cross-language-search/runs/2026-09-22-w4-first/`。开放题 A 组 20 次成功；种子 A 组成功 7、失败 1（403，不补剩余额度）。B/C/M 各 20 条 blocked。判定 45 条，新颖性与愿意继续看均为 unknown。主分支仍无该运行目录 |
+| W5 | 有依赖（仍阻塞：无发起人短会话；2026-09-22 未运行） | E2a 人工候选价值实验 | W1；发起人短会话反馈 | 未运行：无会话记录，无参与者、起点、候选、反馈或耗时；同等翻译与顺序记录保持待运行 |
+| W6 | 部分（主分支 09-18 对照模板仍未运行；未合并 PR #7 上 gtx 六条已有译文与技术核对；个人模型未运行） | 现成翻译检查、个人模型最小请求 | 公开片段；请求部分需本地个人配置 | 主分支冒烟集与空模板仍见 `fragments-2026-09-17.md`、`translation-contrast-2026-09-18.md`。PR #7 `runs/2026-09-22-w6/`：gtx 六次 HTTP 200；P-01、P-04、P-05 改变理解；P-02、P-03、P-06 未记成严重误译；沉浸式翻译与 Chrome 界面未运行。E6 `probe.jsonl` 状态为未运行，发送 0，用量与延迟为未知 |
+| W7 | 部分（未合并 PR #6：元数据草案已备；E8 复测未运行） | 元数据与许可交付准备、E8 复测 | 名称文案；应用设置需相应权限 | 草案在 `cursor/w7-release-metadata-e8-6a3c`。简介与 topics 未写入仓库设置，仓库名未改，未添加 LICENSE。23 条入口查询状态均为未运行。09-17 基线与 09-18 的 403 记录未覆盖 |
+| W8 | 报告已写（搜索、推荐、翻译均为未决定；证据不足） | 首轮投入决策 | W4/W5，参考 W6 | `docs/reports/w8-first-round-decision-2026-09-22.md`。09-17 草稿保留不改。三方向未在继续、缩小、暂停中选定 |
 
 默认按 W1→W2→W3→W4→W5→W6→W7→W8 执行；W6 的最小连接检查可以提前。W5 不要求 E1 成功，模型配置未就绪时也可先做 W5、W7。
 

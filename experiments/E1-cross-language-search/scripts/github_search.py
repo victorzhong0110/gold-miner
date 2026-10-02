@@ -63,7 +63,7 @@ def _map_property(prop: Any) -> str:
 def extract_matched_fields(item: dict) -> list[str]:
     """Map ``item['text_matches'][*]['property']`` to name/description/readme/unknown.
 
-    Missing or empty ``text_matches`` yields ``["unknown"]`` per protocol 7.
+    Missing or empty ``text_matches`` yields ``["unknown"]`` per protocol section 5.
     Result is de-duplicated, first-seen order preserved.
     """
     text_matches = item.get("text_matches") if isinstance(item, dict) else None
@@ -84,7 +84,7 @@ def parse_repo_item(item: dict) -> dict:
     """Parse one Search API ``items[]`` entry into a stable dict.
 
     Keeps ``full_name`` exactly as returned; adds ``canonical`` for dedup,
-    ``matched_fields`` for protocol 7, plus ``stars`` alias for convenience.
+    ``matched_fields`` for protocol section 5, plus ``stars`` alias for convenience.
     """
     if not isinstance(item, dict):
         raise TypeError("item must be dict")

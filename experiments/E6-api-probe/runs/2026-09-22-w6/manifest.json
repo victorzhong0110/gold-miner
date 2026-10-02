@@ -1,0 +1,11 @@
+{
+  "run_id": "2026-09-22-w6-e6",
+  "personal_model_request": "未运行",
+  "reason": "OPENAI_API_KEY、OPENAI_BASE_URL、OPENAI_MODEL 均未设置",
+  "elapsed_ms": "未知",
+  "usage": "未知",
+  "model_output": "未运行",
+  "sent_requests": 0,
+  "account_quota": "未知",
+  "note": "没有个人配置，不写配额、延迟或模型输出。记录格式由 e6_probe.py 与测试覆盖。"
+}

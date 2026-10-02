@@ -1,0 +1,310 @@
+{
+  "version": "glossary-mechanical-v1",
+  "query_source": "glossary-unverified-mechanical-v1",
+  "terms_path": "experiments/E9-glossary/terms.yaml",
+  "model_requests": 0,
+  "synonym_guarantee": false,
+  "note": "未验证词表的机械匹配。未覆盖、有剩余词或歧义则该任务 B/C/M 为空，不得补造查询。这不是同义结论，也不是模型改写。",
+  "tasks": [
+    {
+      "task_id": "zh2en-eval-01",
+      "direction": "zh2en",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "zh2en-eval-02",
+      "direction": "zh2en",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "zh2en-eval-03",
+      "direction": "zh2en",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "zh2en-eval-04",
+      "direction": "zh2en",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "zh2en-eval-05",
+      "direction": "zh2en",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "zh2en-eval-06",
+      "direction": "zh2en",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "zh2en-eval-07",
+      "direction": "zh2en",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "zh2en-eval-08",
+      "direction": "zh2en",
+      "status": "blocked",
+      "reason": "glossary_remainder",
+      "matched_term_id": "static-site-generator",
+      "remainder": "不要node",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "zh2en-eval-09",
+      "direction": "zh2en",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "zh2en-eval-10",
+      "direction": "zh2en",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "en2zh-eval-01",
+      "direction": "en2zh",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "en2zh-eval-02",
+      "direction": "en2zh",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "en2zh-eval-03",
+      "direction": "en2zh",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "en2zh-eval-04",
+      "direction": "en2zh",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "en2zh-eval-05",
+      "direction": "en2zh",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "en2zh-eval-06",
+      "direction": "en2zh",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "en2zh-eval-07",
+      "direction": "en2zh",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "en2zh-eval-08",
+      "direction": "en2zh",
+      "status": "blocked",
+      "reason": "glossary_remainder",
+      "matched_term_id": "self-hosting",
+      "remainder": "wecombotnosaas",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "en2zh-eval-09",
+      "direction": "en2zh",
+      "status": "blocked",
+      "reason": "glossary_remainder",
+      "matched_term_id": "self-hosting",
+      "remainder": "IwantatoolthatarchivesmyWeibopostsincludingimagesletsmesearchthemlocallyandisnotabrowserextension",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    },
+    {
+      "task_id": "en2zh-eval-10",
+      "direction": "en2zh",
+      "status": "blocked",
+      "reason": "glossary_uncovered",
+      "matched_term_id": null,
+      "remainder": "",
+      "ambiguous_term_ids": [],
+      "model_requests": 0,
+      "arms": {
+        "B": [],
+        "C": [],
+        "M": []
+      }
+    }
+  ]
+}

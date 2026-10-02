@@ -1,0 +1,91 @@
+{
+  "_comment": "Hand-written fixture variants for offline harness. source=fixture. Not a model run. Not live GitHub.",
+  "zh2en-dev-01": {
+    "B": {
+      "variants": [
+        {
+          "variant_query": "clipboard history tool",
+          "variant_lang": "en",
+          "api_query": "clipboard history tool"
+        }
+      ]
+    },
+    "C": {
+      "variants": [
+        {
+          "variant_query": "剪贴板历史 工具",
+          "variant_lang": "zh",
+          "api_query": "剪贴板历史 工具"
+        },
+        {
+          "variant_query": "clipboard history manager",
+          "variant_lang": "en",
+          "api_query": "clipboard history manager"
+        },
+        {
+          "variant_query": "clipboard manager search paste",
+          "variant_lang": "en",
+          "api_query": "clipboard manager search paste"
+        }
+      ]
+    },
+    "M": {
+      "variants": [
+        {
+          "variant_query": "剪贴板 历史 记录 工具",
+          "variant_lang": "zh",
+          "api_query": "剪贴板 历史 记录 工具"
+        },
+        {
+          "variant_query": "剪贴板 管理器 可搜索",
+          "variant_lang": "zh",
+          "api_query": "剪贴板 管理器 可搜索"
+        }
+      ]
+    }
+  },
+  "en2zh-dev-01": {
+    "B": {
+      "variants": [
+        {
+          "variant_query": "Windows 剪贴板历史 工具",
+          "variant_lang": "zh",
+          "api_query": "Windows 剪贴板历史 工具"
+        }
+      ]
+    },
+    "C": {
+      "variants": [
+        {
+          "variant_query": "clipboard history manager windows",
+          "variant_lang": "en",
+          "api_query": "clipboard history manager windows"
+        },
+        {
+          "variant_query": "Windows 剪贴板 历史",
+          "variant_lang": "zh",
+          "api_query": "Windows 剪贴板 历史"
+        },
+        {
+          "variant_query": "剪贴板 管理 历史记录",
+          "variant_lang": "zh",
+          "api_query": "剪贴板 管理 历史记录"
+        }
+      ]
+    },
+    "M": {
+      "variants": [
+        {
+          "variant_query": "windows clipboard history search",
+          "variant_lang": "en",
+          "api_query": "windows clipboard history search"
+        },
+        {
+          "variant_query": "windows clipboard manager native",
+          "variant_lang": "en",
+          "api_query": "windows clipboard manager native"
+        }
+      ]
+    }
+  }
+}

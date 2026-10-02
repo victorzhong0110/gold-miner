@@ -1,0 +1,1 @@
+I'm trying to ignore Adobe Indesign copies because Maccy copies blank items. I tried to use "com.adobe.indesign" in Maccy's preferences but it's still not ignoring the copies and I see blank items in Maccy. How can I ignore Adobe pasteboard types?

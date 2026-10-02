@@ -1,38 +1,37 @@
 # 黄金矿工 Gold Miner
 
-跨语言 GitHub 项目发现与自然探索。用自己的语言发现、阅读、继续探索值得使用或学习的开源项目；首轮中英双向，计划以 Chrome 扩展在 GitHub 原页面内工作。
+在 GitHub 原页面里，用自己的语言发现值得使用或学习的开源项目。Chrome MV3 试验扩展支持中英搜索、仓库页探索、兴趣与反馈、本地缓存复用；模型 API 由使用者自备。
 
-[English](README.en.md)
+[English](README.en.md) · [10 分钟上手](docs/guides/getting-started.md) · [45 项工作包状态](docs/work-packages/STATUS.md)
 
-**当前处于产品验证规划阶段，尚无可安装扩展，也没有产品效果结论。** 本轮更新了 v0.4 行动计划、讨论来源、E1 搜索协议与 E2 无目标发现协议。尚未运行这两项实验或调用个人模型 API。
+**当前版本 0.1.1，工程试验包。** 自动化回归通过；Chrome 实际安装、跨语言增益、真人探索和持续使用尚未验收。已有 A 组搜索、README 字段配对及六条 gtx 翻译记录，不能由它们推出产品有效。
 
-## 从这里开始
+## 使用
 
-- [完整行动计划 v0.4](docs/plan/v0.4.md)：目标与约束、现在可做的工作包、条件满足后再做的工作、全部实验、工期、待定事项与暂停条件。
-- [自动翻译与推荐：讨论及想法来源](docs/research/2026-09-17-translation-and-discovery.md)：被通用 AI 替代的风险、TikTok 机制借鉴、语言障碍与兴趣反馈、共享发现条目，以及对 Claude 评审的处理。
-- [当前待办](docs/backlog.md)：执行顺序、状态和依赖；未创建对应 GitHub issues。
+1. 克隆本仓库，或解压 [0.1.1 试验包](dist/gold-miner-extension-0.1.1.zip)。
+2. 在 `chrome://extensions` 开启开发者模式，加载 `extension/` 或解压后的目录。Chrome 102 及以上。
+3. 打开 GitHub 搜索或仓库页。点击扩展图标进入设置，选择阅读语言和兴趣。
+4. 可选配置自己的 OpenAI 兼容 API 端点、模型和密钥，并授权该端点。留空时使用有限词表和公开搜索。
 
-## 下一步
+取消和关闭会停止后续请求；已发出的模型调用可能计费。个人偏好和密钥留在本机，导出包不含密钥。许可证仍待用户决定，尚未发布商店版本。
 
-1. 固定阅读对照与独立评估材料，检查真实候选来源。
-2. 用小脚本比较原生搜索、简单译词、跨语言扩展与同语言等预算扩展。
-3. 在同样好的翻译条件下，比较照常浏览和少量辅助推荐；先人工探索候选价值，再检验自动方法。
-4. 根据两条路径的实际证据选择最小扩展范围；随后验证安装、配置、费用、自然度和复用。
+## 开发与验证
 
-工作名沿用黄金矿工 / Gold Miner。名称竞争需要继续检查，改名不作为实验前置条件。搜索和无目标发现分别判断；中文 README 的比例不决定项目是否继续。
+```bash
+python3 scripts/run_offline_suite.py
+bash extension/scripts/build.sh
+```
 
-## 协议与参考
+构建产物与源码逐文件比对；`dist/build-manifest.json` 记录源码 SHA 和 ZIP 哈希。E1 生成→检索桥见 `experiments/E1-cross-language-search/scripts/e1_pipeline.py`；盲判遮蔽与回填见同目录 `blind_eval.py`。普通测试不请求付费 API。
 
-- [E1 跨语言搜索](experiments/E1-cross-language-search/protocol.md)；[任务文件](experiments/E1-cross-language-search/queries.yaml)目前只有开发题，评估批次尚未冻结。
-- [E2 无目标发现](experiments/E2-open-ended-discovery/protocol.md)；完整自然度随后由 E4 验证。
-- [工程检查](docs/engineering/prerequisites.md)；[模型配置方案](docs/decisions/0002-model-endpoint-config.md)。
-- [E8 首次探测](experiments/E8-discoverability/2026-09-17-probe.md)与[后续模板](experiments/E8-discoverability/template.md)。
-- [名称记录与元数据文案](docs/decisions/0001-project-name.md)；[许可证备选](docs/decisions/0003-license.md)，具体许可证尚未落地。
-- [EhViewer 研究](docs/research/ehviewer-cross-language-search.md)：概念映射与词表启发，包含代码和数据的复用边界。
-- 历史：[v0.3](docs/plan/v0.3.md)、[Claude 评审](docs/reviews/2026-09-17-v0.3-review.md)。它们保留原文；当前执行顺序以 v0.4 为准。
+## 项目资料
 
-## 边界
+- [阶段报告与未完成项](docs/reports/2026-10-02-phase-review.md)
+- [完整 WP1–WP6 任务定义](docs/work-packages/README.md)，覆盖 W0–W14、E1–E9。
+- [E1 搜索协议](experiments/E1-cross-language-search/protocol.md) · [E2 探索协议](experiments/E2-open-ended-discovery/protocol.md)
+- [配置](docs/guides/config.md) · [实验操作](docs/engineering/offline-operator.md)
+- [讨论来源与产品思考](docs/research/2026-09-17-translation-and-discovery.md) · [EhViewer 研究来源](docs/research/ehviewer-cross-language-search.md)
+- [名称记录](docs/decisions/0001-project-name.md) · [许可备选](docs/decisions/0003-license.md)
+- 历史计划：[v0.3](docs/plan/v0.3.md)、[v0.4](docs/plan/v0.4.md)、[v0.5](docs/plan/v0.5-compressed-wp.md)。
 
-源码计划开源，短期不以盈利为目的。模型调用由使用者自备 API，项目不承担公共推理费用。个人偏好优先本地保存，贡献共享内容需主动启用；没有共享译文的项目仍须有发现路径。
-
-先采用现成翻译作为强对照，仅为真实缺口补充能力。独立发现网站、全量爬取、大型推荐模型和公共模型代理不在首轮范围。
+项目不提供公共模型代理或推理补贴。不设 stars 排除下限；先使用现成翻译，是否补充翻译能力由真实缺口决定。独立网站、全量 GitHub 抓取和大型推荐模型不在本阶段范围。

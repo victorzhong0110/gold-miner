@@ -1,0 +1,52 @@
+{
+  "_comment": "Offline fixture. source=fixture. Not a live GitHub API dump claimed as current.",
+  "repo": {
+    "full_name": "p0deje/Maccy",
+    "description": "Lightweight clipboard manager for macOS",
+    "topics": ["clipboard", "macos", "swift"]
+  },
+  "searches": {
+    "clipboard": {
+      "items": [
+        {
+          "full_name": "p0deje/Maccy",
+          "stargazers_count": 21637,
+          "description": "Lightweight clipboard manager for macOS",
+          "html_url": "https://github.com/p0deje/Maccy"
+        },
+        {
+          "full_name": "EcoPasteHub/EcoPaste",
+          "stargazers_count": 100,
+          "description": "clipboard manager",
+          "html_url": "https://github.com/EcoPasteHub/EcoPaste"
+        },
+        {
+          "full_name": "Clipy/Clipy",
+          "stargazers_count": 50,
+          "description": "clipboard history",
+          "html_url": "https://github.com/Clipy/Clipy"
+        }
+      ]
+    },
+    "macos": {
+      "items": [
+        {
+          "full_name": "Clipy/Clipy",
+          "stargazers_count": 50,
+          "description": "clipboard history",
+          "html_url": "https://github.com/Clipy/Clipy"
+        }
+      ]
+    },
+    "swift": {
+      "items": [
+        {
+          "full_name": "EcoPasteHub/EcoPaste",
+          "stargazers_count": 100,
+          "description": "clipboard manager",
+          "html_url": "https://github.com/EcoPasteHub/EcoPaste"
+        }
+      ]
+    }
+  }
+}
