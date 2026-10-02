@@ -5,8 +5,9 @@ from datetime import date, datetime
 import json
 import re
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-REPO = re.compile(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z')
+REPO = re.compile(r'[A-Za-z0-9][A-Za-z0-9-]{0,38}/(?!(?:\.|\.\.)$)[A-Za-z0-9_.-]{1,100}\Z')
 SHA = re.compile(r'[0-9a-f]{40}\Z')
 ACTIONS = {'seen', 'saved', 'tried', 'learned', 'revisited', 'no-opportunity', 'not-used'}
 
@@ -53,18 +54,23 @@ def discovery(row):
         raise ValueError('source must locate a file at the recorded repository commit')
     if any(x in source['url'] for x in ['?', '#', '..', '\\']):
         raise ValueError('ambiguous source path')
-    datetime.fromisoformat(source['checked_at'].replace('Z','+00:00'))
+    from e2_records import timestamp
+    timestamp(source['checked_at'])
     text(source['license'],'source.license')
     return row
 
 
-def diary(row):
+def diary(row, today=None):
     required = {'participant','date','reading_lang','action','repo','reason','minutes','visible_cost'}
     shape(row, required, required)
     if not re.fullmatch(r'P[0-9]{2,4}', row['participant']):
         raise ValueError('use pseudonymous participant ID such as P01')
-    day = date.fromisoformat(row['date'])
-    if day > date.today(): raise ValueError('cannot record a future observation')
+    try:
+        if not isinstance(row['date'],str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}',row['date']): raise ValueError()
+        day = date.fromisoformat(row['date'])
+    except (ValueError, TypeError):
+        raise ValueError('date: valid YYYY-MM-DD required') from None
+    if day > (today or date.today()): raise ValueError('cannot record a future observation')
     if row['reading_lang'] not in {'zh','en'} or row['action'] not in ACTIONS:
         raise ValueError('unsupported language or action')
     if row['repo'] is not None and not REPO.fullmatch(row['repo']):
@@ -79,11 +85,11 @@ def diary(row):
     return row
 
 
-def summarize(rows):
+def summarize(rows, today=None):
     participants = {}
     seen = set()
     for row in rows:
-        diary(row)
+        diary(row, today=today)
         key = (row['participant'],row['date'],row['repo'],row['action'])
         if key in seen: raise ValueError('duplicate observation; do not inflate counts')
         seen.add(key)
@@ -102,19 +108,30 @@ def summarize(rows):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('kind', choices=['discovery','diary'])
+    parser.add_argument('kind', choices=['discovery','diary','session','candidate'])
     parser.add_argument('input', type=Path)
+    parser.add_argument('--timezone', help='IANA timezone for diary calendar dates; default: local system timezone')
     args = parser.parse_args()
+    from e2_records import session, candidate, session_summary
+    validators = {'discovery':discovery,'session':session,'candidate':candidate}
     rows = []
     try:
+        today = datetime.now(ZoneInfo(args.timezone)).date() if args.timezone else date.today()
+        validators['diary'] = lambda row: diary(row,today=today)
         for number, line in enumerate(args.input.read_text().splitlines(),1):
             if not line.strip(): continue
             row = json.loads(line)
-            (discovery if args.kind == 'discovery' else diary)(row)
+            validators[args.kind](row)
             rows.append(row)
-        output = {'valid_entries':len(rows), 'public_contribution':False} if args.kind == 'discovery' else summarize(rows)
+        if args.kind == 'diary':
+            output=summarize(rows,today=today)
+            output['timezone']=args.timezone or 'system-local'
+        elif args.kind == 'session': output=session_summary(rows)
+        else: output={'valid_entries':len(rows),'public_contribution':False}
         print(json.dumps(output,ensure_ascii=False,indent=2))
-    except (ValueError, TypeError, KeyError, AttributeError) as error:
+    except ZoneInfoNotFoundError:
+        parser.exit(1, "invalid diary timezone: use an IANA timezone name\n")
+    except (ValueError, TypeError, KeyError, AttributeError, OSError) as error:
         parser.exit(1, f'invalid record at or before line {locals().get("number", 0)}: {error}\n')
 
 if __name__ == '__main__': main()

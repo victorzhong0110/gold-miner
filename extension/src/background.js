@@ -41,9 +41,23 @@ if (typeof importScripts === "function") {
     const inflight = new Map();
     let isolationState = "pending";
     let isolationPromise;
-    let cacheWrites = Promise.resolve();
+    let localWrites = Promise.resolve();
     let dataEpoch = 0;
     let githubBackoffUntil = 0;
+
+    // All read-modify-write mutations share an ordering, including clear/import.
+    // A failed operation is reported to its caller but does not block later writes.
+    function enqueueLocalWrite(work) {
+      const write = localWrites.then(work);
+      localWrites = write.catch(() => {});
+      return write;
+    }
+
+    function boundCache(cache) {
+      const keys = Object.keys(cache);
+      for (const old of keys.slice(0, Math.max(0, keys.length - 100))) delete cache[old];
+      return cache;
+    }
 
     function isolationOk() {
       return isolationState === "ok";
@@ -457,15 +471,13 @@ if (typeof importScripts === "function") {
     }
 
     async function persistCacheEntry(state, key, entry, job) {
-      const write = cacheWrites.then(async () => {
+      await enqueueLocalWrite(async () => {
         if (job.budget.cancelled || job.epoch !== dataEpoch) return;
         const latest = await loadState();
         if (job.budget.cancelled || job.epoch !== dataEpoch) return;
         const cache = Object.assign({}, latest.cache);
         cache[key] = entry;
-        const keys = Object.keys(cache);
-        for (const old of keys.slice(0, Math.max(0, keys.length - 100))) delete cache[old];
-        await chromeApi.storage.local.set({cache});
+        await chromeApi.storage.local.set({cache: boundCache(cache)});
         if (job.budget.cancelled) {
           const current = await loadState();
           const cleaned = Object.assign({}, current.cache);
@@ -473,8 +485,6 @@ if (typeof importScripts === "function") {
           await chromeApi.storage.local.set({cache: cleaned});
         }
       });
-      cacheWrites = write.catch(() => {});
-      await write;
     }
 
     function makeCacheEntry(state, request, result, contentVersion) {
@@ -547,8 +557,13 @@ if (typeof importScripts === "function") {
           job
         );
         if (state.historyEnabled && pageRepo) {
-          const hist = (state.pageHistory || []).concat([pageRepo]).slice(-30);
-          await chromeApi.storage.local.set({ pageHistory: hist });
+          await enqueueLocalWrite(async () => {
+            if (job.budget.cancelled || job.epoch !== dataEpoch) return;
+            const latest = await loadState();
+            if (!latest.historyEnabled || job.budget.cancelled || job.epoch !== dataEpoch) return;
+            const hist = (latest.pageHistory || []).concat([pageRepo]).slice(-30);
+            await chromeApi.storage.local.set({ pageHistory: hist });
+          });
         }
       }
       if (job.budget.cancelled) return {code: "cancelled", jobId, candidates: []};
@@ -583,69 +598,75 @@ if (typeof importScripts === "function") {
         return { code: "ok", settings: publicSettings(await loadState()) };
       }
       if (message.type === "SAVE_SETTINGS") {
-        const isolated = await lockStorage();
-        const incoming = (message.settings || {});
-        const interests = Array.isArray(incoming.interests)
-          ? incoming.interests
-              .map(function (s) {
-                return S.sanitizeRemoteText(String(s));
-              })
-              .filter(Boolean)
-              .slice(0, 12)
-          : [];
-        const patch = {
-          readingLang: incoming.readingLang === "en" ? "en" : "zh",
-          interests: interests,
-          personalization: incoming.personalization !== false,
-          historyEnabled: Boolean(incoming.historyEnabled),
-        };
-        const byokIn = incoming.byok || {};
-        if (byokIn.baseUrl && !S.endpointUrl(byokIn.baseUrl)) return {code: "invalid_endpoint"};
-        const previous = await loadState();
-        const changed = JSON.stringify(previous.byok) !== JSON.stringify(byokIn);
-        patch.modelRevision = previous.modelRevision + (changed ? 1 : 0);
-        const hasKey = Boolean(byokIn.apiKey);
-        if (hasKey && !isolated) {
-          await chromeApi.storage.local.set(patch);
-          return { code: "storage_isolation_failed", isolated: false };
-        }
-        if (isolated) {
-          patch.byok = {
-            baseUrl: S.sanitizeRemoteText(byokIn.baseUrl || ""),
-            model: S.sanitizeRemoteText(byokIn.model || ""),
-            apiKey: String(byokIn.apiKey || ""),
+        return enqueueLocalWrite(async () => {
+          const isolated = await lockStorage();
+          const incoming = (message.settings || {});
+          const interests = Array.isArray(incoming.interests)
+            ? incoming.interests
+                .map(function (s) {
+                  return S.sanitizeRemoteText(String(s));
+                })
+                .filter(Boolean)
+                .slice(0, 12)
+            : [];
+          const patch = {
+            readingLang: incoming.readingLang === "en" ? "en" : "zh",
+            interests: interests,
+            personalization: incoming.personalization !== false,
+            historyEnabled: Boolean(incoming.historyEnabled),
           };
-        }
-        await chromeApi.storage.local.set(patch);
-        return { code: "ok", isolated: isolated };
+          const byokIn = incoming.byok || {};
+          if (byokIn.baseUrl && !S.endpointUrl(byokIn.baseUrl)) return {code: "invalid_endpoint"};
+          const previous = await loadState();
+          const changed = JSON.stringify(previous.byok) !== JSON.stringify(byokIn);
+          patch.modelRevision = previous.modelRevision + (changed ? 1 : 0);
+          const hasKey = Boolean(byokIn.apiKey);
+          if (hasKey && !isolated) {
+            await chromeApi.storage.local.set(patch);
+            return { code: "storage_isolation_failed", isolated: false };
+          }
+          if (isolated) {
+            patch.byok = {
+              baseUrl: S.sanitizeRemoteText(byokIn.baseUrl || ""),
+              model: S.sanitizeRemoteText(byokIn.model || ""),
+              apiKey: String(byokIn.apiKey || ""),
+            };
+          }
+          await chromeApi.storage.local.set(patch);
+          return { code: "ok", isolated: isolated };
+        });
       }
       if (message.type === "FEEDBACK") {
-        const state = await loadState();
-        const repo = S.canonicalRepo(message.repo || "");
-        if (!repo || !["seen", "interested", "irrelevant"].includes(message.action)) return { code: "bad_response" };
-        const fb = Object.assign({}, state.feedback);
-        fb[repo] = message.action;
-        const seen = new Set(state.seen);
-        if (message.action === "seen" || message.action === "irrelevant") seen.add(repo);
-        await chromeApi.storage.local.set({
-          feedback: fb,
-          seen: Array.from(seen),
+        return enqueueLocalWrite(async () => {
+          const state = await loadState();
+          const repo = S.canonicalRepo(message.repo || "");
+          if (!repo || !["seen", "interested", "irrelevant"].includes(message.action)) return { code: "bad_response" };
+          const fb = Object.assign({}, state.feedback);
+          fb[repo] = message.action;
+          const seen = new Set(state.seen);
+          if (message.action === "seen" || message.action === "irrelevant") seen.add(repo);
+          await chromeApi.storage.local.set({
+            feedback: fb,
+            seen: Array.from(seen),
         });
         return { code: "ok" };
+        });
       }
       if (message.type === "CLEAR_LOCAL") {
         dataEpoch += 1;
         for (const job of inflight.values()) { job.budget.cancel(); job.controller.abort(); }
-        await cacheWrites;
-        await chromeApi.storage.local.set({
-          seen: [],
-          feedback: {},
-          cache: {},
-          pageHistory: [],
+        return enqueueLocalWrite(async () => {
+          await chromeApi.storage.local.set({
+            seen: [],
+            feedback: {},
+            cache: {},
+            pageHistory: [],
         });
         return { code: "ok" };
+        });
       }
       if (message.type === "EXPORT_CACHE") {
+        await localWrites;
         const state = await loadState();
         const bundle = S.sanitizeExport({
           exported_at: new Date().toISOString(),
@@ -655,18 +676,19 @@ if (typeof importScripts === "function") {
       }
       if (message.type === "IMPORT_CACHE") {
         if (!message.bundle || message.bundle.format !== "gold-miner-cache-v1" || !Array.isArray(message.bundle.entries) || message.bundle.entries.length > 100) return {code: "bad_response"};
-        await cacheWrites;
-        const incoming = S.sanitizeExport(message.bundle || {});
-        const state = await loadState();
-        const cache = Object.assign({}, state.cache);
-        let imported = 0;
-        for (let i = 0; i < incoming.entries.length; i++) {
-          const packed = S.importedCacheRecord(incoming.entries[i]);
-          cache[packed.key] = packed.record;
-          imported += 1;
-        }
-        await chromeApi.storage.local.set({ cache: cache });
-        return { code: "ok", imported: imported };
+        return enqueueLocalWrite(async () => {
+          const incoming = S.sanitizeExport(message.bundle || {});
+          const state = await loadState();
+          const cache = Object.assign({}, state.cache);
+          let imported = 0;
+          for (let i = 0; i < incoming.entries.length; i++) {
+            const packed = S.importedCacheRecord(incoming.entries[i]);
+            cache[packed.key] = packed.record;
+            imported += 1;
+          }
+          await chromeApi.storage.local.set({ cache: boundCache(cache) });
+          return { code: "ok", imported: imported };
+        });
       }
       return { code: "bad_response" };
     }

@@ -130,6 +130,29 @@ try {
     await page.evaluate(() => history.pushState({},'', '/settings/profile'));
     await page.locator('#gold-miner-root').waitFor({state:'detached'});
   });
+  await check('concurrent-feedback-import-and-clear-ordering', async () => {
+    const reply = await a.options.evaluate(async () => {
+      const send = message => chrome.runtime.sendMessage(message);
+      const feedback = await Promise.all([
+        send({type:'FEEDBACK',repo:'fixture/one',action:'seen'}),
+        send({type:'FEEDBACK',repo:'fixture/two',action:'irrelevant'})
+      ]);
+      const state = await chrome.storage.local.get(['seen','feedback']);
+      const base = {format:'gold-miner-cache-v1',entries:[]};
+      const imported = await Promise.all(['fixture-import-one','fixture-import-two'].map(query =>
+        send({type:'IMPORT_CACHE',bundle:{...base,entries:[{pageKind:'SEARCH',query,language:'en',
+          content_version:'fixture-import-v1',processing_mode:'rules',created_at:new Date().toISOString(),rawCandidates:[]}]}})));
+      const cache = await chrome.storage.local.get('cache');
+      await Promise.all([send({type:'FEEDBACK',repo:'fixture/late',action:'seen'}),send({type:'CLEAR_LOCAL'})]);
+      const cleared = await chrome.storage.local.get(['seen','feedback','cache','pageHistory']);
+      return {feedback,state,imported,queries:Object.values(cache.cache).map(x=>x.query),cleared};
+    });
+    assert(reply.feedback.every(x=>x.code==='ok'));
+    assert(reply.state.seen.includes('fixture/one') && reply.state.seen.includes('fixture/two'));
+    assert(reply.imported.every(x=>x.code==='ok'));
+    assert(reply.queries.includes('fixture-import-one') && reply.queries.includes('fixture-import-two'));
+    assert.deepEqual(reply.cleared,{seen:[],feedback:{},cache:{},pageHistory:[]});
+  });
   assert.deepEqual(errors, [], 'no unhandled options/content errors');
 } catch(error) {
   results.push({name:'acceptance',status:'failed',message:error.stack});

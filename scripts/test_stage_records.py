@@ -43,3 +43,14 @@ class StageRecordsTests(unittest.TestCase):
         with self.assertRaises(ValueError): diary(row)
         row = self.observation(); row['reason']='Bearer fixture-secret'
         with self.assertRaises(ValueError): diary(row)
+
+    def test_diary_calendar_boundary_uses_operators_day(self):
+        from datetime import date
+        row = self.observation('2026-10-03')
+        diary(row,today=date(2026,10,3))
+        with self.assertRaises(ValueError): diary(row,today=date(2026,10,2))
+        self.assertEqual(summarize([row],today=date(2026,10,3))['records'],1)
+    def test_repository_paths_cannot_escape_via_dot_segments(self):
+        for repo in ['owner/..','../repo','owner/.','bad_owner/repo']:
+            row = self.observation();row.update(action='seen',repo=repo)
+            with self.assertRaises(ValueError):diary(row)

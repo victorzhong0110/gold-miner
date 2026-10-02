@@ -11,16 +11,203 @@
     "status"
   ],
   "properties": {
-    "session_id": {"type": "string", "minLength": 1},
-    "pair": {"type": "string", "enum": ["P1", "P2"]},
-    "condition": {"type": "string", "enum": ["A", "B"]},
-    "participant": {"type": "string", "minLength": 1},
-    "reading_lang": {"type": "string", "enum": ["zh", "en"]},
-    "status": {"type": "string", "enum": ["未运行", "owner-blocked", "recorded"]},
-    "start_url": {"type": "string"},
-    "interests": {"type": "array", "items": {"type": "string"}},
-    "reason_quote": {"type": "string"},
-    "prep_minutes": {"type": ["number", "null"]},
-    "visible_cost": {"type": ["string", "null"]}
-  }
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pair": {
+      "type": "string",
+      "enum": [
+        "P1",
+        "P2"
+      ]
+    },
+    "condition": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B"
+      ]
+    },
+    "participant": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reading_lang": {
+      "type": "string",
+      "enum": [
+        "zh",
+        "en"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "未运行",
+        "owner-blocked",
+        "recorded"
+      ]
+    },
+    "start_url": {
+      "type": "string"
+    },
+    "interests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "reason_quote": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "prep_minutes": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "visible_cost": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "evidence_kind": {
+      "enum": [
+        "fixture",
+        "human-record"
+      ]
+    },
+    "order": {
+      "enum": [
+        "A_then_B",
+        "B_then_A"
+      ]
+    },
+    "start": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "method_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "opened_repos": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9-]{0,38}/(?!(?:\\.|\\.\\.)$)[A-Za-z0-9_.-]{1,100}$"
+      }
+    },
+    "worth_follow": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "abandon_reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "github_requests": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "model_requests": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "observer_notes": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "translation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool",
+        "settings",
+        "target_lang"
+      ],
+      "properties": {
+        "tool": {
+          "type": "string",
+          "minLength": 1
+        },
+        "settings": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_lang": {
+          "enum": [
+            "zh",
+            "en"
+          ]
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "recorded"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "abandon_reason",
+          "end",
+          "evidence_kind",
+          "github_requests",
+          "interests",
+          "method_version",
+          "model_requests",
+          "observer_notes",
+          "opened_repos",
+          "order",
+          "prep_minutes",
+          "reason_quote",
+          "start",
+          "start_url",
+          "translation",
+          "visible_cost",
+          "worth_follow"
+        ],
+        "properties": {
+          "participant": {
+            "pattern": "^P[0-9]{2,4}$"
+          }
+        }
+      }
+    }
+  ]
 }
