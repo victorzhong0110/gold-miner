@@ -599,9 +599,19 @@
     } catch { return ""; }
   }
 
+  function isOptionsSender(sender, extensionId) {
+    if (!sender || sender.id !== extensionId) return false;
+    try {
+      const url = new URL(sender.url || "");
+      return url.protocol === "chrome-extension:" && url.hostname === extensionId &&
+        url.pathname === "/src/options.html";
+    } catch { return false; }
+  }
+
   function allowedMessage(sender) {
     if (!sender || !sender.id) return false;
     if (root.chrome && root.chrome.runtime && sender.id !== root.chrome.runtime.id) return false;
+    if (isOptionsSender(sender, root.chrome && root.chrome.runtime && root.chrome.runtime.id)) return true;
     if (sender.tab) {
       try { if (new URL(sender.url || sender.tab.url).origin !== "https://github.com") return false; }
       catch { return false; }
@@ -638,6 +648,7 @@
     buildExploreQueries,
     parseModelExpansions,
     allowedMessage,
+    isOptionsSender,
     endpointUrl,
   };
 })(typeof globalThis !== "undefined" ? globalThis : this);

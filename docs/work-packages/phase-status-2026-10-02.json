@@ -180,7 +180,7 @@
       "id": "WP3-02",
       "title": "完成首次使用流程",
       "status": "partial",
-      "evidence": "选项、真实模型调用、端点权限和连接超时已实现；Chrome 流程未测",
+      "evidence": "Chromium 首跑发现 sender.tab 拒绝真实设置页；已按自有扩展 URL 修复，真实浏览器复验待跑",
       "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
@@ -320,7 +320,7 @@
       "id": "WP5-01",
       "title": "试用交付准备",
       "status": "verified",
-      "evidence": "中英说明、0.1.1 试验包、确定性构建、版本与已知限制齐备",
+      "evidence": "中英说明、0.1.2 试验包、确定性构建、版本与已知限制齐备",
       "owner": "Codex / current ChatGPT Work session",
       "merged": true,
       "actual_acceptance": "engineering-only",
@@ -410,7 +410,7 @@
       "id": "WP6-03",
       "title": "Beta交付",
       "status": "partial",
-      "evidence": "0.1.1 源码、ZIP、哈希与构建说明一致；实机未通过，不标 Beta",
+      "evidence": "0.1.2 源码、ZIP、哈希与构建说明一致；实机未通过，不标 Beta",
       "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
@@ -483,14 +483,15 @@
   },
   "current_owner_instruction": "2026-10-02: leave decisions and personal operations to owner",
   "owner_checklist": "docs/guides/owner-stage-checklist.md",
-  "browser_automation": "implemented; CI execution pending; local Chromium download blocked",
+  "browser_automation": "first actual Chromium run exposed options-tab authorization; fixed with regression, second run pending",
   "license_decision": {
     "license": "MIT",
     "scope": "own code and documentation",
     "decided_by": "owner",
     "date": "2026-10-02"
   },
-  "continuation_source_sha": "537fe004683bb247c66009b920ebcc220ce3d79e",
+  "continuation_source_sha": "bb9fadb9263d3a35dcbabd75acd836c3efe48c04",
   "continuation_branch": "work/owner-handoff-2026-10-02",
-  "continuation_merge_status": "pending CI and merge"
+  "continuation_merge_status": "pending CI and merge",
+  "trial_version": "0.1.2"
 }
