@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-04",
+  "base_main_sha": "065ff0605cac5f641c5fd6511bda34bf8f11397a",
+  "scope": "B/C/M reasoning-compatible generation and safe CLI run identity",
+  "python_tests": 296,
+  "extension_tests": 58,
+  "result": "passed",
+  "live_model": "not-run",
+  "reason": "no OPENAI_API_KEY or MINIMAX_API_KEY in this environment",
+  "new_paid_model_requests": 0,
+  "log_sha256": "16455565835a43d0e42b79afc3644ac918fe7ef46c1038d1893c67e00d195776",
+  "d_result_review": "docs/reports/2026-10-04-d-review.json",
+  "effectiveness": "not-concluded"
+}

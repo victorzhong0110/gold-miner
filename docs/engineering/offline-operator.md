@@ -92,3 +92,17 @@ python3 experiments/E1-cross-language-search/scripts/blind_eval.py --pipeline /t
 ```
 
 默认开发命令缺少检索客户端时可能返回非零，这是未运行而非成功。真实调用命令加 `--live`，使用已有环境变量。判断者仅查看 `blind-candidates.jsonl`，不查看 `blind-key.json`。填写实际 `purpose_fit`、`hard_conditions`、`novel_to_judge`、`worth_following`、`reason`、`judge` 和 `judged_at` 后，使用 `--key`、`--judgments`、`--judge-kind` 分析。未知硬条件不计合适；技术核对不得声称真人新颖性；缺少判定或失败组不输出增益结论。
+
+## D组结果之后
+
+D组2026-10-04已完成20题，记录见runs/2026-10-04-d-minimax；用途判断及B/C/M仍未运行。已合入的runner会拒绝续跑时换run_id、模型、端点、prompt或题集，截断回答不能算完成，接口拒绝8192上限不会取消上限重发。
+
+B/C/M查询生成器已统一2048输出token（含推理），默认60秒超时；设置BYOK_TIMEOUT_SECONDS会覆盖默认值。一次请求、不自动重试；think不当成最终JSON，length保留失败。比历史256token设置可能多用token/等待时间，实际费用未知。正式新批次须冻结具体参数及已有代码SHA；不要续写到D的目录。当前环境缺模型密钥，未调用付费接口。
+
+真实A/B/C/M入口必须显式提供新--run-id，输出目录已含pipeline.json时拒绝覆盖；任何请求前检查模型配置，结果包含source_sha、settings_sha256和batch（参数快照在generation_records，不复制可能含私密值的配置文件）。正式eval仍须冻结。已存在的D目录不得用于此命令。
+
+```sh
+python3 experiments/E1-cross-language-search/scripts/e1_pipeline.py \
+  --live --batch eval.batch_1 --run-id YOUR_NEW_BCM_RUN_ID \
+  --settings /path/to/frozen-settings.json --out /path/to/new-bcm-run
+```

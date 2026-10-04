@@ -122,7 +122,8 @@ def record_row(
 
 
 def _extract_json_object(text: str) -> dict:
-    raw = (text or "").strip()
+    raw = re.sub(r"<think\b[^>]*>[\s\S]*?</think\s*>", "", text or "", flags=re.I)
+    raw = re.sub(r"<think\b[^>]*>[\s\S]*$", "", raw, flags=re.I).strip()
     start = raw.find("{")
     end = raw.rfind("}")
     if start < 0 or end <= start:
@@ -210,7 +211,7 @@ class HttpQueryClient:
         base_url: str,
         model: str,
         api_key: str,
-        timeout: float = 20.0,
+        timeout: float = 60.0,
     ) -> None:
         self.http_post = http_post or _default_http_post
         self.base_url = base_url.rstrip("/")
@@ -227,7 +228,7 @@ class HttpQueryClient:
             user += f"\n查询语言：{query_lang(task['direction'])}"
         payload = {
             "model": self.model,
-            "max_tokens": 256,
+            "max_tokens": 2048,
             "messages": [
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": user},
@@ -257,12 +258,23 @@ class HttpQueryClient:
             data = json.loads(body)
         except json.JSONDecodeError as exc:
             raise QueryClientError("bad_response", "response was not JSON") from exc
-        if not isinstance(data, dict) or "choices" not in data:
-            raise QueryClientError("bad_response", "response missing choices")
-        content = (
-            data.get("choices")
-            and data["choices"][0].get("message", {}).get("content")
-        ) or ""
+        if not isinstance(data, dict):
+            raise QueryClientError("bad_response", "response was not an object")
+        base_resp = data.get("base_resp")
+        if isinstance(base_resp, dict) and base_resp.get("status_code") == 1004:
+            raise QueryClientError("auth_rejected", "provider auth rejection; check key and platform region")
+        if data.get("error") or (isinstance(base_resp, dict) and base_resp.get("status_code")):
+            raise QueryClientError("bad_response", "provider returned an error")
+        choices = data.get("choices")
+        if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
+            raise QueryClientError("bad_response", "response missing valid choices")
+        choice = choices[0]
+        if choice.get("finish_reason") == "length":
+            raise QueryClientError("model_output_truncated", "completion exceeded the 2048-token cap")
+        message = choice.get("message")
+        content = message.get("content") if isinstance(message, dict) else None
+        if not isinstance(content, str) or not content.strip():
+            raise QueryClientError("empty_model_output", "response missing a final answer")
         variants = parse_model_variants(arm, task["direction"], str(content))
         if not variants:
             raise QueryClientError("bad_response", "model returned no variants")
@@ -279,7 +291,7 @@ def default_client_from_env(*, http_post: HttpPost | None = None) -> HttpQueryCl
         return None
     if not model.strip():
         return None
-    timeout = float(os.environ.get("BYOK_TIMEOUT_SECONDS") or "20")
+    timeout = float(os.environ.get("BYOK_TIMEOUT_SECONDS") or "60")
     return HttpQueryClient(
         http_post,
         base_url=base,
@@ -330,10 +342,18 @@ def generate(
             notes=notes,
         )
     prompt = PROMPTS[arm].read_text(encoding="utf-8")
+    def recorded(**fields):
+        row = record_row(**fields)
+        if isinstance(client, HttpQueryClient):
+            row["request_parameters"] = {"model": client.model,
+                "base_url_host": urllib.request.urlparse(client.base_url).hostname,
+                "max_tokens": 2048, "timeout_seconds": client.timeout,
+                "max_model_requests": 1, "automatic_retries": 0}
+        return row
     try:
         variants = client.generate_variants(task, arm, prompt)
     except QueryClientError as exc:
-        return record_row(
+        return recorded(
             task=task,
             arm=arm,
             mode="live",
@@ -341,7 +361,7 @@ def generate(
             code=exc.code,
             notes=exc.notes or exc.code,
         )
-    return record_row(
+    return recorded(
         task=task,
         arm=arm,
         mode="live",

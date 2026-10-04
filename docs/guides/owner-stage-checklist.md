@@ -29,3 +29,5 @@ python3 scripts/stage_records.py candidate /path/to/your-local-candidates.jsonl
 E2 完整字段及操作说明见 [记录说明](../../experiments/E2-open-ended-discovery/recording.md)。结构验证会保留未知、排除 fixture 的真人计数，并标记不完整/条件不一致的配对；不能代替你的真实判断。
 
 E3 已补 [三轮短摘录上下文与代码材料](../../experiments/E3-faithful-reading/context-pack-2026-10-03.md)；正式比较前由你冻结选定范围和工具。两种条件须使用相同的原语言 quote、代码及 authored_context，不把作者说明当成机器译文；整页或图像比较须另行登记范围。
+
+2026-10-04更新：D实跑及PR15审查已合入main。B/C/M入口修复2048token/思考解析并拒绝覆盖已有输出；完整命令与参数记录见offline-operator.md。当前Codex环境没有模型密钥，未代跑B/C/M，不需再选择模型。
