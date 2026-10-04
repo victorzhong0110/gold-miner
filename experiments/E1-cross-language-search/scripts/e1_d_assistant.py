@@ -13,6 +13,14 @@ repositories are hallucinations, not candidates.
 
 No network unless ``--live``. Missing credentials write nothing under
 ``runs/`` and exit as 未运行 / owner-blocked. Quota stops are resumable.
+
+A task counts as completed only when the model returned a parseable list and
+every name was checked. Timeouts, HTTP errors and answers without a list stay
+retryable: the next run with the same ``--out`` asks the model again (up to
+``--model-attempts`` per run). GitHub 301/302 answers for renamed or
+transferred repositories are followed and counted as existing under the new
+``canonical_repo``; unresolved checks are re-run on resume without a new model
+call.
 """
 
 from __future__ import annotations
@@ -20,6 +28,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import hashlib
+import http.client
 import json
 import os
 import re
@@ -391,6 +400,12 @@ def default_model_post(url: str, headers: dict, payload: dict, timeout: float) -
         return {"status": int(exc.code), "body": body, "retry_after": retry}
     except TimeoutError as exc:
         raise TimeoutError("model request timed out") from exc
+    except urllib.error.URLError as exc:
+        if isinstance(exc.reason, TimeoutError):
+            raise TimeoutError("model request timed out") from exc
+        raise ConnectionError("model request failed: " + type(exc.reason).__name__) from exc
+    except (http.client.HTTPException, OSError) as exc:
+        raise ConnectionError("model request failed: " + type(exc).__name__) from exc
 
 
 def default_github_get(url: str, headers: dict, timeout: float) -> dict:
@@ -418,6 +433,8 @@ def default_github_get(url: str, headers: dict, timeout: float) -> dict:
                 "X-RateLimit-Remaining": remaining,
             },
         }
+    except (urllib.error.URLError, TimeoutError, http.client.HTTPException, OSError) as exc:
+        return {"status": 0, "body": "", "headers": {}, "error": type(exc).__name__}
 
 
 def _retry_after_seconds(value: Any) -> float | None:
@@ -443,9 +460,18 @@ def model_payload(model: str, prompt: str, *, include_max_tokens: bool) -> dict:
     return payload
 
 
-def verify_repo(full_name: str, github_get: HttpGet, token: str, timeout: float) -> dict:
-    owner, repo = full_name.split("/", 1)
-    url = "https://api.github.com/repos/" + urllib.parse.quote(owner) + "/" + urllib.parse.quote(repo)
+GITHUB_API_HOST = "api.github.com"
+REDIRECT_STATUSES = (301, 302, 307, 308)
+MAX_GITHUB_REDIRECTS = 3
+# Verification codes that are final for a name. Anything else (redirect not
+# resolved, GitHub rate limit, network or bad response) is re-checked on resume.
+FINAL_VERIFY_CODES = {"exists", "github_not_found"}
+# Model-call codes that stop the whole invocation (same cause for every task).
+FATAL_MODEL_CODES = {"auth_rejected", "insufficient_balance", "tool_unavailable"}
+QUOTA_MODEL_CODES = {"quota_limited", "rate_limited"}
+
+
+def _github_headers(token: str) -> dict:
     headers = {
         "Accept": "application/vnd.github+json",
         "User-Agent": USER_AGENT,
@@ -453,10 +479,10 @@ def verify_repo(full_name: str, github_get: HttpGet, token: str, timeout: float)
     }
     if token:
         headers["Authorization"] = "Bearer " + token
-    packed = github_get(url, headers, timeout)
-    status = int(packed.get("status") or 0)
-    body = str(packed.get("body") or "")
-    hdrs = packed.get("headers") if isinstance(packed.get("headers"), dict) else {}
+    return headers
+
+
+def _classify_repo_response(status: int, body: str, hdrs: dict) -> dict:
     if status == 200:
         try:
             data = json.loads(body)
@@ -483,13 +509,6 @@ def verify_repo(full_name: str, github_get: HttpGet, token: str, timeout: float)
         }
     if status == 404:
         return {"code": "github_not_found", "http_status": 404, "exists": False}
-    if status in (301, 302, 307, 308):
-        return {
-            "code": "github_migrated",
-            "http_status": status,
-            "exists": False,
-            "location": hdrs.get("Location") or "",
-        }
     remaining = hdrs.get("X-RateLimit-Remaining")
     if status in (403, 429) or remaining == "0":
         return {
@@ -498,7 +517,81 @@ def verify_repo(full_name: str, github_get: HttpGet, token: str, timeout: float)
             "exists": False,
             "retry_after": hdrs.get("Retry-After"),
         }
+    if not status:
+        return {"code": "github_network_error", "http_status": None, "exists": False}
     return {"code": "bad_response", "http_status": status, "exists": False}
+
+
+def verify_repo(
+    full_name: str,
+    github_get: HttpGet,
+    token: str,
+    timeout: float,
+    *,
+    sleep: SleepFn | None = None,
+    sleep_seconds: float = 0.0,
+    max_redirects: int = MAX_GITHUB_REDIRECTS,
+) -> dict:
+    """Check one name with ``GET /repos/{owner}/{repo}``.
+
+    A renamed or transferred repository answers 301 with ``Location`` pointing
+    at ``/repositories/{id}`` (or another ``/repos/...`` URL). The redirect is
+    followed on api.github.com only, up to ``max_redirects`` hops; the final
+    ``full_name`` becomes ``canonical_repo`` and the hop is recorded. The
+    result carries ``github_requests`` (every hop is one request).
+    """
+    owner, repo = full_name.split("/", 1)
+    url = "https://api.github.com/repos/" + urllib.parse.quote(owner) + "/" + urllib.parse.quote(repo)
+    headers = _github_headers(token)
+    hops: list[dict] = []
+    requests = 0
+    result: dict | None = None
+    for hop in range(max_redirects + 1):
+        if hop and sleep and sleep_seconds:
+            sleep(sleep_seconds)
+        packed = github_get(url, headers, timeout)
+        requests += 1
+        status = int(packed.get("status") or 0)
+        body = str(packed.get("body") or "")
+        hdrs = packed.get("headers") if isinstance(packed.get("headers"), dict) else {}
+        if status in REDIRECT_STATUSES:
+            location = str(hdrs.get("Location") or "")
+            target = urllib.parse.urljoin(url, location) if location else ""
+            parsed = urllib.parse.urlparse(target)
+            hops.append({"http_status": status, "location": target})
+            if not target or parsed.scheme != "https" or parsed.netloc.lower() != GITHUB_API_HOST:
+                result = {
+                    "code": "github_migrated",
+                    "http_status": status,
+                    "exists": False,
+                    "location": target,
+                    "message": "redirect without a followable api.github.com Location",
+                }
+                break
+            if hop == max_redirects:
+                result = {
+                    "code": "github_migrated",
+                    "http_status": status,
+                    "exists": False,
+                    "location": target,
+                    "message": "too many redirects",
+                }
+                break
+            url = target
+            continue
+        result = _classify_repo_response(status, body, hdrs)
+        break
+    assert result is not None
+    result["github_requests"] = requests
+    if hops:
+        result["redirect"] = {
+            "from": full_name,
+            "first_http_status": hops[0]["http_status"],
+            "hops": hops,
+        }
+        if result.get("exists"):
+            result["redirected_from"] = full_name
+    return result
 
 
 def _model_headers(api_key: str) -> dict:
@@ -526,14 +619,16 @@ def call_model(
         started = time.monotonic()
         try:
             packed = http_post(url, _model_headers(api_key), payload, timeout)
-        except TimeoutError:
+        except (TimeoutError, ConnectionError) as exc:
             attempts.append(
                 {
-                    "code": "timeout",
+                    "code": "timeout" if isinstance(exc, TimeoutError) else "network_error",
                     "http_status": None,
                     "elapsed_ms": int((time.monotonic() - started) * 1000),
                     "include_max_tokens": include_cap,
+                    "timeout_s": timeout,
                     "sent": True,
+                    "error_excerpt": redact(str(exc))[:300],
                 }
             )
             break
@@ -546,6 +641,9 @@ def call_model(
         classified["include_max_tokens"] = include_cap
         classified["retry_after"] = packed.get("retry_after")
         classified["sent"] = True
+        classified["timeout_s"] = timeout
+        if classified["code"] != "ok":
+            classified["error_excerpt"] = redact(body)[:500]
         attempts.append(classified)
         message = body.lower()
         if (
@@ -568,7 +666,9 @@ def call_model(
                 "business_code": item.get("business_code"),
                 "elapsed_ms": item.get("elapsed_ms"),
                 "include_max_tokens": item.get("include_max_tokens"),
+                "timeout_s": item.get("timeout_s"),
                 "sent": True,
+                **({"error_excerpt": item["error_excerpt"]} if item.get("error_excerpt") else {}),
             }
             for item in attempts
         ],
@@ -624,9 +724,16 @@ def candidate_from_verification(
 
 
 def overlap_with_historical_a(
-    d_candidates: list[dict], a_candidates: list[dict]
+    d_candidates: list[dict],
+    a_candidates: list[dict],
+    task_ids: list[str] | None = None,
 ) -> dict:
-    """Set overlap only. Not a suitability comparison."""
+    """Set overlap only. Not a suitability comparison.
+
+    With ``task_ids`` the table has one row per batch task, in batch order,
+    including tasks where D or A has nothing. A tasks outside the batch are
+    listed separately and are not part of the totals.
+    """
     a_by_task: dict[str, list[str]] = {}
     for row in a_candidates:
         if row.get("arm") != "A":
@@ -649,11 +756,18 @@ def overlap_with_historical_a(
         key = canonical(repo)
         if key not in d_by_task[task_id]:
             d_by_task[task_id].append(key)
+    if task_ids is None:
+        ordered = sorted(set(a_by_task) | set(d_by_task))
+        outside: list[str] = []
+    else:
+        ordered = list(task_ids)
+        outside = sorted(set(a_by_task) - set(ordered))
     per_task = []
-    for task_id in sorted(set(a_by_task) | set(d_by_task)):
+    for task_id in ordered:
         a_set = a_by_task.get(task_id, [])
         d_set = d_by_task.get(task_id, [])
-        inter = [name for name in d_set if name in set(a_set)]
+        a_keys = set(a_set)
+        inter = [name for name in d_set if name in a_keys]
         per_task.append(
             {
                 "task_id": task_id,
@@ -661,19 +775,83 @@ def overlap_with_historical_a(
                 "a_candidates": len(a_set),
                 "intersection": len(inter),
                 "d_only": len(d_set) - len(inter),
+                "intersection_repos": inter,
             }
         )
     return {
         "kind": "canonical-repo-set-overlap",
         "suitability": "未运行",
         "per_task": per_task,
+        "a_tasks_outside_batch": [
+            {"task_id": task_id, "a_candidates": len(a_by_task[task_id])} for task_id in outside
+        ],
         "d_existing": sum(row["d_existing"] for row in per_task),
+        "a_candidates": sum(row["a_candidates"] for row in per_task),
         "intersection": sum(row["intersection"] for row in per_task),
         "d_only": sum(row["d_only"] for row in per_task),
     }
 
 
+def _event_key(row: dict) -> str:
+    if row.get("call_id"):
+        return str(row["call_id"])
+    return f"{row.get('task_id')}@{row.get('recorded_at')}@{row.get('input_sha256')}@{row.get('code')}"
+
+
+def model_call_events(rows: list[dict]) -> list[dict]:
+    """Distinct model-call events. Terminal marker rows repeat their event."""
+    seen: set[str] = set()
+    events = []
+    for row in rows:
+        if not row.get("task_id"):
+            continue
+        key = _event_key(row)
+        if key in seen:
+            continue
+        seen.add(key)
+        events.append(row)
+    return events
+
+
+def latest_calls(rows: list[dict]) -> dict[str, dict]:
+    latest: dict[str, dict] = {}
+    for row in rows:
+        if row.get("task_id"):
+            latest[str(row["task_id"])] = row
+    return latest
+
+
+def is_completed(row: dict | None) -> bool:
+    """A task counts as completed only after an ok answer with a parseable
+    list whose verification pass finished. Timeouts, bad responses and empty
+    lists stay retryable, whatever ``terminal`` an older runner wrote."""
+    return bool(
+        row
+        and row.get("code") == "ok"
+        and row.get("terminal")
+        and row.get("parsed_repos")
+    )
+
+
+def latest_verifications(rows: list[dict]) -> dict[tuple[str, str], dict]:
+    latest: dict[tuple[str, str], dict] = {}
+    for row in rows:
+        name = row.get("model_repo")
+        if not row.get("task_id") or not isinstance(name, str):
+            continue
+        latest[(str(row["task_id"]), canonical(name))] = row
+    return latest
+
+
+def _fmt_rate(num: int, den: int) -> str:
+    if not den:
+        return "未知"
+    return f"{num}/{den} = {num / den * 100:.1f}%"
+
+
 def render_report(summary: dict) -> str:
+    usage = summary["usage"]
+    repos = summary["repos"]
     lines = [
         f"# E1 D 组运行 {summary['run_id']}",
         "",
@@ -681,24 +859,76 @@ def render_report(summary: dict) -> str:
         f"- 模型：`{summary['model']}`。端点：`POST /v1/responses`，服务端工具 `web_search`。",
         f"- 决定：{DECISION}（2026-10-04）。输出上限 {MAX_OUTPUT_TOKENS}。",
         f"- 材料提交：`{summary['materials_commit']}`。",
-        f"- 开始 {summary.get('started_at') or '未知'}，结束 {summary.get('finished_at') or '未结束'}。",
-        f"- 任务完成 {summary['tasks_terminal']} / {summary['tasks_total']}。",
-        f"- 模型请求 {summary['model_requests']}（含参数重试）。GitHub 核对请求 {summary['github_requests']}。",
-        f"- 存在的仓库 {summary['existing_repos']}。幻觉（GitHub 404）{summary['hallucinations']}。",
-        f"- 服务端 web_search 调用次数（响应里可见的）{summary['web_search_calls']}。模型没发起搜索的已完成任务 {summary['tasks_without_search']}。",
-        f"- 可见 token：输入 {summary['usage'].get('input_tokens')}，输出 {summary['usage'].get('output_tokens')}。缺计数的记未知，不把 null 当成 0 以外的含义。",
-        f"- 可见费用：{summary['visible_cost']}。",
-        f"- 人工用途判断：未运行。阅读对照：未运行。B/C/M 在本模型上：未运行。",
+        f"- 开始 {summary.get('started_at') or '未知'}，结束 {summary.get('finished_at') or '未结束'}（UTC）。"
+        f"修复后的 runner 调用 {len(summary.get('invocations') or [])} 次（见 checkpoint.json `invocations`；首轮调用未逐次记录）。",
+        f"- 状态：`{summary['status']}`。",
         "",
+        "## 任务",
+        "",
+        f"- 任务完成 {summary['tasks_completed']} / {summary['tasks_total']}。失败（可续跑重试）{summary['tasks_failed']}。未尝试 {summary['tasks_not_attempted']}。",
+        "- 「完成」= 模型返回可解析名单且 GitHub 核对已跑完。超时、HTTP 错误、没有可解析名单的任务不算完成，续跑时重新请求模型。",
     ]
+    if summary["failed_tasks"]:
+        lines.append(
+            "- 仍失败："
+            + "，".join(f"`{row['task_id']}`（{row['code']}，已请求 {row['model_requests']} 次）" for row in summary["failed_tasks"])
+            + "。"
+        )
+    if summary["retried_tasks"]:
+        lines.append(
+            "- 经过重试才完成："
+            + "，".join(
+                f"`{row['task_id']}`（先前 {'、'.join(row['failed_codes'])}，共请求 {row['model_requests']} 次）"
+                for row in summary["retried_tasks"]
+            )
+            + "。"
+        )
+    lines += [
+        f"- 模型请求 {summary['model_requests']}（含失败与重试；参数重试也计入）。GitHub 核对请求 {summary['github_requests']}（含跳转跟随与重核）。",
+        f"- 服务端 web_search 调用（响应里可见的）：全部请求合计 {summary['web_search_calls']}；完成任务的最终回答合计 {summary['web_search_calls_completed']}。完成任务里模型没发起搜索的 {summary['tasks_without_search']}。",
+        f"- 可见 token（全部请求合计）：输入 {usage.get('input_tokens')}，其中缓存 {usage.get('cached_tokens')}；输出 {usage.get('output_tokens')}。缺计数的请求不计入，不把 null 当成 0。",
+        f"- 可见费用：{summary['visible_cost']}。",
+        "- 人工用途判断：未运行。阅读对照：未运行。B/C/M 在本模型上：未运行。",
+        "",
+        "## 仓库核对",
+        "",
+        f"- 完成任务里模型提名 {repos['proposed']} 个（每题最多 {REPO_LIMIT}，题内去重）。",
+        f"- GitHub 存在 {repos['exists']}（公开 {repos['exists_public']}，私有 {repos['exists_private']}）。其中经 301/302 跳转（改名或转移）跟随后存在 {repos['redirected']}。",
+        f"- 幻觉（GitHub 404）{repos['hallucinated']}。幻觉率（占提名）{_fmt_rate(repos['hallucinated'], repos['proposed'])}。",
+        f"- 核对未决（跳转跟不到、GitHub 限流或错误，续跑时重核）{repos['unresolved']}。",
+        f"- 公开存在、写入 candidates.jsonl 的去重仓库 {summary['existing_repos']}。",
+    ]
+    if repos["redirect_rows"]:
+        lines.append("")
+        lines.append("| 任务 | 模型给的名字 | GitHub 跳转 | 现名（canonical_repo） |")
+        lines.append("|---|---|---|---|")
+        for row in repos["redirect_rows"]:
+            lines.append(
+                f"| {row['task_id']} | {row['model_repo']} | {row['http_status']} → {row['location']} | {row['canonical_repo'] or '未解析'} |"
+            )
+    if repos["hallucinated_rows"]:
+        lines.append("")
+        lines.append("404 名单：" + "，".join(f"`{row['model_repo']}`（{row['task_id']}）" for row in repos["hallucinated_rows"]) + "。")
+    lines.append("")
+    lines.append("failures.jsonl 是只追加的事件记录。上面数字取每个任务、每个名字的最新状态；较早的 timeout / bad_response / github_migrated 行若已被后来的成功覆盖，在这里不再算失败。")
+    lines.append("")
     if summary.get("stopped_before_task_id"):
         lines.append(
-            f"配额或限流停在尚未完成的任务 `{summary['stopped_before_task_id']}`，代码 `{summary.get('stop_code')}`。该任务及之后的任务未运行。"
+            f"停在尚未完成的任务 `{summary['stopped_before_task_id']}`，代码 `{summary.get('stop_code')}`。"
         )
         lines.append("")
-        remaining = summary.get("remaining_task_ids") or []
-        lines.append("尚未完成：" + (", ".join(remaining) if remaining else "无"))
-        lines.append("")
+    remaining = summary.get("remaining_task_ids") or []
+    lines.append("尚未完成：" + (", ".join(remaining) if remaining else "无"))
+    lines.append("")
+    lines.append("## 每题")
+    lines.append("")
+    lines.append("| 任务 | D 状态 | 模型请求 | web_search | 提名 | 存在 | 404 | 跳转 | 未决 |")
+    lines.append("|---|---|---:|---:|---:|---:|---:|---:|---:|")
+    for row in summary["per_task"]:
+        lines.append(
+            f"| {row['task_id']} | {row['status']} | {row['model_requests']} | {row['web_search_calls']} | {row['proposed']} | {row['exists']} | {row['hallucinated']} | {row['redirected']} | {row['unresolved']} |"
+        )
+    lines.append("")
     lines.append("## 与历史 A 组的仓库集合交集")
     lines.append("")
     lines.append(
@@ -707,14 +937,23 @@ def render_report(summary: dict) -> str:
     lines.append("")
     overlap = summary.get("overlap") or {}
     lines.append(
-        f"D 存在仓库 {overlap.get('d_existing', 0)}，与该次 A 组交集 {overlap.get('intersection', 0)}，只在 D 出现 {overlap.get('d_only', 0)}。"
+        f"本批 {summary['tasks_total']} 题：D 存在仓库 {overlap.get('d_existing', 0)}，该次 A 组候选 {overlap.get('a_candidates', 0)}，交集 {overlap.get('intersection', 0)}，只在 D 出现 {overlap.get('d_only', 0)}。"
     )
     lines.append("")
-    lines.append("| 任务 | D 存在 | A 条数 | 交集 | 只在 D |")
-    lines.append("|---|---:|---:|---:|---:|")
+    lines.append("| 任务 | D 状态 | D 存在 | A 条数 | 交集 | 只在 D |")
+    lines.append("|---|---|---:|---:|---:|---:|")
+    status_by_task = {row["task_id"]: row["status"] for row in summary["per_task"]}
     for row in overlap.get("per_task") or []:
         lines.append(
-            f"| {row['task_id']} | {row['d_existing']} | {row['a_candidates']} | {row['intersection']} | {row['d_only']} |"
+            f"| {row['task_id']} | {status_by_task.get(row['task_id'], '—')} | {row['d_existing']} | {row['a_candidates']} | {row['intersection']} | {row['d_only']} |"
+        )
+    outside = overlap.get("a_tasks_outside_batch") or []
+    if outside:
+        lines.append("")
+        lines.append(
+            "A 组那次还跑了不在本批的任务，不计入上表合计："
+            + "，".join(f"{row['task_id']}（{row['a_candidates']} 条）" for row in outside)
+            + "。"
         )
     lines.append("")
     lines.append("## 不能下的结论")
@@ -722,42 +961,131 @@ def render_report(summary: dict) -> str:
     lines.append(
         "不能由这份名单宣布跨语言增益、产品效果或应该缩小功能。人工判断未运行。B、C、M 未在本模型上运行。费用未知。"
     )
+    lines.append(
+        "「存在」只说明 GitHub 上有这个仓库，不说明它适合用户原话里的需求；与 A 组交集低也不说明哪一组更好用。幻觉率只按 GitHub 404 计，不含存在但答非所问的仓库。"
+    )
     lines.append("")
     return "\n".join(lines)
 
 
 def _sum_usage(rows: list[dict]) -> dict:
-    totals = {"input_tokens": 0, "output_tokens": 0, "known_input": False, "known_output": False}
+    totals = {"input_tokens": 0, "output_tokens": 0, "cached_tokens": 0}
+    known = {"input_tokens": False, "output_tokens": False, "cached_tokens": False}
     for row in rows:
         usage = row.get("usage") if isinstance(row.get("usage"), dict) else {}
-        if isinstance(usage.get("input_tokens"), int):
-            totals["input_tokens"] += usage["input_tokens"]
-            totals["known_input"] = True
-        if isinstance(usage.get("output_tokens"), int):
-            totals["output_tokens"] += usage["output_tokens"]
-            totals["known_output"] = True
-    return {
-        "input_tokens": totals["input_tokens"] if totals["known_input"] else None,
-        "output_tokens": totals["output_tokens"] if totals["known_output"] else None,
-    }
+        for key in totals:
+            if isinstance(usage.get(key), int):
+                totals[key] += usage[key]
+                known[key] = True
+    return {key: totals[key] if known[key] else None for key in totals}
 
 
-def write_outputs(out_dir: Path, state: dict, tasks: list[dict]) -> dict:
+def summarize(out_dir: Path, state: dict, tasks: list[dict]) -> dict:
     call_rows = read_jsonl(out_dir / "model_calls.jsonl")
-    calls_by_task: dict[str, dict] = {}
-    for row in call_rows:
-        if row.get("task_id"):
-            calls_by_task[str(row["task_id"])] = row
-    calls = list(calls_by_task.values())
+    events = model_call_events(call_rows)
+    latest = latest_calls(call_rows)
     candidates = read_jsonl(out_dir / "candidates.jsonl")
-    failures = read_jsonl(out_dir / "failures.jsonl")
     costs = read_jsonl(out_dir / "latency_cost.jsonl")
-    terminal = {row["task_id"] for row in calls if row.get("terminal")}
-    remaining = [task["id"] for task in tasks if task["id"] not in terminal]
-    historical = read_jsonl(state.get("historical_a_path") and Path(state["historical_a_path"]) or HISTORICAL_A)
-    overlap = overlap_with_historical_a(candidates, historical)
-    usage = _sum_usage(calls)
-    summary = {
+    verifications = latest_verifications(read_jsonl(out_dir / "verifications.jsonl"))
+    events_by_task: dict[str, list[dict]] = {}
+    for row in events:
+        events_by_task.setdefault(str(row["task_id"]), []).append(row)
+
+    per_task = []
+    repos = {
+        "proposed": 0,
+        "exists": 0,
+        "exists_public": 0,
+        "exists_private": 0,
+        "redirected": 0,
+        "hallucinated": 0,
+        "unresolved": 0,
+        "redirect_rows": [],
+        "hallucinated_rows": [],
+    }
+    failed_tasks = []
+    retried_tasks = []
+    completed_ids = set()
+    for task in tasks:
+        task_id = task["id"]
+        row = latest.get(task_id)
+        task_events = events_by_task.get(task_id, [])
+        entry = {
+            "task_id": task_id,
+            "model_requests": sum(int(e.get("model_requests") or 0) for e in task_events),
+            "web_search_calls": sum(len(e.get("searches") or []) for e in task_events),
+            "proposed": 0,
+            "exists": 0,
+            "hallucinated": 0,
+            "redirected": 0,
+            "unresolved": 0,
+        }
+        if is_completed(row):
+            completed_ids.add(task_id)
+            entry["status"] = "完成"
+            names = list(row.get("parsed_repos") or [])
+            entry["proposed"] = len(names)
+            for name in names:
+                checked = verifications.get((task_id, canonical(name)))
+                code = checked.get("code") if checked else None
+                redirect = checked.get("redirect") if checked else None
+                if code == "exists":
+                    entry["exists"] += 1
+                    if checked.get("private"):
+                        repos["exists_private"] += 1
+                    else:
+                        repos["exists_public"] += 1
+                elif code == "github_not_found":
+                    entry["hallucinated"] += 1
+                    repos["hallucinated_rows"].append({"task_id": task_id, "model_repo": name})
+                else:
+                    entry["unresolved"] += 1
+                if isinstance(redirect, dict):
+                    hops = redirect.get("hops") or [{}]
+                    if code == "exists":
+                        entry["redirected"] += 1
+                    repos["redirect_rows"].append(
+                        {
+                            "task_id": task_id,
+                            "model_repo": name,
+                            "http_status": redirect.get("first_http_status"),
+                            "location": hops[-1].get("location") or "",
+                            "canonical_repo": checked.get("canonical_repo") if code == "exists" else None,
+                        }
+                    )
+            failed_codes = [e.get("code") for e in task_events if e.get("code") != "ok"]
+            if failed_codes:
+                retried_tasks.append(
+                    {"task_id": task_id, "failed_codes": failed_codes, "model_requests": entry["model_requests"]}
+                )
+        elif row is None:
+            entry["status"] = "未尝试"
+        elif row.get("code") == "ok":
+            entry["status"] = "核对未完"
+            failed_tasks.append({"task_id": task_id, "code": "verification_incomplete", "model_requests": entry["model_requests"]})
+        else:
+            entry["status"] = f"失败（{row.get('code')}）"
+            failed_tasks.append({"task_id": task_id, "code": row.get("code"), "model_requests": entry["model_requests"]})
+        for key in ("proposed", "exists", "hallucinated", "redirected", "unresolved"):
+            repos[key] += entry[key]
+        per_task.append(entry)
+
+    remaining = [task["id"] for task in tasks if task["id"] not in completed_ids]
+    seen_candidates: set[tuple[str, str]] = set()
+    public_candidates = []
+    for row in candidates:
+        key = (str(row.get("task_id")), canonical(str(row.get("repo"))))
+        if row.get("task_id") not in completed_ids or key in seen_candidates:
+            continue
+        seen_candidates.add(key)
+        public_candidates.append(row)
+    historical = read_jsonl(
+        state.get("historical_a_path") and Path(state["historical_a_path"]) or HISTORICAL_A
+    )
+    overlap = overlap_with_historical_a(public_candidates, historical, [task["id"] for task in tasks])
+    complete = not remaining and not state.get("stop_code") and repos["unresolved"] == 0
+    completed_events = [latest[task_id] for task_id in completed_ids]
+    return {
         "run_id": state["run_id"],
         "batch": state["batch"],
         "model": state["model"],
@@ -765,29 +1093,43 @@ def write_outputs(out_dir: Path, state: dict, tasks: list[dict]) -> dict:
         "materials_commit": state["materials_commit"],
         "prompt_sha256": state["prompt_sha256"],
         "started_at": state.get("started_at"),
-        "finished_at": utcnow() if not remaining and not state.get("stop_code") else state.get("finished_at"),
+        "finished_at": (state.get("finished_at") or utcnow()) if complete else None,
+        "invocations": state.get("invocations") or [],
         "tasks_total": len(tasks),
-        "tasks_terminal": len(terminal),
-        "model_requests": sum(int(row.get("model_requests") or 0) for row in calls),
+        "tasks_completed": len(completed_ids),
+        "tasks_failed": len(failed_tasks),
+        "tasks_not_attempted": sum(1 for row in per_task if row["status"] == "未尝试"),
+        "failed_tasks": failed_tasks,
+        "retried_tasks": retried_tasks,
+        "model_requests": sum(int(row.get("model_requests") or 0) for row in events),
         "github_requests": sum(int(row.get("github_requests") or 0) for row in costs),
-        "existing_repos": len(candidates),
-        "hallucinations": sum(1 for row in failures if row.get("code") == "github_not_found"),
-        "web_search_calls": sum(len(row.get("searches") or []) for row in calls),
-        "tasks_without_search": sum(
-            1 for row in calls if row.get("terminal") and row.get("code") == "ok" and not row.get("searches")
-        ),
-        "usage": usage,
+        "existing_repos": len(public_candidates),
+        "hallucinations": repos["hallucinated"],
+        "hallucination_rate": (repos["hallucinated"] / repos["proposed"]) if repos["proposed"] else None,
+        "repos": repos,
+        "web_search_calls": sum(len(row.get("searches") or []) for row in events),
+        "web_search_calls_completed": sum(len(row.get("searches") or []) for row in completed_events),
+        "tasks_without_search": sum(1 for row in completed_events if not row.get("searches")),
+        "usage": _sum_usage(events),
         "visible_cost": "未知",
         "stopped_before_task_id": state.get("stopped_before_task_id"),
         "stop_code": state.get("stop_code"),
         "remaining_task_ids": remaining,
+        "per_task": per_task,
         "overlap": overlap,
         "human_judgment": "未运行",
         "b_c_m": "未运行",
-        "status": "complete" if not remaining and not state.get("stop_code") else "incomplete",
+        "status": "complete" if complete else "incomplete",
     }
-    if summary["status"] == "complete":
-        summary["finished_at"] = summary["finished_at"] or utcnow()
+
+
+def write_outputs(out_dir: Path, state: dict, tasks: list[dict]) -> dict:
+    summary = summarize(out_dir, state, tasks)
+    if summary["finished_at"]:
+        state["finished_at"] = summary["finished_at"]
+    else:
+        state.pop("finished_at", None)
+    repos = summary["repos"]
     manifest = {
         "run_id": summary["run_id"],
         "batch": summary["batch"],
@@ -809,16 +1151,37 @@ def write_outputs(out_dir: Path, state: dict, tasks: list[dict]) -> dict:
             "github_verification": summary["github_requests"],
             "web_search_calls_visible": summary["web_search_calls"],
         },
+        "tasks": {
+            "total": summary["tasks_total"],
+            "completed": summary["tasks_completed"],
+            "failed": summary["tasks_failed"],
+            "not_attempted": summary["tasks_not_attempted"],
+            "failed_task_ids": [row["task_id"] for row in summary["failed_tasks"]],
+        },
+        "repos": {
+            "proposed": repos["proposed"],
+            "exists": repos["exists"],
+            "exists_public": repos["exists_public"],
+            "exists_private": repos["exists_private"],
+            "redirected": repos["redirected"],
+            "hallucinated_404": repos["hallucinated"],
+            "unresolved": repos["unresolved"],
+            "hallucination_rate_of_proposed": (
+                round(summary["hallucination_rate"], 4) if summary["hallucination_rate"] is not None else None
+            ),
+            "candidates_public_distinct": summary["existing_repos"],
+        },
         "started_at": summary["started_at"],
         "finished_at": summary["finished_at"],
+        "invocations": summary["invocations"],
         "elapsed_note": "per-task elapsed_ms is in latency_cost.jsonl",
         "errors": summary["stop_code"],
         "visible_cost": "未知",
-        "usage_tokens": usage,
+        "usage_tokens": summary["usage"],
         "human_judgment": "未运行",
         "status": summary["status"],
         "stopped_before_task_id": summary["stopped_before_task_id"],
-        "remaining_task_ids": remaining,
+        "remaining_task_ids": summary["remaining_task_ids"],
         "decision": DECISION,
     }
     (out_dir / "manifest.json").write_text(
@@ -838,9 +1201,11 @@ def write_outputs(out_dir: Path, state: dict, tasks: list[dict]) -> dict:
                 ) if k in state},
                 "stopped_before_task_id": state.get("stopped_before_task_id"),
                 "stop_code": state.get("stop_code"),
-                "remaining_task_ids": remaining,
+                "remaining_task_ids": summary["remaining_task_ids"],
+                "failed_task_ids": [row["task_id"] for row in summary["failed_tasks"]],
                 "quota_waits": state.get("quota_waits") or [],
                 "sent_but_incomplete": state.get("sent_but_incomplete") or [],
+                "invocations": state.get("invocations") or [],
             },
             ensure_ascii=False,
             indent=2,
@@ -865,17 +1230,6 @@ def write_outputs(out_dir: Path, state: dict, tasks: list[dict]) -> dict:
     return summary
 
 
-def _verified_names(out_dir: Path, task_id: str) -> set[str]:
-    found = set()
-    for row in read_jsonl(out_dir / "verifications.jsonl"):
-        if row.get("task_id") != task_id or not isinstance(row.get("model_repo"), str):
-            continue
-        if row.get("code") == "rate_limited":
-            continue
-        found.add(canonical(row["model_repo"]))
-    return found
-
-
 def run_d_group(
     *,
     out_dir: Path,
@@ -898,7 +1252,19 @@ def run_d_group(
     wait_for_quota: bool = False,
     quota_wait_seconds: float = QUOTA_WAIT_SECONDS,
     max_quota_waits: int = 1,
+    model_attempts: int = 3,
+    retry_backoff_seconds: float = 30.0,
+    reverify_only: bool = False,
 ) -> dict:
+    """Run or resume arm D.
+
+    Resume rules: a task is skipped only when ``is_completed``. A task whose
+    latest model call failed (timeout, network, HTTP error, no parseable list)
+    is asked again, up to ``model_attempts`` requests per invocation. For
+    completed tasks, names whose latest verification is not final (unfollowed
+    redirect, GitHub rate limit or error) are re-checked without calling the
+    model again. ``reverify_only`` skips every model call.
+    """
     out_dir.mkdir(parents=True, exist_ok=True)
     state_path = out_dir / "checkpoint.json"
     if state_path.is_file():
@@ -915,9 +1281,23 @@ def run_d_group(
             "quota_waits": [],
         }
     state["historical_a_path"] = str(HISTORICAL_A)
+    state.setdefault("invocations", []).append(
+        {
+            "started_at": utcnow(),
+            "runner_materials_commit": materials,
+            "model_timeout_s": model_timeout,
+            "model_attempts": model_attempts,
+            "reverify_only": reverify_only,
+        }
+    )
     seeds = seeds if seeds is not None else load_seed_canonicals()
-    calls = {row["task_id"]: row for row in read_jsonl(out_dir / "model_calls.jsonl") if row.get("task_id")}
+    call_rows = read_jsonl(out_dir / "model_calls.jsonl")
+    calls = latest_calls(call_rows)
+    event_counts: dict[str, int] = {}
+    for row in model_call_events(call_rows):
+        event_counts[str(row["task_id"])] = event_counts.get(str(row["task_id"]), 0) + 1
     quota_waits = list(state.get("quota_waits") or [])
+    waits_this_run = 0
 
     def persist(stop_code: str | None = None, stopped_before: str | None = None) -> dict:
         state["stop_code"] = stop_code
@@ -931,227 +1311,102 @@ def run_d_group(
             state["historical_a_path"] = str(hist_path)
         return write_outputs(out_dir, state, tasks)
 
-    for task in tasks:
-        existing = calls.get(task["id"])
-        if existing and existing.get("terminal"):
-            continue
-        if not existing:
-            prompt = render_prompt(prompt_template, task["query"])
-            result = call_model(
-                base_url=base_url,
-                model=model,
-                api_key=api_key,
-                prompt=prompt,
-                http_post=http_post,
-                timeout=model_timeout,
-            )
-            raw = result["answer"] or ""
-            answer = strip_think(raw)
-            parsed = parse_assistant_repos(answer)
-            record = {
+    def build_record(task: dict, prompt: str, result: dict) -> dict:
+        raw = result["answer"] or ""
+        answer = strip_think(raw)
+        parsed = parse_assistant_repos(answer)
+        seq = event_counts.get(task["id"], 0) + 1
+        event_counts[task["id"]] = seq
+        code = result["code"]
+        if code == "ok" and not parsed["repos"]:
+            code = "no_parseable_list"
+        record = {
+            "run_id": run_id,
+            "task_id": task["id"],
+            "call_id": f"{task['id']}#{seq}",
+            "direction": task["direction"],
+            "arm": "D",
+            "code": code,
+            "http_status": result["http_status"],
+            "business_code": result["business_code"],
+            "model_requests": result["model_requests"],
+            "elapsed_ms": result["elapsed_ms"],
+            "attempts": result["attempts"],
+            "searches": result["searches"],
+            "usage": result["usage"],
+            "response_status": result["response_status"],
+            "parsed_repos": parsed["repos"],
+            "ignored_over_cap": parsed["ignored_over_cap"],
+            "answer_text": redact(answer),
+            "raw_output_sha256": sha256_text(raw),
+            "raw_output_chars": len(raw),
+            "think_present": "<think" in raw.lower(),
+            "input_sha256": sha256_text(prompt),
+            "terminal": False,
+            "retryable": code != "ok",
+            "recorded_at": utcnow(),
+        }
+        if len(raw) <= 16000:
+            record["raw_output"] = redact(raw)
+        return record
+
+    def log_model_failure(task: dict, record: dict, message: str) -> None:
+        append_jsonl(out_dir / "model_calls.jsonl", record)
+        calls[task["id"]] = record
+        append_jsonl(
+            out_dir / "failures.jsonl",
+            {
                 "run_id": run_id,
                 "task_id": task["id"],
-                "direction": task["direction"],
                 "arm": "D",
-                "code": result["code"],
-                "http_status": result["http_status"],
-                "business_code": result["business_code"],
-                "model_requests": result["model_requests"],
-                "elapsed_ms": result["elapsed_ms"],
-                "attempts": result["attempts"],
-                "searches": result["searches"],
-                "usage": result["usage"],
-                "response_status": result["response_status"],
-                "parsed_repos": parsed["repos"],
-                "ignored_over_cap": parsed["ignored_over_cap"],
-                "answer_text": redact(answer),
-                "raw_output_sha256": sha256_text(raw),
-                "raw_output_chars": len(raw),
-                "think_present": "<think" in raw.lower(),
-                "input_sha256": sha256_text(prompt),
-                "terminal": False,
-                "recorded_at": utcnow(),
-            }
-            if len(raw) <= 16000:
-                record["raw_output"] = redact(raw)
-            if result["code"] in {"quota_limited", "rate_limited"}:
-                if wait_for_quota and len(quota_waits) < max_quota_waits:
-                    hinted = _retry_after_seconds(result.get("retry_after"))
-                    delay = hinted if hinted and 0 < hinted <= quota_wait_seconds else quota_wait_seconds
-                    quota_waits.append(
-                        {
-                            "task_id": task["id"],
-                            "code": result["code"],
-                            "wait_seconds": delay,
-                            "started_at": utcnow(),
-                        }
-                    )
-                    state["quota_waits"] = quota_waits
-                    state["stopped_before_task_id"] = task["id"]
-                    state["stop_code"] = result["code"]
-                    write_outputs(out_dir, state, tasks)
-                    sleep(delay)
-                    result = call_model(
-                        base_url=base_url,
-                        model=model,
-                        api_key=api_key,
-                        prompt=prompt,
-                        http_post=http_post,
-                        timeout=model_timeout,
-                    )
-                    raw = result["answer"] or ""
-                    answer = strip_think(raw)
-                    parsed = parse_assistant_repos(answer)
-                    record = {
-                        **record,
-                        "code": result["code"],
-                        "http_status": result["http_status"],
-                        "business_code": result["business_code"],
-                        "model_requests": record["model_requests"] + result["model_requests"],
-                        "elapsed_ms": record["elapsed_ms"] + result["elapsed_ms"],
-                        "attempts": record["attempts"] + result["attempts"],
-                        "searches": result["searches"],
-                        "usage": result["usage"],
-                        "response_status": result["response_status"],
-                        "parsed_repos": parsed["repos"],
-                        "ignored_over_cap": parsed["ignored_over_cap"],
-                        "answer_text": redact(answer),
-                        "raw_output_sha256": sha256_text(raw),
-                        "raw_output_chars": len(raw),
-                        "think_present": "<think" in raw.lower(),
-                        "quota_wait": quota_waits[-1],
-                    }
-                    if len(raw) <= 16000:
-                        record["raw_output"] = redact(raw)
-                if result["code"] in {"quota_limited", "rate_limited"}:
-                    state.setdefault("sent_but_incomplete", []).append(
-                        {
-                            "task_id": task["id"],
-                            "code": result["code"],
-                            "model_requests": result["model_requests"],
-                            "recorded_at": utcnow(),
-                        }
-                    )
-                    persist(result["code"], task["id"])
-                    return {"code": result["code"], "stopped_before_task_id": task["id"], "status": "incomplete"}
-            if result["code"] in {"auth_rejected", "insufficient_balance", "tool_unavailable", "timeout"}:
-                record["terminal"] = True
-                append_jsonl(out_dir / "model_calls.jsonl", record)
-                append_jsonl(
-                    out_dir / "failures.jsonl",
-                    {
-                        "run_id": run_id,
-                        "task_id": task["id"],
-                        "arm": "D",
-                        "code": result["code"],
-                        "message": "模型请求失败，未核对仓库。",
-                    },
-                )
-                append_jsonl(
-                    out_dir / "latency_cost.jsonl",
-                    {
-                        "run_id": run_id,
-                        "task_id": task["id"],
-                        "arm": "D",
-                        "elapsed_ms": result["elapsed_ms"],
-                        "github_requests": 0,
-                        "model_requests": result["model_requests"],
-                        "visible_cost": "未知",
-                    },
-                )
-                calls[task["id"]] = record
-                nxt = next(
-                    (
-                        item["id"]
-                        for item in tasks
-                        if item["id"] != task["id"]
-                        and item["id"]
-                        not in {
-                            row["task_id"]
-                            for row in read_jsonl(out_dir / "model_calls.jsonl")
-                            if row.get("terminal")
-                        }
-                    ),
-                    None,
-                )
-                summary = persist(result["code"], nxt)
-                return {
-                    "code": result["code"],
-                    "stopped_before_task_id": nxt,
-                    "status": summary["status"],
-                }
-            if result["code"] != "ok":
-                record["terminal"] = True
-                append_jsonl(out_dir / "model_calls.jsonl", record)
-                append_jsonl(
-                    out_dir / "failures.jsonl",
-                    {
-                        "run_id": run_id,
-                        "task_id": task["id"],
-                        "arm": "D",
-                        "code": result["code"],
-                        "message": "模型没有返回可解析的名单。",
-                    },
-                )
-                append_jsonl(
-                    out_dir / "latency_cost.jsonl",
-                    {
-                        "run_id": run_id,
-                        "task_id": task["id"],
-                        "arm": "D",
-                        "elapsed_ms": result["elapsed_ms"],
-                        "github_requests": 0,
-                        "model_requests": result["model_requests"],
-                        "visible_cost": "未知",
-                    },
-                )
-                calls[task["id"]] = record
-                continue
-            append_jsonl(out_dir / "model_calls.jsonl", record)
-            calls[task["id"]] = record
-            existing = record
+                "code": record["code"],
+                "message": message,
+            },
+        )
+        append_jsonl(
+            out_dir / "latency_cost.jsonl",
+            {
+                "run_id": run_id,
+                "task_id": task["id"],
+                "arm": "D",
+                "elapsed_ms": int(record["elapsed_ms"] or 0),
+                "github_requests": 0,
+                "model_requests": int(record["model_requests"] or 0),
+                "visible_cost": "未知",
+            },
+        )
 
+    def verify_task(task: dict, existing: dict, *, reverify: bool) -> dict | None:
         repos = list(existing.get("parsed_repos") or [])
-        done = _verified_names(out_dir, task["id"])
+        current = latest_verifications(read_jsonl(out_dir / "verifications.jsonl"))
+        pending = [
+            (index, name)
+            for index, name in enumerate(repos, start=1)
+            if (current.get((task["id"], canonical(name))) or {}).get("code") not in FINAL_VERIFY_CODES
+        ]
+        if reverify and not pending:
+            return None
+        have = {
+            canonical(str(row.get("repo")))
+            for row in read_jsonl(out_dir / "candidates.jsonl")
+            if row.get("task_id") == task["id"]
+        }
         github_requests = 0
         verify_started = time.monotonic()
         stopped = False
-        for index, name in enumerate(repos, start=1):
-            if canonical(name) in done:
-                continue
+        for index, name in pending:
             if github_sleep_seconds:
                 sleep(github_sleep_seconds)
-            checked = verify_repo(name, github_get, github_token, github_timeout)
-            github_requests += 1
-            if checked["code"] == "github_migrated" and checked.get("location"):
-                location = str(checked["location"])
-                if location.startswith("https://api.github.com/repos/"):
-                    if github_sleep_seconds:
-                        sleep(github_sleep_seconds)
-                    checked_follow = github_get(location, {
-                        "Accept": "application/vnd.github+json",
-                        "User-Agent": USER_AGENT,
-                        **({"Authorization": "Bearer " + github_token} if github_token else {}),
-                    }, github_timeout)
-                    github_requests += 1
-                    status = int(checked_follow.get("status") or 0)
-                    if status == 200:
-                        try:
-                            data = json.loads(checked_follow.get("body") or "")
-                        except json.JSONDecodeError:
-                            data = None
-                        stars = data.get("stargazers_count") if isinstance(data, dict) else None
-                        if isinstance(data, dict) and isinstance(data.get("full_name"), str) and isinstance(stars, int):
-                            checked = {
-                                "code": "exists",
-                                "http_status": 200,
-                                "exists": True,
-                                "canonical_repo": data["full_name"],
-                                "stars": stars,
-                                "private": bool(data.get("private")),
-                                "description": data.get("description") if isinstance(data.get("description"), str) else "",
-                                "migrated_from": name,
-                            }
+            checked = verify_repo(
+                name,
+                github_get,
+                github_token,
+                github_timeout,
+                sleep=sleep,
+                sleep_seconds=github_sleep_seconds,
+            )
+            github_requests += int(checked.get("github_requests") or 1)
+            redirect = checked.get("redirect")
             row = {
                 "run_id": run_id,
                 "task_id": task["id"],
@@ -1164,21 +1419,31 @@ def run_d_group(
                 "canonical_repo": checked.get("canonical_repo"),
                 "stars": checked.get("stars"),
                 "private": checked.get("private"),
+                "redirect": redirect,
+                "reverify": reverify,
                 "fetched_at": utcnow(),
             }
+            if isinstance(redirect, dict) and checked.get("exists"):
+                row["note"] = (
+                    f"GitHub {redirect.get('first_http_status')} 跳转：{name} 现为 {checked.get('canonical_repo')}"
+                    "（改名或转移），按存在计。"
+                )
             append_jsonl(out_dir / "verifications.jsonl", row)
             if checked["code"] == "exists" and not checked.get("private"):
-                append_jsonl(
-                    out_dir / "candidates.jsonl",
-                    candidate_from_verification(
-                        run_id=run_id,
-                        task=task,
-                        rank=index,
-                        verified=checked,
-                        fetched_at=row["fetched_at"],
-                        seeds=seeds,
-                    ),
-                )
+                key = canonical(checked["canonical_repo"])
+                if key not in have:
+                    have.add(key)
+                    append_jsonl(
+                        out_dir / "candidates.jsonl",
+                        candidate_from_verification(
+                            run_id=run_id,
+                            task=task,
+                            rank=index,
+                            verified=checked,
+                            fetched_at=row["fetched_at"],
+                            seeds=seeds,
+                        ),
+                    )
             elif checked["code"] == "exists" and checked.get("private"):
                 append_jsonl(
                     out_dir / "failures.jsonl",
@@ -1222,51 +1487,125 @@ def run_d_group(
                         "task_id": task["id"],
                         "arm": "D",
                         "code": checked["code"],
-                        "message": f"核对 {name} 失败，http {checked.get('http_status')}",
+                        "message": f"核对 {name} 未决，http {checked.get('http_status')}，续跑时重核。",
                     },
                 )
-        elapsed_ms = int(existing.get("elapsed_ms") or 0) + int((time.monotonic() - verify_started) * 1000)
-        if stopped:
-            append_jsonl(
-                out_dir / "latency_cost.jsonl",
-                {
-                    "run_id": run_id,
-                    "task_id": task["id"],
-                    "arm": "D",
-                    "elapsed_ms": elapsed_ms,
-                    "github_requests": github_requests,
-                    "model_requests": int(existing.get("model_requests") or 0),
-                    "visible_cost": "未知",
-                },
-            )
-            summary = persist("rate_limited", task["id"])
-            return {"code": "rate_limited", "stopped_before_task_id": task["id"], "status": summary["status"]}
-        existing["terminal"] = True
-        existing["verification_elapsed_ms"] = int((time.monotonic() - verify_started) * 1000)
-        # Rewrite this task's model call as terminal. Append a terminal marker row.
-        append_jsonl(
-            out_dir / "model_calls.jsonl",
-            {**existing, "terminal": True, "verification_complete": True},
-        )
-        calls[task["id"]] = {**existing, "terminal": True}
+        verify_ms = int((time.monotonic() - verify_started) * 1000)
+        model_ms = 0 if reverify else int(existing.get("elapsed_ms") or 0)
         append_jsonl(
             out_dir / "latency_cost.jsonl",
             {
                 "run_id": run_id,
                 "task_id": task["id"],
                 "arm": "D",
-                "elapsed_ms": elapsed_ms,
+                "elapsed_ms": model_ms + verify_ms,
                 "github_requests": github_requests,
-                "model_requests": int(existing.get("model_requests") or 0),
+                "model_requests": 0 if reverify else int(existing.get("model_requests") or 0),
                 "visible_cost": "未知",
             },
         )
+        if stopped:
+            summary = persist("rate_limited", task["id"])
+            return {"code": "rate_limited", "stopped_before_task_id": task["id"], "status": summary["status"]}
+        if not reverify:
+            marker = {
+                **existing,
+                "terminal": True,
+                "verification_complete": True,
+                "verification_elapsed_ms": verify_ms,
+            }
+            append_jsonl(out_dir / "model_calls.jsonl", marker)
+            calls[task["id"]] = marker
         persist(None, None)
+        return None
 
-    state["stop_code"] = None
-    state["stopped_before_task_id"] = None
+    for task in tasks:
+        latest = calls.get(task["id"])
+        if is_completed(latest):
+            stop = verify_task(task, latest, reverify=True)
+            if stop:
+                return stop
+            continue
+        if reverify_only:
+            continue
+        existing = latest if latest and latest.get("code") == "ok" and latest.get("parsed_repos") else None
+        if existing is None:
+            prompt = render_prompt(prompt_template, task["query"])
+            used = 0
+            while used < model_attempts:
+                result = call_model(
+                    base_url=base_url,
+                    model=model,
+                    api_key=api_key,
+                    prompt=prompt,
+                    http_post=http_post,
+                    timeout=model_timeout,
+                )
+                used += 1
+                record = build_record(task, prompt, result)
+                code = record["code"]
+                if code in QUOTA_MODEL_CODES:
+                    append_jsonl(out_dir / "model_calls.jsonl", record)
+                    calls[task["id"]] = record
+                    state.setdefault("sent_but_incomplete", []).append(
+                        {
+                            "task_id": task["id"],
+                            "code": code,
+                            "model_requests": result["model_requests"],
+                            "recorded_at": record["recorded_at"],
+                        }
+                    )
+                    if wait_for_quota and waits_this_run < max_quota_waits:
+                        hinted = _retry_after_seconds(result.get("retry_after"))
+                        delay = hinted if hinted and 0 < hinted <= quota_wait_seconds else quota_wait_seconds
+                        quota_waits.append(
+                            {
+                                "task_id": task["id"],
+                                "code": code,
+                                "wait_seconds": delay,
+                                "started_at": utcnow(),
+                            }
+                        )
+                        waits_this_run += 1
+                        persist(code, task["id"])
+                        sleep(delay)
+                        used -= 1  # a quota wait does not use up a retry
+                        continue
+                    persist(code, task["id"])
+                    return {"code": code, "stopped_before_task_id": task["id"], "status": "incomplete"}
+                if code in FATAL_MODEL_CODES:
+                    log_model_failure(task, record, "模型请求失败，未核对仓库。整批停在此题，修好后续跑。")
+                    summary = persist(code, task["id"])
+                    return {"code": code, "stopped_before_task_id": task["id"], "status": summary["status"]}
+                if code == "ok":
+                    append_jsonl(out_dir / "model_calls.jsonl", record)
+                    calls[task["id"]] = record
+                    existing = record
+                    break
+                if code == "no_parseable_list":
+                    message = "模型回答里没有可解析的仓库名单，不算完成，可续跑重试。"
+                elif code in {"timeout", "network_error"}:
+                    message = f"模型请求{'超时' if code == 'timeout' else '网络失败'}（{model_timeout:g}s），未核对仓库，可续跑重试。"
+                else:
+                    message = f"模型没有返回可解析的名单（http {record.get('http_status')}），可续跑重试。"
+                log_model_failure(task, record, message + f" 本次第 {used}/{model_attempts} 次。")
+                if used < model_attempts and retry_backoff_seconds:
+                    sleep(retry_backoff_seconds * used)
+            if existing is None:
+                persist(None, None)
+                continue
+        stop = verify_task(task, existing, reverify=False)
+        if stop:
+            return stop
+
     summary = persist(None, None)
-    return {"code": "ok", "status": summary["status"], "stopped_before_task_id": None}
+    code = "ok" if summary["status"] == "complete" else "tasks_incomplete"
+    return {
+        "code": code,
+        "status": summary["status"],
+        "stopped_before_task_id": None,
+        "failed_task_ids": [row["task_id"] for row in summary["failed_tasks"]],
+    }
 
 
 def credentials_from_env() -> dict:
@@ -1285,6 +1624,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-id", default="2026-10-04-d-minimax")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--wait-for-quota", action="store_true")
+    parser.add_argument("--max-quota-waits", type=int, default=3,
+                        help="quota waits allowed in this invocation (each ~5h)")
+    parser.add_argument("--model-timeout", type=float, default=300.0,
+                        help="client timeout per model request, seconds")
+    parser.add_argument("--model-attempts", type=int, default=3,
+                        help="model requests per unfinished task in this invocation")
+    parser.add_argument("--retry-backoff", type=float, default=30.0,
+                        help="seconds before retry n is multiplied by n")
+    parser.add_argument("--reverify-only", action="store_true",
+                        help="no model calls; only re-check unresolved GitHub names")
     args = parser.parse_args(argv)
     if args.batch != "eval.batch_1":
         print(json.dumps({
@@ -1337,11 +1686,17 @@ def main(argv: list[str] | None = None) -> int:
         github_get=default_github_get,
         materials=materials_commit(root),
         wait_for_quota=args.wait_for_quota,
+        max_quota_waits=max(args.max_quota_waits, 0),
+        model_timeout=args.model_timeout,
+        model_attempts=max(args.model_attempts, 1),
+        retry_backoff_seconds=max(args.retry_backoff, 0.0),
+        reverify_only=args.reverify_only,
     )
     public = {
         "code": result["code"],
         "status": result["status"],
         "stopped_before_task_id": result.get("stopped_before_task_id"),
+        "failed_task_ids": result.get("failed_task_ids") or [],
         "out": str(out_dir),
     }
     print(json.dumps(public, ensure_ascii=False))

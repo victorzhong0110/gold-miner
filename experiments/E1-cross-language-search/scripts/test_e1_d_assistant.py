@@ -286,6 +286,263 @@ class RunTests(unittest.TestCase):
     def test_redact_removes_key(self):
         self.assertNotIn("sk-abcdefghij", d.redact("token sk-abcdefghij tail", extra="sk-abcdefghij"))
 
+def run(out, tasks, http_post, github_get, **kwargs):
+    params = dict(
+        out_dir=out,
+        tasks=tasks,
+        run_id="test-d",
+        base_url="https://api.minimax.cn/v1",
+        model="MiniMax-M3",
+        api_key="sk-testkeyvalue",
+        github_token="",
+        prompt_template=PROMPT,
+        http_post=http_post,
+        github_get=github_get,
+        sleep=lambda _s: None,
+        github_sleep_seconds=0,
+        seeds=set(),
+        historical_a=[],
+    )
+    params.update(kwargs)
+    return d.run_d_group(**params)
+
+
+def simple_github(url, headers, timeout):
+    parts = url.rstrip("/").split("/")
+    return {"status": 200, "body": github_body(parts[-2] + "/" + parts[-1], 1), "headers": {}}
+
+
+def rows(path):
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+class RetryTests(unittest.TestCase):
+    def test_timeout_is_not_completed_and_resume_retries(self):
+        calls = {"n": 0}
+        sleeps = []
+
+        def failing_post(url, headers, payload, timeout):
+            calls["n"] += 1
+            raise TimeoutError("model request timed out")
+
+        tasks = [task("zh2en-eval-01", "第一题"), task("zh2en-eval-02", "第二题")]
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+
+            def post_first_ok(url, headers, payload, timeout):
+                if "第一" in payload["input"]:
+                    return model_response("one/repo\n")
+                return failing_post(url, headers, payload, timeout)
+
+            first = run(out, tasks, post_first_ok, simple_github, model_attempts=2,
+                        retry_backoff_seconds=5, sleep=sleeps.append)
+            self.assertEqual(first["status"], "incomplete")
+            self.assertEqual(first["failed_task_ids"], ["zh2en-eval-02"])
+            self.assertEqual(calls["n"], 2)
+            self.assertIn(5, sleeps)
+            manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["tasks"]["completed"], 1)
+            self.assertEqual(manifest["tasks"]["failed"], 1)
+            self.assertEqual(manifest["remaining_task_ids"], ["zh2en-eval-02"])
+            self.assertIsNone(manifest["finished_at"])
+            report = (out / "report.md").read_text(encoding="utf-8")
+            self.assertIn("任务完成 1 / 2", report)
+            self.assertIn("zh2en-eval-02", report)
+            fails = rows(out / "failures.jsonl")
+            self.assertEqual([f["code"] for f in fails], ["timeout", "timeout"])
+
+            def post_ok(url, headers, payload, timeout):
+                calls["n"] += 1
+                self.assertIn("第二", payload["input"])
+                return model_response("two/repo\n")
+
+            second = run(out, tasks, post_ok, simple_github)
+            self.assertEqual(second["status"], "complete")
+            self.assertEqual(calls["n"], 3)
+            manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["tasks"]["completed"], 2)
+            self.assertEqual(manifest["actual_requests"]["model"], 4)
+            report = (out / "report.md").read_text(encoding="utf-8")
+            self.assertIn("任务完成 2 / 2", report)
+            self.assertIn("经过重试才完成", report)
+
+    def test_bad_response_and_empty_list_stay_retryable(self):
+        answers = iter(
+            [
+                {"status": 400, "body": json.dumps({"error": {"message": "bad"}}), "retry_after": None},
+                model_response("我找不到合适的仓库。\n"),
+                model_response("found/repo\n"),
+            ]
+        )
+
+        def http_post(url, headers, payload, timeout):
+            return next(answers)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            first = run(out, [task("en2zh-eval-03", "q", "en2zh")], http_post, simple_github,
+                        model_attempts=2)
+            self.assertEqual(first["status"], "incomplete")
+            codes = [r["code"] for r in rows(out / "model_calls.jsonl")]
+            self.assertEqual(codes, ["bad_response", "no_parseable_list"])
+            self.assertIn("bad", rows(out / "model_calls.jsonl")[0]["attempts"][0]["error_excerpt"])
+            self.assertEqual(rows(out / "candidates.jsonl"), [])
+            second = run(out, [task("en2zh-eval-03", "q", "en2zh")], http_post, simple_github)
+            self.assertEqual(second["status"], "complete")
+            self.assertEqual([r["repo"] for r in rows(out / "candidates.jsonl")], ["found/repo"])
+
+    def test_legacy_terminal_timeout_row_is_retried(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            legacy = {
+                "run_id": "test-d",
+                "task_id": "zh2en-eval-08",
+                "code": "timeout",
+                "model_requests": 1,
+                "elapsed_ms": 300000,
+                "searches": [],
+                "usage": {},
+                "parsed_repos": [],
+                "terminal": True,
+                "recorded_at": "2026-10-04T11:27:23Z",
+            }
+            (out / "model_calls.jsonl").write_text(json.dumps(legacy) + "\n", encoding="utf-8")
+            posts = []
+
+            def http_post(url, headers, payload, timeout):
+                posts.append(1)
+                return model_response("x/y\n")
+
+            result = run(out, [task("zh2en-eval-08", "q")], http_post, simple_github)
+            self.assertEqual(result["status"], "complete")
+            self.assertEqual(len(posts), 1)
+            manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["actual_requests"]["model"], 2)
+
+    def test_auth_rejected_stops_and_stays_retryable(self):
+        def http_post(url, headers, payload, timeout):
+            return {"status": 401, "body": json.dumps({"base_resp": {"status_code": 1004}}), "retry_after": None}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            result = run(out, [task("zh2en-eval-01", "q"), task("zh2en-eval-02", "q2")], http_post, simple_github)
+            self.assertEqual(result["code"], "auth_rejected")
+            self.assertEqual(result["stopped_before_task_id"], "zh2en-eval-01")
+            self.assertEqual(len(rows(out / "model_calls.jsonl")), 1)
+            self.assertFalse(rows(out / "model_calls.jsonl")[0]["terminal"])
+
+
+class RedirectTests(unittest.TestCase):
+    def test_verify_repo_follows_repositories_location(self):
+        seen = []
+
+        def github_get(url, headers, timeout):
+            seen.append(url)
+            if url.endswith("/repos/twwch/Mako"):
+                return {
+                    "status": 301,
+                    "body": json.dumps({"message": "Moved Permanently", "url": "https://api.github.com/repositories/1105761331"}),
+                    "headers": {"Location": "https://api.github.com/repositories/1105761331"},
+                }
+            if url == "https://api.github.com/repositories/1105761331":
+                self.assertIn("Accept", headers)
+                return {"status": 200, "body": github_body("newowner/Mako", 7), "headers": {}}
+            raise AssertionError(url)
+
+        checked = d.verify_repo("twwch/Mako", github_get, "", 5)
+        self.assertEqual(checked["code"], "exists")
+        self.assertEqual(checked["canonical_repo"], "newowner/Mako")
+        self.assertEqual(checked["redirected_from"], "twwch/Mako")
+        self.assertEqual(checked["redirect"]["first_http_status"], 301)
+        self.assertEqual(checked["github_requests"], 2)
+        self.assertEqual(len(seen), 2)
+
+    def test_offhost_redirect_is_unresolved(self):
+        def github_get(url, headers, timeout):
+            return {"status": 301, "body": "", "headers": {"Location": "https://evil.example/repos/a/b"}}
+
+        checked = d.verify_repo("a/b", github_get, "", 5)
+        self.assertEqual(checked["code"], "github_migrated")
+        self.assertFalse(checked["exists"])
+        self.assertEqual(checked["github_requests"], 1)
+
+    def test_redirect_loop_is_bounded(self):
+        def github_get(url, headers, timeout):
+            return {"status": 301, "body": "", "headers": {"Location": "/repositories/1"}}
+
+        checked = d.verify_repo("a/b", github_get, "", 5)
+        self.assertEqual(checked["code"], "github_migrated")
+        self.assertEqual(checked["github_requests"], d.MAX_GITHUB_REDIRECTS + 1)
+
+    def test_resume_reverifies_migrated_without_model_call(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            moved = {"n": 0}
+
+            def http_post(url, headers, payload, timeout):
+                return model_response("keep/one\nold/name\nghost/none\n")
+
+            def github_get_old(url, headers, timeout):
+                if url.endswith("/old/name"):
+                    return {"status": 301, "body": "", "headers": {"Location": "https://evil.example/x"}}
+                if url.endswith("/ghost/none"):
+                    return {"status": 404, "body": "{}", "headers": {}}
+                return simple_github(url, headers, timeout)
+
+            first = run(out, [task("zh2en-eval-04", "q")], http_post, github_get_old,
+                        historical_a=[{"arm": "A", "task_id": "zh2en-eval-04", "repo": "new/name"},
+                                      {"arm": "A", "task_id": "seed-zh2en-01", "repo": "z/z"}])
+            self.assertEqual(first["status"], "incomplete")
+            manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["tasks"]["completed"], 1)
+            self.assertEqual(manifest["repos"]["unresolved"], 1)
+
+            def no_post(url, headers, payload, timeout):
+                raise AssertionError("model must not be called again")
+
+            def github_get_new(url, headers, timeout):
+                moved["n"] += 1
+                if url.endswith("/repos/old/name"):
+                    return {"status": 301, "body": "", "headers": {"Location": "https://api.github.com/repositories/42"}}
+                if url.endswith("/repositories/42"):
+                    return {"status": 200, "body": github_body("new/name", 9), "headers": {}}
+                raise AssertionError("only the unresolved name is re-checked: " + url)
+
+            second = run(out, [task("zh2en-eval-04", "q")], no_post, github_get_new,
+                         historical_a=[{"arm": "A", "task_id": "zh2en-eval-04", "repo": "new/name"},
+                                       {"arm": "A", "task_id": "seed-zh2en-01", "repo": "z/z"}])
+            self.assertEqual(second["status"], "complete")
+            self.assertEqual(moved["n"], 2)
+            manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["repos"]["proposed"], 3)
+            self.assertEqual(manifest["repos"]["exists"], 2)
+            self.assertEqual(manifest["repos"]["redirected"], 1)
+            self.assertEqual(manifest["repos"]["hallucinated_404"], 1)
+            self.assertEqual(manifest["repos"]["unresolved"], 0)
+            self.assertEqual(manifest["actual_requests"]["model"], 1)
+            verifications = rows(out / "verifications.jsonl")
+            self.assertEqual(verifications[-1]["canonical_repo"], "new/name")
+            self.assertTrue(verifications[-1]["reverify"])
+            self.assertIn("跳转", verifications[-1]["note"])
+            cands = [r["repo"] for r in rows(out / "candidates.jsonl")]
+            self.assertEqual(cands, ["keep/one", "new/name"])
+            report = (out / "report.md").read_text(encoding="utf-8")
+            self.assertIn("new/name", report)
+            self.assertIn("幻觉率（占提名）1/3", report)
+            self.assertIn("| zh2en-eval-04 | 完成 | 2 | 1 | 1 | 1 |", report)
+            self.assertIn("seed-zh2en-01", report)
+            self.assertIn("不能下的结论", report)
+
+    def test_overlap_lists_every_batch_task(self):
+        overlap = d.overlap_with_historical_a(
+            [{"task_id": "t1", "repo": "a/b"}],
+            [{"arm": "A", "task_id": "t1", "repo": "A/B"}, {"arm": "A", "task_id": "seed", "repo": "c/d"}],
+            ["t1", "t2"],
+        )
+        self.assertEqual([r["task_id"] for r in overlap["per_task"]], ["t1", "t2"])
+        self.assertEqual(overlap["intersection"], 1)
+        self.assertEqual(overlap["a_tasks_outside_batch"], [{"task_id": "seed", "a_candidates": 1}])
+
 
 if __name__ == "__main__":
     unittest.main()
