@@ -47,7 +47,7 @@ python3 experiments/E1-cross-language-search/scripts/e1_d_assistant.py \
   --out experiments/E1-cross-language-search/runs/2026-10-04-d-minimax
 ```
 
-配额或 GitHub 限流停在未完成任务上。同一 `--out` 再执行一次即从该任务继续。人工用途判断不在这条命令里。
+配额或 GitHub 限流停在未完成任务上。同一 `--out` 再执行一次即从该任务继续。只有「模型返回可解析名单且核对跑完」的题算完成；超时、HTTP 错误、没有名单的题续跑时重新请求模型（每次调用每题最多 `--model-attempts` 次，默认 3；单次超时 `--model-timeout`，默认 300 秒）。GitHub 对改名/转移仓库返回的 301 会被跟随，按新名记为存在；跟不到的核对续跑时重核，不再请求模型（`--reverify-only` 只做这一步）。人工用途判断不在这条命令里。
 
 ## 3 BYOK 连接探测
 

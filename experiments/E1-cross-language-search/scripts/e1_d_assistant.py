@@ -858,7 +858,14 @@ def render_report(summary: dict) -> str:
         f"- 批次：`{summary['batch']}`。协议第 3 节 D 组，联网助手强对照。",
         f"- 模型：`{summary['model']}`。端点：`POST /v1/responses`，服务端工具 `web_search`。",
         f"- 决定：{DECISION}（2026-10-04）。输出上限 {MAX_OUTPUT_TOKENS}。",
-        f"- 材料提交：`{summary['materials_commit']}`。",
+        f"- 材料提交：`{summary['materials_commit']}`（首轮）。"
+        + (
+            "续跑 runner 提交："
+            + "、".join(sorted({f"`{row.get('runner_materials_commit')}`" for row in summary.get("invocations") or []}))
+            + "。"
+            if summary.get("invocations")
+            else ""
+        ),
         f"- 开始 {summary.get('started_at') or '未知'}，结束 {summary.get('finished_at') or '未结束'}（UTC）。"
         f"修复后的 runner 调用 {len(summary.get('invocations') or [])} 次（见 checkpoint.json `invocations`；首轮调用未逐次记录）。",
         f"- 状态：`{summary['status']}`。",
@@ -1198,6 +1205,7 @@ def write_outputs(out_dir: Path, state: dict, tasks: list[dict]) -> dict:
                     "materials_commit",
                     "prompt_sha256",
                     "started_at",
+                    "finished_at",
                 ) if k in state},
                 "stopped_before_task_id": state.get("stopped_before_task_id"),
                 "stop_code": state.get("stop_code"),

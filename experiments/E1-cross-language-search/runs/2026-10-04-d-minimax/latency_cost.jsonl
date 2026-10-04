@@ -18,3 +18,8 @@
 {"run_id": "2026-10-04-d-minimax", "task_id": "en2zh-eval-08", "arm": "D", "elapsed_ms": 241037, "github_requests": 10, "model_requests": 1, "visible_cost": "未知"}
 {"run_id": "2026-10-04-d-minimax", "task_id": "en2zh-eval-09", "arm": "D", "elapsed_ms": 117134, "github_requests": 5, "model_requests": 1, "visible_cost": "未知"}
 {"run_id": "2026-10-04-d-minimax", "task_id": "en2zh-eval-10", "arm": "D", "elapsed_ms": 94119, "github_requests": 4, "model_requests": 1, "visible_cost": "未知"}
+{"run_id": "2026-10-04-d-minimax", "task_id": "zh2en-eval-04", "arm": "D", "elapsed_ms": 2280, "github_requests": 2, "model_requests": 0, "visible_cost": "未知"}
+{"run_id": "2026-10-04-d-minimax", "task_id": "zh2en-eval-08", "arm": "D", "elapsed_ms": 31245, "github_requests": 11, "model_requests": 1, "visible_cost": "未知"}
+{"run_id": "2026-10-04-d-minimax", "task_id": "en2zh-eval-01", "arm": "D", "elapsed_ms": 244152, "github_requests": 9, "model_requests": 1, "visible_cost": "未知"}
+{"run_id": "2026-10-04-d-minimax", "task_id": "en2zh-eval-03", "arm": "D", "elapsed_ms": 78850, "github_requests": 9, "model_requests": 1, "visible_cost": "未知"}
+{"run_id": "2026-10-04-d-minimax", "task_id": "en2zh-eval-07", "arm": "D", "elapsed_ms": 2254, "github_requests": 2, "model_requests": 0, "visible_cost": "未知"}

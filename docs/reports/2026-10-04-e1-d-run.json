@@ -1,0 +1,101 @@
+{
+  "experiment": "E1",
+  "arm": "D",
+  "batch": "eval.batch_1",
+  "status": "已运行",
+  "run_status": "complete",
+  "run_id": "2026-10-04-d-minimax",
+  "run_directory": "experiments/E1-cross-language-search/runs/2026-10-04-d-minimax",
+  "report": "experiments/E1-cross-language-search/runs/2026-10-04-d-minimax/report.md",
+  "model": "MiniMax-M3",
+  "base_url_host": "api.minimax.cn",
+  "endpoint": "POST /v1/responses",
+  "server_tool": "web_search",
+  "decision": "docs/decisions/0004-minimax-d-group.md",
+  "materials_commit_first_pass": "eae2d4c14b52339f12af05ca1a41a28f82fb30bf",
+  "runner_commit_resume": [
+    "314c2a75e55f2455657500dcad3a49e99d9724e7"
+  ],
+  "started_at": "2026-10-04T11:13:52Z",
+  "finished_at": "2026-10-04T12:50:25Z",
+  "tasks": {
+    "total": 20,
+    "completed": 20,
+    "failed": 0,
+    "not_attempted": 0,
+    "failed_task_ids": []
+  },
+  "retried_tasks": [
+    {
+      "task_id": "zh2en-eval-08",
+      "first_code": "timeout",
+      "outcome": "ok on retry 1"
+    },
+    {
+      "task_id": "en2zh-eval-01",
+      "first_code": "timeout",
+      "outcome": "ok on retry 1"
+    },
+    {
+      "task_id": "en2zh-eval-03",
+      "first_code": "bad_response (http 400)",
+      "outcome": "ok on retry 1"
+    }
+  ],
+  "model_requests": 23,
+  "github_requests": 177,
+  "web_search_calls_visible": 126,
+  "usage_tokens": {
+    "input_tokens": 1151179,
+    "output_tokens": 9356,
+    "cached_tokens": 626595
+  },
+  "repos": {
+    "proposed": 172,
+    "exists": 169,
+    "exists_public": 169,
+    "exists_private": 0,
+    "redirected": 3,
+    "hallucinated_404": 3,
+    "unresolved": 0,
+    "hallucination_rate_of_proposed": 0.0174,
+    "candidates_public_distinct": 169
+  },
+  "redirects_followed": [
+    {
+      "task_id": "zh2en-eval-04",
+      "model_repo": "twwch/Mako",
+      "canonical_repo": "LingyiChen-AI/Mako",
+      "http_status": 301
+    },
+    {
+      "task_id": "zh2en-eval-08",
+      "model_repo": "davidmerfield/Blot",
+      "canonical_repo": "blotcms/blot",
+      "http_status": 301
+    },
+    {
+      "task_id": "en2zh-eval-07",
+      "model_repo": "Wjavan/Direct-download-link",
+      "canonical_repo": "Wjavan/FerryLink",
+      "http_status": 301
+    }
+  ],
+  "overlap_with_historical_a": {
+    "source": "runs/2026-09-22-w4-first",
+    "intersection": 0,
+    "note": "仓库全名集合交集，不是用途适合度，也不是同时运行的配对实验。"
+  },
+  "visible_cost": "未知",
+  "human_judgment": "未运行",
+  "b_c_m_on_this_model": "未运行",
+  "reading_baseline": "未运行",
+  "not_concluded": "不能由这份名单宣布跨语言增益、产品效果或应该缩小功能。存在只说明 GitHub 上有该仓库，不说明适合需求。",
+  "supersedes": {
+    "file": "docs/reports/2026-10-04-e1-d-not-run.json",
+    "removed_in_favor_of_this_file": true,
+    "git_history": "eae2d4c",
+    "what_it_recorded": "2026-10-04T11:12:37Z 第一次执行实跑入口时进程环境没有密钥（code missing_credentials，exit 2），模型请求 0、GitHub 请求 0、未创建运行目录。随后带密钥于 2026-10-04T11:13:52Z 开始实跑，该记录不再代表 D 组状态。",
+    "checked_at": "2026-10-04T11:12:37Z"
+  }
+}
