@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased — 2026-10-05 E6 probe-record schema 不可满足，已修
+
+- `probe-record.schema.json` 的 required 有 30 个字段名，properties 只描述 16 个，
+  `additionalProperties` 却是 false。那 14 个字段被**同时要求与禁止**——
+  任何对象都无法满足该 schema。
+- 一直没被发现的原因：`test_e6_probe.py` 的
+  `assertEqual(set(record), set(schema["required"]))` 意图正确且一直通过，
+  但**只比对了字段名，没有拿 schema 去过一遍记录**。
+- 方向判断：工具产出 30、required 30、schema 缺描述的必填字段为 0，
+  工具产出的是严格超集 → 改 schema，不削工具。
+- 补齐 14 个字段声明（类型取自实测），并给 `run_id` 补 minLength 与说明。
+- 测试新增两个模块级断言：`required - properties` 必须为空（无需 jsonschema）、
+  用 jsonschema 真验记录（缺库时回退）。原名字比对保留。
+- 验证：补声明后今日新记录与 **2026-09-22 已记录记录双双 VALID**（证明产物一直
+  是对的）；重新引入原缺陷测试失败、还原通过；**全仓库 13 个 schema 现全部可满足**。
+- 离线套件 362 Python + 58 Node 通过，付费请求 0；`e6_probe.py` 行为未改。
+
 ## Unreleased — 2026-10-05 盲判记录可回填为 schema 合规记录
 
 - 三方字段集不一致：schema 要 `run_id`/`task_id`/`repo` 且禁止 `blind_id`；

@@ -349,3 +349,43 @@ schema 全合法、四臂齐全；离线套件 exit 0，**354 Python + 58 Node**
 
 验证：离线套件 exit 0，**362 Python + 58 Node**（原 354 + 58），付费请求 0。
 详见 [2026-10-05-blind-record-schema-mismatch.md](../reports/2026-10-05-blind-record-schema-mismatch.md)。
+
+## 2026-10-05 E6 的 probe-record schema 不可满足
+
+把「按 schema 校验已记录产物」从 E1 扩到 E2/E3/E6 时，在 E6 找到一个**比前两次
+更严重**的问题：不是工具少产字段，而是 **schema 本身自相矛盾**。
+
+`experiments/E6-api-probe/schemas/probe-record.schema.json` 的 `required` 有 **30** 个
+字段名，`properties` 只描述 **16** 个，`additionalProperties` 却是 `false`。
+那 14 个既 required 又不在 properties 里的字段
+（`run_id`/`started_at`/`finished_at`/`base_url`/`model`/`protocol`/`prompt`/
+`billing_note`/`response_format`/`visible_response_id`/`error_detail`/
+`cache_hits`/`cancelled_before_send`/`max_output_tokens`）
+**被同时要求与禁止——任何对象都无法满足该 schema。**
+
+**为什么一直没发现**：`test_e6_probe.py` 里有一处
+`self.assertEqual(set(record), set(schema["required"]))`，意图正确且一直通过
+（工具确实产出 30 个、required 确实是 30 个），但它**只比对了字段名，
+没有拿 schema 去过一遍记录**。差一步就能抓到。
+
+**方向判断**：先确认哪边有问题——工具产出 30、schema required 30、
+**schema 缺描述的必填字段为 0**（工具无任何 required 缺项），
+即工具产出的是严格超集。那 14 个都是有价值的探测事实。
+所以改 schema，不削工具。
+
+已修：补齐 14 个字段声明（类型取自实测——今日新记录与 2026-09-22 已记录记录
+形状一致），并给 `run_id` 补上 `minLength` 与说明（它本就在 required 里却连
+描述都没有，而仓库另外 12 个 schema 都要求 run_id）。
+`test_e6_probe.py` 新增两个模块级断言：`required - properties` 必须为空
+（无需 jsonschema 即可跑），以及用 jsonschema 真验一遍记录（缺库时回退）。
+
+验证：补声明前今日新记录 INVALID，补声明后 VALID，**2026-09-22 已记录记录也
+VALID**（最强佐证：那份产物从头到尾都对，错的是 schema）；只带 30 个必填键的
+最小对象 additionalProperties 错误 0；重新引入原缺陷测试失败、还原 14/14 通过；
+**全仓库 13 个 schema 现已全部可满足**（E6 是唯一破损的）。
+E3 的 observation.schema.json 有 9 个 required 未描述但 addl=true，不构成破损，
+本轮不动。`e6_probe.py` 行为未改，只改 schema 与测试。
+
+离线套件 exit 0，362 Python + 58 Node，付费请求 0，未改任何已记录产物。
+E6 探测本身仍是「未运行」，本轮只修好它的记录契约。详见
+[2026-10-05-e6-schema-unsatisfiable.md](../reports/2026-10-05-e6-schema-unsatisfiable.md)。
