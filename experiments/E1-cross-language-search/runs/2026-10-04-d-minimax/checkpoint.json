@@ -1,0 +1,14 @@
+{
+  "run_id": "2026-10-04-d-minimax",
+  "batch": "eval.batch_1",
+  "model": "MiniMax-M3",
+  "base_url": "https://api.minimax.cn/v1",
+  "materials_commit": "eae2d4c14b52339f12af05ca1a41a28f82fb30bf",
+  "prompt_sha256": "0ebfbbb1b70b59e2bfcbb546d92b7173b8dd7db216abd6f343fa6b1fb5f18e8e",
+  "started_at": "2026-10-04T11:13:52Z",
+  "stopped_before_task_id": null,
+  "stop_code": null,
+  "remaining_task_ids": [],
+  "quota_waits": [],
+  "sent_but_incomplete": []
+}
