@@ -515,10 +515,35 @@
       .slice(0, 4);
   }
 
+  // Thinking is not a final answer; discard an unfinished thinking suffix too.
+  function finalModelText(content) {
+    if (typeof content !== "string") return "";
+    return content.replace(/<think\b[^>]*>[\s\S]*?<\/think\s*>/gi, "")
+      .replace(/<think\b[^>]*>[\s\S]*$/gi, "").trim();
+  }
+
+  function modelResponseCode(status, data) {
+    if (status === 401 || status === 403 || data?.base_resp?.status_code === 1004) return "auth_rejected";
+    if (status === 429) return "rate_limited";
+    if (status < 200 || status >= 300 || data?.error || (data?.base_resp?.status_code && data.base_resp.status_code !== 0)) return "bad_response";
+    const choice = data?.choices?.[0];
+    if (choice?.finish_reason === "length") return "model_output_truncated";
+    if (!finalModelText(choice?.message?.content)) return "empty_model_output";
+    return "ok";
+  }
+
+  function authHint(base) {
+    try {
+      if (["api.minimax.io", "api.minimaxi.com", "api.minimax.cn"].includes(new URL(base).hostname))
+        return " 检查密钥有效性及平台区域：国际 api.minimax.io；大陆按控制台端点。Check key validity and platform region.";
+    } catch {}
+    return "";
+  }
+
   function parseModelExpansions(payload, original, lang) {
     let data = payload;
     if (typeof payload === "string") {
-      const trimmed = payload.trim();
+      const trimmed = finalModelText(payload);
       const start = trimmed.indexOf("{");
       const end = trimmed.lastIndexOf("}");
       if (start < 0 || end <= start) return [];
@@ -649,6 +674,9 @@
     descriptionKeywords,
     buildExploreQueries,
     parseModelExpansions,
+    finalModelText,
+    modelResponseCode,
+    authHint,
     allowedMessage,
     isOptionsSender,
     endpointUrl,

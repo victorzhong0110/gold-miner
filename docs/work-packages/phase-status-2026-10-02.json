@@ -501,7 +501,7 @@
   },
   "continuation_source_sha": "e92d008c1600c0a1d9ad2bd2e555b08f70fd8f9a",
   "continuation_branch": "work/stage-records-and-storage-2026-10-03",
-  "trial_version": "0.1.3",
+  "trial_version": "0.1.4",
   "continuation_delivery": "https://github.com/victorzhong0110/gold-miner/pull/13 (canonical GitHub merge state)",
   "previous_handoff": {
     "pr": 12,
@@ -509,7 +509,7 @@
     "version": "0.1.2",
     "source_sha": "bb9fadb9263d3a35dcbabd75acd836c3efe48c04"
   },
-  "updated_date": "2026-10-03",
+  "updated_date": "2026-10-04",
   "timezone": "Asia/Taipei",
   "current_work_branch": "work/stage-records-and-storage-2026-10-03",
   "storage_ordering": {
@@ -527,5 +527,20 @@
     "file": "experiments/E3-faithful-reading/context-pack-2026-10-03.jsonl",
     "scope": "three text turns by short quotes/context, immutable code/comments, existing Chinese snapshots; not full page/image archive",
     "evaluation": "not-run"
+  },
+  "runtime_fixes": {
+    "source_sha": "3c186e0135a13329645ee9afadc57e2056e7ec3c",
+    "feedback_source_sha": "1b5eb97b61d9ad79fe90ca8c6853473c32b5c5c8",
+    "fixed": [
+      "S1",
+      "S3",
+      "S5",
+      "S6"
+    ],
+    "S2": "current official mainland docs list .cn; added source/region guidance",
+    "S4": "owner-blocked: choose/freeze independent assistant/model/budget",
+    "offline": "passed",
+    "browser": "pending CI",
+    "report": "docs/reports/2026-10-04-runtime-fixes.md"
   }
 }
