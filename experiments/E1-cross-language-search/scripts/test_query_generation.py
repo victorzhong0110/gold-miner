@@ -281,10 +281,10 @@ class StrictParserTests(unittest.TestCase):
         self.assertEqual(ctx.exception.code, "ambiguous_model_output")
         self.assertIn("2 JSON objects", ctx.exception.notes)
 
-    def test_single_object_with_prose_around_it_is_still_accepted(self):
-        # One object plus brace-free prose is unambiguous; keep accepting it.
-        rows = qg.parse_model_variants("C", "en2zh", 'Answer: {"zh":["报表"]} hope that helps')
-        self.assertEqual([r["variant_query"] for r in rows], ["报表"])
+    def test_single_example_object_inside_prose_is_refused(self):
+        with self.assertRaises(qg.QueryClientError) as ctx:
+            qg.parse_model_variants("C", "en2zh", 'Example: {"zh":["demo"]} but I cannot answer')
+        self.assertEqual(ctx.exception.code, 'ambiguous_model_output')
 
     def test_brace_counting_ignores_braces_inside_strings(self):
         self.assertEqual(
@@ -295,37 +295,57 @@ class StrictParserTests(unittest.TestCase):
         )
         self.assertEqual(qg._top_level_brace_groups('{"unclosed": "x"'), [])
 
-    def test_brace_free_prose_around_valid_json_is_accepted(self):
-        rows = qg.parse_model_variants("C", "en2zh", 'Here: {"zh":["报表"],"en":["report"]} done')
+    def test_only_json_or_json_fence_is_accepted(self):
+        rows = qg.parse_model_variants("C", "en2zh", '```json\n{"zh":["报表"],"en":["report"]}\n```')
         self.assertEqual([r["variant_query"] for r in rows], ["报表", "report"])
 
 
-class KnownOpenPathsTests(unittest.TestCase):
-    """Paths this session deliberately did NOT close, pinned so they stay visible.
+class ProseIsRejectedTests(unittest.TestCase):
+    """Replaces this session's KnownOpenPathsTests, which pinned the
+    single-prose-example case as still accepted. The review closed that path.
 
-    Self-review of commit e5784ab found the change was diagnostics-only: across
-    70 old-vs-new comparisons the accept/reject set was identical and only the
-    error code changed. In particular a single JSON object wrapped in prose is
-    still accepted, so a model that echoes only an example and gives no real
-    answer still contributes that example as a candidate.
-
-    Closing this would mean reading intent out of prose, which this session
-    already got wrong twice (the materials check read 本步不要写 as permission;
-    the query-length probe truncated a whole sentence to vary its length). The
-    real defence is the C prompt forbidding prose, which it already does.
+    The rule is now structural rather than intent-based: exactly one JSON object,
+    optionally inside a code fence, and nothing else. Reading intent out of prose
+    was the alternative, and this session already got that wrong twice.
     """
 
-    def test_single_object_in_prose_is_still_accepted(self):
-        rows = qg.parse_model_variants("C", "en2zh", 'Example: {"zh":["demo"]} -> your answer')
-        self.assertEqual([r["variant_query"] for r in rows], ["demo"])
+    def test_compliant_object_is_accepted(self):
+        rows = qg.parse_model_variants('C', 'en2zh', '<think>t</think>{"zh":["报表生成器"],"en":["report"]}')
+        self.assertEqual([r['variant_query'] for r in rows], ['报表生成器', 'report'])
+
+    def test_fenced_object_is_accepted(self):
+        rows = qg.parse_model_variants('C', 'en2zh', '```json\n{"zh":["报表"]}\n```')
+        self.assertEqual([r['variant_query'] for r in rows], ['报表'])
+
+    def test_prose_array_and_two_objects_are_rejected(self):
+        for text in ['Example: {"zh":["demo"]} -> your answer',
+                     'Here: {"zh":["报表"]} done',
+                     '[{"zh":["报表"]}]',
+                     '{"zh":["报表"]} {']:
+            with self.assertRaises(qg.QueryClientError):
+                qg.parse_model_variants('C', 'en2zh', text)
 
     def test_two_objects_are_rejected_with_a_specific_code(self):
-        # This is the case the fix actually improved: the reason is now explicit.
         with self.assertRaises(qg.QueryClientError) as ctx:
-            qg.parse_model_variants("C", "en2zh",
-                                    '{"zh":["demo"]} and my answer: {"zh":["报表生成器"]}')
-        self.assertEqual(ctx.exception.code, "ambiguous_model_output")
+            qg.parse_model_variants('C', 'en2zh', '{"zh":["demo"]} and my answer: {"zh":["报表"]}')
+        self.assertEqual(ctx.exception.code, 'ambiguous_model_output')
 
-    def test_compliant_output_is_unaffected(self):
-        rows = qg.parse_model_variants("C", "en2zh", '<think>t</think>{"zh":["报表生成器"],"en":["report"]}')
-        self.assertEqual([r["variant_query"] for r in rows], ["报表生成器", "report"])
+        for text in ['Here: {"zh":["报表"]} done', '[{"zh":["报表"]}]', '{"zh":["报表"]} {']:
+            with self.assertRaises(qg.QueryClientError): qg.parse_model_variants('C', 'en2zh', text)
+
+    def test_client_credential_not_in_environment_is_redacted_before_excerpt(self):
+        secret = 'fixture-private-credential-with-no-prefix'
+        def post(*args):
+            return {'status': 200, 'body': json.dumps({'choices': [{'finish_reason': 'stop',
+                'message': {'content': 'rejected ' + secret}}]})}
+        client = qg.HttpQueryClient(post, base_url='https://fixture.test/v1', model='fixture', api_key=secret)
+        row = qg.generate({'id': 'fixture', 'query': 'report', 'direction': 'en2zh'}, 'C', 'live', client)
+        self.assertNotIn(secret, json.dumps(row))
+        self.assertIn('[redacted]', row['raw_output'])
+
+    def test_length_with_no_content_is_still_truncated(self):
+        def post(*args):
+            return {'status': 200, 'body': json.dumps({'choices': [{'finish_reason': 'length', 'message': {'content': ''}}]})}
+        client = qg.HttpQueryClient(post, base_url='https://fixture.test/v1', model='fixture', api_key='fixture')
+        row = qg.generate({'id': 'fixture', 'query': 'report', 'direction': 'en2zh'}, 'C', 'live', client)
+        self.assertEqual(row['code'], 'model_output_truncated')
