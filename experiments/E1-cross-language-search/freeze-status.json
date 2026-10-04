@@ -1,0 +1,48 @@
+{
+  "freeze_status_field": "pointers-recorded-not-yet-run",
+  "concrete_model_id": null,
+  "pointers": {
+    "eval_frozen_commit": "6010be0eee6d0e7f46ad851931741b81f741e0f0",
+    "prompts_frozen_commit": "6010be0eee6d0e7f46ad851931741b81f741e0f0",
+    "run_settings_commit": "6010be0eee6d0e7f46ad851931741b81f741e0f0",
+    "seed_set_frozen_commit": "6010be0eee6d0e7f46ad851931741b81f741e0f0"
+  },
+  "pointers_exist": {
+    "6010be0eee6d0e7f46ad851931741b81f741e0f0": true
+  },
+  "missing_pointers": [],
+  "absent_at_frozen_commit": [
+    {
+      "material": "experiments/E1-cross-language-search/verified-seeds.jsonl",
+      "pointer": "seed_set_frozen_commit",
+      "sha": "6010be0eee6d0e7f46ad851931741b81f741e0f0",
+      "reason": "material did not exist at the frozen commit"
+    },
+    {
+      "material": "experiments/E1-cross-language-search/prompts/m-rewrite.txt",
+      "pointer": "prompts_frozen_commit",
+      "sha": "6010be0eee6d0e7f46ad851931741b81f741e0f0",
+      "reason": "material did not exist at the frozen commit"
+    },
+    {
+      "material": "experiments/E1-cross-language-search/prompts/d-control.template.jsonl",
+      "pointer": "prompts_frozen_commit",
+      "sha": "6010be0eee6d0e7f46ad851931741b81f741e0f0",
+      "reason": "material did not exist at the frozen commit"
+    }
+  ],
+  "modified_since_freeze": [
+    {
+      "material": "experiments/E1-cross-language-search/run-settings.json",
+      "sha": "6010be0eee6d0e7f46ad851931741b81f741e0f0"
+    },
+    {
+      "material": "experiments/E1-cross-language-search/prompts/README.md",
+      "sha": "6010be0eee6d0e7f46ad851931741b81f741e0f0"
+    }
+  ],
+  "unreadable_pointers": [],
+  "stale": true,
+  "status": "stale",
+  "model_configured": false
+}

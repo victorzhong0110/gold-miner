@@ -24,6 +24,11 @@
   三条查询挂两条，表现为「模型时好时坏」。见
   [验证记录](docs/reports/2026-10-05-live-model-verification.md)。
   这是连通性证据，**不是 H1 增益证据**。
+- **附带发现：已登记的评估冻结不成立**。`run-settings.json` 的四个冻结指针都指向
+  `6010be0e`，但该提交不含 `prompts/m-rewrite.txt` 与 `verified-seeds.jsonl`——
+  M 组提示词与整个种子集都是冻结之后才加入的。直接跑 E1 会让 M 组结果来自未冻结的
+  提示词且事后无从察觉。新增 `e1_freeze_check.py` 与 `test_e1_freeze_check.py`
+  自动锁定（当前 `status: stale`）；**本轮不代做重新冻结**，待选定模型后由发起人另开提交。
 
 ## 0.1.0-trial — review follow-up (Draft PR #2)
 

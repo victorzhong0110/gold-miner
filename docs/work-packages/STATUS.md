@@ -16,10 +16,10 @@ R1（模型缓存恢复）、R2（取消终态）、R3（导入链接）已修�
 | WP1-02 | 对齐协议与规范 | verified | 规范入口显式对齐；历史 v0.3/v0.4 未改 |
 | WP1-03 | 真实模型客户端和配置 | verified | HTTP 客户端与恢复回归已测；2026-10-05 修 S6 并加 12 项回归，随后以发起人本机凭据完成**真实模型请求验证**（HTTP 200 / `finish_reason: stop` / 解析出 4 条扩展）。仍缺的是冻结后的正式评估运行，不是连通性 |
 | WP1-04 | 接通完整检索执行链 | verified | e1_pipeline.py + test_e1_pipeline.py：保留原文、语言标签、预算和字段检查 |
-| WP1-05 | 冻结评估材料 | partial | 历史冻结材料已保留；正式比较须冻结具体模型与新代码 SHA |
+| WP1-05 | 冻结评估材料 | partial | 历史冻结材料已保留，但 **2026-10-05 核对发现已登记的四个指针指向 `6010be0e`，该提交不含 M 组提示词与 `verified-seeds.jsonl`**，故冻结实际不成立。已加 `e1_freeze_check.py` + `test_e1_freeze_check.py` 自动锁定；重新冻结待发起人选定模型后另开提交 |
 | WP1-06 | 准备 E2/E3 正式材料 | partial | E2 会话包、E3 真实片段已保留；正式多轮材料和实际会话待补 |
 | WP1-07 | 离线基线与操作说明 | verified | 统一离线套件含 E6/E8/内容脚本/源码与包一致性 |
-| WP2-01 | 预先登记判断标准 | partial | protocol、judgment-guide 已有标准；正式新批次须预登记具体模型 |
+| WP2-01 | 预先登记判断标准 | partial | protocol、judgment-guide 已有标准；`concrete_model_id` 仍为 null（owner-blocked），且因 M 组提示词未冻结，预登记同样不成立（见 WP1-05） |
 | WP2-02 | 运行 E1 A/B/C/M | partial | A 组和 README 配对有历史 live 记录；B/C/M 尚未实测 |
 | WP2-03 | 运行强对照 D | pending-live | 工具侧已就绪：新增 `e1_d_control.py` 录入+比较，harness 接 `--d-input`，命中/幻觉/未核实分开计数（2026-10-05）。**对照本身仍未运行**，D 是真人强对照，不能由 fixture 补齐 |
 | WP2-04 | 盲判和增量分析 | partial | blind_eval.py 已实现去重、遮蔽与回填；真人盲判尚未执行 |
@@ -103,6 +103,22 @@ harness 接受 `--d-input`，命中／幻觉／未核实三者分开计数，没
   其中 3 项本轮新增：长结果页面板无需滚动即可见、探测读输入框而非陈旧存储、改动 BYOK 清空陈旧绿灯。
 - `dist/build-manifest.json` 已重建，产物与源码逐文件哈希一致。
 
-仍然**未发生**、不得据此宣称的事：发起人真机复测（含 S6 修复后模型请求次数确实 > 0）、
-真人盲判、E1 B/C/M/D 实测、E2 会话、E3 对照、O1 复测。这些仍按各自状态行记为
-`partial` / `pending-human` / `pending-live`。
+仍然**未发生**、不得据此宣称的事：真人盲判、E1 B/C/M/D 实测、E2 会话、E3 对照、
+O1 复测。这些仍按各自状态行记为 `partial` / `pending-human` / `pending-live`。
+
+## 2026-10-05 附带发现：已登记的评估冻结不成立
+
+核对 `run-settings.json` 的四个冻结指针时发现：它们都指向 `6010be0e…`，
+但**该提交不包含 M 组提示词和整个种子集**——`prompts/m-rewrite.txt` 与
+`verified-seeds.jsonl` 在那个提交里都不存在，是冻结之后才加入的。
+
+M 组是四个实验臂之一。直接跑 E1 会让 M 组结果来自一个从未冻结的提示词，
+而事后无法从记录中看出——这正是冻结要防的失败。因此 WP1-05「冻结评估材料」
+和 WP2-01「预先登记判断标准」**实际上都不成立**，此前按「已回填」记录是不准确的。
+
+已加自动核对 `experiments/E1-cross-language-search/scripts/e1_freeze_check.py`，
+机器可读状态在 [`freeze-status.json`](../experiments/E1-cross-language-search/freeze-status.json)
+（当前 `stale`），并由 `test_e1_freeze_check.py` 锁定：记录与真实材料一旦不一致即失败。
+**本轮不代做重新冻结**——选定 `concrete_model_id` 后由发起人另开提交重新指向，
+在状态一致前不得称本批「已冻结」。明细见
+[冻结检查清单](../experiments/E1-cross-language-search/freeze-checklist.md)。
