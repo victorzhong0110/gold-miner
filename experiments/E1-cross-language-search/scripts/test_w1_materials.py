@@ -168,9 +168,12 @@ class TestW1RunSettings(unittest.TestCase):
         self.assertIn("recorded-not-used", data.get("reading_setup_status", ""))
         self.assertFalse(scan_secrets(read_text(SETTINGS)))
 
-    def test_no_real_model_configured(self):
+    def test_owner_model_decision_recorded(self):
         data = json.loads(read_text(SETTINGS))
-        self.assertIsNone(data["model"].get("concrete_model_id"))
+        self.assertEqual(data["model"].get("concrete_model_id"), "MiniMax-M3")
+        self.assertEqual(data["model"].get("status"), "owner-decided-2026-10-04")
+        self.assertEqual(data["model"].get("b_c_m_live"), "未运行")
+        self.assertIsNone(data["budget"]["D"].get("task_cap"))
 
     def test_query_file_sha_blank_settings_point_at_materials(self):
         text = read_text(QUERIES)

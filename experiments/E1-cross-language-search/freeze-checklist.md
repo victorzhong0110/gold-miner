@@ -21,7 +21,7 @@
 
 - [x] B/C/M/D 提示词在 `prompts/`
 - [x] `run-settings.json` 预算 A1 / B2 / C4 / M4
-- [ ] `concrete_model_id` 仍为 null（owner-blocked：无发起人模型探测）
+- [x] `concrete_model_id` 为 MiniMax-M3（2026-10-04 发起人决定，见 docs/decisions/0004-minimax-d-group.md）。B/C/M 实跑仍未运行。
 
 ## SHA 回填（只能填已存在提交）
 
