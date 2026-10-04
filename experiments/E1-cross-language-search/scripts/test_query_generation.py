@@ -166,3 +166,30 @@ class ReasoningClientTests(unittest.TestCase):
             client=qg.HttpQueryClient(post,base_url="https://fixture.example/v1",model="MiniMax-M3",api_key="fixture")
             row=qg.generate(task,"B","live",client);self.assertEqual(row["code"],code);self.assertEqual(len(calls),1)
             self.assertEqual(row["variants"],[])
+
+
+class VisibleUsageTests(unittest.TestCase):
+    def test_usage_and_elapsed_recorded_even_when_truncated(self):
+        task = {"id": "test", "query": "q", "direction": "zh2en"}
+        usage = {"prompt_tokens": 10, "completion_tokens": 2048, "total_tokens": 2058,
+                 "completion_tokens_details": {"reasoning_tokens": 2000},
+                 "prompt_tokens_details": {"cached_tokens": 4}}
+        def post(*args):
+            return {"status": 200, "body": json.dumps({"usage": usage, "choices": [
+                {"finish_reason": "length", "message": {"content": "<think>..."}}]})}
+        client = qg.HttpQueryClient(post, base_url="https://fixture.example/v1", model="MiniMax-M3", api_key="k")
+        row = qg.generate(task, "B", "live", client)
+        self.assertEqual(row["code"], "model_output_truncated")
+        self.assertEqual(row["usage"], {"prompt_tokens": 10, "completion_tokens": 2048,
+                                        "reasoning_tokens": 2000, "cached_prompt_tokens": 4,
+                                        "total_tokens": 2058})
+        self.assertIsInstance(row["elapsed_seconds"], float)
+
+    def test_missing_usage_stays_none_not_zero(self):
+        task = {"id": "test", "query": "q", "direction": "zh2en"}
+        def post(*args):
+            raise qg.QueryClientError("timeout", "model request timed out")
+        client = qg.HttpQueryClient(post, base_url="https://fixture.example/v1", model="MiniMax-M3", api_key="k")
+        row = qg.generate(task, "B", "live", client)
+        self.assertEqual(row["code"], "timeout")
+        self.assertIsNone(row["usage"])

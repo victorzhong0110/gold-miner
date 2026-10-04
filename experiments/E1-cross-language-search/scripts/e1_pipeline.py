@@ -2,13 +2,17 @@
 """Auditable generation -> validation -> A/B/C/M search bridge; no network by default."""
 from __future__ import annotations
 import argparse
+import datetime
 import hashlib
 import json
 import os
 import re
 from pathlib import Path
 from e1_batch import build_a_variants, load_queries, run_batch, is_eval_frozen, materials_commit
-from query_generation import E1, generate, query_lang, other_lang, default_client_from_env
+from query_generation import E1, MAX_OUTPUT_TOKENS, generate, query_lang, other_lang, default_client_from_env
+
+# GitHub search allows 30 authenticated requests/minute; space serial calls (not a guarantee).
+DEFAULT_GITHUB_SLEEP_SECONDS = 3.0
 
 
 def search_variants(task: dict, arm: str, generated: list[dict]) -> list[dict]:
@@ -47,8 +51,48 @@ def search_variants(task: dict, arm: str, generated: list[dict]) -> list[dict]:
     return original + rows
 
 
+def summarize_usage(records):
+    """Per-arm visible token totals; requests without counters are counted, not zero-filled."""
+    out = {}
+    for row in records:
+        arm = out.setdefault(row['arm'], {'model_requests': 0, 'requests_with_usage': 0,
+                                          'requests_without_usage': 0, 'prompt_tokens': 0,
+                                          'completion_tokens': 0, 'reasoning_tokens': 0,
+                                          'cached_prompt_tokens': 0})
+        if 'request_parameters' not in row:
+            continue
+        arm['model_requests'] += 1
+        usage = row.get('usage')
+        if not isinstance(usage, dict):
+            arm['requests_without_usage'] += 1
+            continue
+        arm['requests_with_usage'] += 1
+        for key in ('prompt_tokens', 'completion_tokens', 'reasoning_tokens', 'cached_prompt_tokens'):
+            if isinstance(usage.get(key), int):
+                arm[key] += usage[key]
+    return out
+
+
+def check_frozen_settings(settings, client):
+    """Pinned model parameters must match the configured client before any request."""
+    model = settings.get('model', {}) if isinstance(settings, dict) else {}
+    problems = []
+    if not client or model.get('concrete_model_id') != client.model:
+        problems.append('concrete model')
+    base = model.get('base_url')
+    if base is not None and (not client or base.rstrip('/') != client.base_url):
+        problems.append('base_url')
+    tokens = model.get('bcm_max_output_tokens')
+    if tokens is not None and tokens != MAX_OUTPUT_TOKENS:
+        problems.append('bcm_max_output_tokens')
+    timeout = model.get('bcm_timeout_seconds')
+    if timeout is not None and (not client or float(timeout) != float(client.timeout)):
+        problems.append('bcm_timeout_seconds (BYOK_TIMEOUT_SECONDS)')
+    return problems
+
+
 def run_pipeline(tasks, *, run_id, mode='fixture', client=None, http_get=None, token=None,
-                 should_cancel=None, allow_network=False):
+                 should_cancel=None, allow_network=False, sleep_seconds=0):
     if mode not in ('fixture', 'live'):
         raise ValueError('mode must be fixture or live')
     records, mappings = [], {arm: {} for arm in ('B', 'C', 'M')}
@@ -71,11 +115,17 @@ def run_pipeline(tasks, *, run_id, mode='fixture', client=None, http_get=None, t
     for arm in ('A', 'B', 'C', 'M'):
         results[arm] = run_batch(tasks=tasks, arm=arm, run_id=run_id + '-' + arm,
                                 variants_by_task=mappings.get(arm), http_get=http_get, token=token,
-                                should_cancel=should_cancel)
+                                should_cancel=should_cancel, sleep_seconds=sleep_seconds)
     return {'run_id': run_id, 'mode': mode, 'field': 'default',
             'generation_records': records, 'arms': results,
-            'model_usage': 'unknown' if mode == 'live' else 'fixture-no-model-calls',
+            'model_usage': summarize_usage(records) if mode == 'live' else 'fixture-no-model-calls',
+            'model_cost': 'unknown' if mode == 'live' else 'fixture-no-model-calls',
+            'github_sleep_seconds': sleep_seconds,
             'product_effect': 'not-evaluated'}
+
+
+def _utcnow():
+    return datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z')
 
 
 def main():
@@ -89,6 +139,8 @@ def main():
     out = Path(args.out)
     if (out / 'pipeline.json').exists():
         parser.error('output already exists; use a new directory (no overwrite or automatic retry)')
+    if out.exists() and (not out.is_dir() or any(out.iterdir())):
+        parser.error('output directory is not empty (e.g. an existing D run); use a new directory')
     if args.live and not args.run_id:
         parser.error('live runs require an explicit --run-id')
     client = default_client_from_env() if args.live else None
@@ -100,13 +152,21 @@ def main():
         model = settings.get('model', {}).get('concrete_model_id')
         if not args.live or not is_eval_frozen(settings) or not model or model != os.environ.get('OPENAI_MODEL'):
             parser.error('formal evaluation requires --live, frozen settings and matching concrete model')
+        problems = check_frozen_settings(settings, client)
+        if problems:
+            parser.error('frozen settings do not match the configured client: ' + ', '.join(problems))
+    sleep_seconds = float(settings.get('github', {}).get('sleep_seconds_between_search_requests',
+                                                         DEFAULT_GITHUB_SLEEP_SECONDS)) if args.live else 0
     http_get = None
     if args.live:
         from github_search import _urllib_get
         http_get = _urllib_get
     tasks = load_queries(E1 / 'queries.yaml')[args.batch]
+    started_at = _utcnow()
     result = run_pipeline(tasks, run_id=args.run_id or 'fixture-dev', mode='live' if args.live else 'fixture',
-                          client=client, http_get=http_get, allow_network=args.live)
+                          client=client, http_get=http_get, allow_network=args.live,
+                          sleep_seconds=sleep_seconds)
+    result['started_at'], result['finished_at'] = started_at, _utcnow()
     result['source_sha'] = materials_commit()
     result['settings_sha256'] = hashlib.sha256(Path(args.settings).read_bytes()).hexdigest()
     result['batch'] = args.batch
