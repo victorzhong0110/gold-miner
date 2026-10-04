@@ -317,3 +317,23 @@ class StrictParserTests(unittest.TestCase):
         client = qg.HttpQueryClient(post, base_url='https://fixture.test/v1', model='fixture', api_key='fixture')
         row = qg.generate({'id': 'fixture', 'query': 'report', 'direction': 'en2zh'}, 'C', 'live', client)
         self.assertEqual(row['code'], 'model_output_truncated')
+
+
+class ReviewedExamplePathsTests(unittest.TestCase):
+    """Source self-review examples now guarded by full-object parsing."""
+
+    def test_single_example_in_prose_is_rejected(self):
+        with self.assertRaises(qg.QueryClientError) as ctx:
+            qg.parse_model_variants("C", "en2zh", 'Example: {"zh":["demo"]} -> your answer')
+        self.assertEqual(ctx.exception.code, "ambiguous_model_output")
+
+    def test_two_objects_are_rejected_with_a_specific_code(self):
+        # This is the case the fix actually improved: the reason is now explicit.
+        with self.assertRaises(qg.QueryClientError) as ctx:
+            qg.parse_model_variants("C", "en2zh",
+                                    '{"zh":["demo"]} and my answer: {"zh":["报表生成器"]}')
+        self.assertEqual(ctx.exception.code, "ambiguous_model_output")
+
+    def test_compliant_output_is_unaffected(self):
+        rows = qg.parse_model_variants("C", "en2zh", '<think>t</think>{"zh":["报表生成器"],"en":["report"]}')
+        self.assertEqual([r["variant_query"] for r in rows], ["报表生成器", "report"])

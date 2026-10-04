@@ -1,9 +1,9 @@
 {
   "pr": 19,
-  "reviewed_head": "ab69b943833cb85239575fa4eda8faf30fd81bc2",
+  "reviewed_head": "0c887dd5049292b6f5f628e2267fc059aa758814",
   "base_main": "6cf2aa07adbb71fe9e5ed5f742d960d1d521070b",
   "validation": {
-    "python": 367,
+    "python": 370,
     "node": 58,
     "offline": "passed",
     "updated_head_ci": "required before merge"
@@ -48,7 +48,8 @@
     "b2d72f6: measured latency ledger",
     "50aea15: blind judgment input schema and export",
     "1c3c608: satisfiable E6 probe schema",
-    "ab69b94: schema sweep closeout"
+    "ab69b94: schema sweep closeout",
+    "0c887dd: source self-review and 3 example regression tests; expectations aligned with reviewed parser"
   ],
-  "delivery": "isolated review branch includes reviewed PR19 source head; CI pins reviewed code"
+  "delivery": "PR20, fixed review head with all PR19 source history included"
 }
