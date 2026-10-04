@@ -78,6 +78,55 @@ def prepare(pipeline, salt=None):
 
 
 
+def export_judgments(key, judgments, judge_kind):
+    """Turn blind judgments into records that satisfy judgments.schema.json.
+
+    The blind step and the repo's only judgments schema describe different
+    shapes, and they were incompatible: a blind row carries `blind_id`, which
+    the schema forbids, and omits `run_id`/`task_id`/`repo`, which it requires.
+    So the records the pending judgment would produce could never be validated
+    against the schema that judgment-guide.md calls authoritative.
+
+    The three identity fields are not invented here -- they come from
+    blind-key.json, which already maps every blind_id to its task and repo.
+    Nothing about the arm is written: the exported row is per (run, task, repo),
+    exactly like the non-blind records, so the arm stays out of the record.
+    """
+    if judge_kind not in ('human', 'technical'):
+        raise ValueError('judge kind must be explicit')
+    run_id = key.get('run_id') or ''
+    rows = []
+    for row in judgments:
+        blind = row['blind_id']
+        refs = key['links'].get(blind)
+        if not refs:
+            raise ValueError('unknown blind judgment: ' + str(blind))
+        ref = refs[0]
+        # kind/notes are required by the schema and are not read by analyze;
+        # they must come from the judge rather than be defaulted here.
+        for field in ('kind', 'notes'):
+            if field not in row:
+                raise ValueError(
+                    field + ' is required to export a schema-valid judgment; '
+                    'blind-sheet.md asks for it and judgments.schema.json requires it'
+                )
+        rows.append({
+            'run_id': run_id,
+            'task_id': ref['task_id'],
+            'repo': ref['repo'],
+            'purpose_fit': row['purpose_fit'],
+            'hard_conditions': row['hard_conditions'],
+            'kind': row['kind'],
+            'novel_to_judge': row['novel_to_judge'],
+            'worth_following': row['worth_following'],
+            'reason': row['reason'],
+            'judge': row['judge'],
+            'judged_at': row['judged_at'],
+            'notes': row['notes'],
+        })
+    return rows
+
+
 def analyze(key, judgments, judge_kind):
     if judge_kind not in ('human', 'technical'):
         raise ValueError('judge kind must be explicit')

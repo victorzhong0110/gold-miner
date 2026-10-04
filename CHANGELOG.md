@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased — 2026-10-05 盲判记录可回填为 schema 合规记录
+
+- 三方字段集不一致：schema 要 `run_id`/`task_id`/`repo` 且禁止 `blind_id`；
+  判定表与 `analyze` 用 `blind_id` 且不产那三个。**发起人按判定表填完的记录
+  无法通过仓库唯一声明权威的 schema**（`additionalProperties:false` 拒绝
+  `blind_id`，同时缺三个必填字段）。下游要么失败要么绕过。
+- 两边形状各自合理（非盲知道 task/repo，盲判刻意只知道 blind_id），
+  缺的是桥。新增 `schemas/judgments-blind.schema.json` 描述盲判输入形状，
+  新增 `blind_eval.export_judgments()` 回填为 `judgments.schema.json` 形状：
+  身份字段**从 blind-key.json 取**而非编造，**不写 arm**，缺 `kind`/`notes` 拒绝导出
+  （不替判定人填值）。
+- 三方漂移棘轮 7 项：判定表字段集必须等于盲判 schema 的 required；
+  `analyze` 读取的字段都必须有描述；显式断言两套 schema 不兼容。
+- **未改判定材料**——字段集现在被测试约束而非修改。
+- 离线套件 362 Python + 58 Node 通过，付费请求 0。
+
 ## Unreleased — 2026-10-05 A/B/C/M 记录耗时并写出 latency_cost.jsonl
 
 - 按 schema 校验 4 个已记录运行：1862 行 0 违规，记录形状本身健康。

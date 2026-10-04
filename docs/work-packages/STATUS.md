@@ -312,3 +312,40 @@ B 组存在系统性长度劣势。
 `elapsed_ms > 0`（证明测的是真实经过时间而非占位 0）；实跑 fixture 得 40 行、
 schema 全合法、四臂齐全；离线套件 exit 0，**354 Python + 58 Node**，付费请求 0。
 详见 [2026-10-05-latency-cost-gap.md](../reports/2026-10-05-latency-cost-gap.md)。
+
+## 2026-10-05 盲判记录无法通过仓库自己的 judgments schema
+
+判定材料即将由发起人判定。核对「判定人产出什么形状的记录」时发现三方字段集不一致：
+
+| 来源 | 字段 |
+|---|---|
+| `judgments.schema.json`（required, addProps:false） | 含 `run_id`/`task_id`/`repo`，**无** `blind_id` |
+| `blind-sheet.md`（每项记录…） | 含 `blind_id`，**无** 那三个身份字段 |
+| `blind_eval.analyze` 实际读取 | `blind_id` + 判定字段 |
+
+差异两边对称：盲判行带 `blind_id` 会被 schema 的 `additionalProperties:false` 拒绝，
+又缺三个必填身份字段。**即：发起人按判定表认真填完，得到的记录无法通过仓库唯一
+声明权威的 schema**（`judgment-guide.md:41`「判定记录字段以本文件加 schemas 为准」）。
+下游要么校验失败，要么绕过校验。
+
+两边形状各自都合理——非盲判定天然知道 task/repo，盲判刻意只知道 `blind_id`。
+缺的是把它们接起来的桥。
+
+已修：
+
+1. 新增 `schemas/judgments-blind.schema.json` 描述盲判输入的真实形状（10 字段，
+   同为 addProps:false），并写明与 `judgments.schema.json` 的分工
+2. 新增 `blind_eval.export_judgments(key, judgments, judge_kind)`：`run_id`/`task_id`/`repo`
+   **从 `blind-key.json` 取**而非编造；导出形状与 `judgments.schema.json` 一致；
+   **不写 arm**（留在 `groups` 供分析，不进记录）；`kind`/`notes` 缺失则**拒绝导出**，
+   不填默认值——`analyze` 不读这两项但 schema 必填，替判定人填值等于伪造他的判断。
+   实测导出全部通过 schema 校验且 arm 未泄漏
+3. 三方漂移棘轮（7 项测试）：判定表字段集必须等于盲判 schema 的 required；
+   `analyze` 读取的每个字段盲判 schema 都必须有描述；并显式断言「盲判行确实无法
+   满足非盲 schema」。双向验证：临时从判定表删 `kind` → 测试失败；还原 → 27/27。
+
+**未改判定材料**：`blind-sheet.md` 与 `evaluation/2026-10-04-minimax/` 一字未改
+（棘轮验证的临时改动已还原）。它的字段集现在被测试**约束**而非被修改。
+
+验证：离线套件 exit 0，**362 Python + 58 Node**（原 354 + 58），付费请求 0。
+详见 [2026-10-05-blind-record-schema-mismatch.md](../reports/2026-10-05-blind-record-schema-mismatch.md)。

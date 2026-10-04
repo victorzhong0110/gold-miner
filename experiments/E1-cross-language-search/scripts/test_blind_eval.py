@@ -1,5 +1,7 @@
 import json
+import re
 import unittest
+from pathlib import Path
 from blind_eval import prepare, analyze, include_d, audit_masking
 class BlindTests(unittest.TestCase):
     def test_combined_d_uses_recorded_rank_and_masks_source(self):
@@ -245,3 +247,100 @@ class ProtocolComparisonTests(unittest.TestCase):
         self.assertIn('D', result['d_not_differenced'])
         # Its per-task set stays visible for a human to read.
         self.assertEqual(result['groups']['task:D']['suitable'], ['d/only'])
+
+
+class JudgmentRecordShapeTests(unittest.TestCase):
+    """The blind step, the blind sheet and judgments.schema.json described three
+    different record shapes, and they were mutually incompatible.
+
+    A blind row carries `blind_id`, which judgments.schema.json rejects under
+    additionalProperties:false, and omits `run_id`/`task_id`/`repo`, which it
+    requires. So the records the pending judgment produces could never be
+    validated against the schema judgment-guide.md calls authoritative.
+    """
+
+    E1 = Path(__file__).resolve().parents[1]
+    SHEET = E1 / "evaluation" / "2026-10-04-minimax" / "blind-sheet.md"
+
+    def _blind_schema(self):
+        return json.loads((self.E1 / "schemas" / "judgments-blind.schema.json").read_text(encoding="utf-8"))
+
+    def _sheet_fields(self):
+        text = self.SHEET.read_text(encoding="utf-8")
+        sentence = re.search(r"每项记录([^。]+)。", text).group(1)
+        return set(re.findall(r"`?([a-z_]{3,})`?", sentence))
+
+    def test_sheet_documents_exactly_the_blind_schema_fields(self):
+        self.assertEqual(self._sheet_fields(), set(self._blind_schema()["required"]))
+
+    def test_blind_schema_covers_every_field_analyze_reads(self):
+        import inspect
+        import blind_eval
+        source = inspect.getsource(blind_eval.analyze)
+        read = {a or b for a, b in re.findall(
+            r"row\[['\"](\w+)['\"]\]|row\.get\(['\"](\w+)['\"]\)", source)}
+        read |= {'purpose_fit', 'hard_conditions', 'worth_following'}  # validated in the choices loop
+        missing = read - set(self._blind_schema()["properties"])
+        self.assertFalse(missing, f"analyze reads fields the blind schema does not describe: {missing}")
+
+    def test_blind_row_cannot_satisfy_the_non_blind_schema(self):
+        # Stated explicitly so the incompatibility is on record, not just implied.
+        main = json.loads((self.E1 / "schemas" / "judgments.schema.json").read_text(encoding="utf-8"))
+        self.assertNotIn("blind_id", main["properties"])
+        self.assertFalse(main["additionalProperties"])
+        self.assertTrue({"run_id", "task_id", "repo"} <= set(main["required"]))
+
+    def _key(self):
+        return {'run_id': 'r1', 'mode': 'live',
+                'links': {'b1': [{'arm': 'C', 'rank': 1, 'task_id': 't1', 'repo': 'x/y'}]},
+                'arm_task_status': {'C': {'t1': 'ok'}}}
+
+    def _judgment(self, **kw):
+        row = {'blind_id': 'b1', 'purpose_fit': 'yes', 'hard_conditions': 'satisfied',
+               'kind': 'tool', 'novel_to_judge': 'unknown', 'worth_following': 'unknown',
+               'reason': 'r', 'judge': 'j', 'judged_at': '2026-10-05T00:00:00Z', 'notes': ''}
+        row.update(kw)
+        return row
+
+    def test_export_produces_schema_valid_records(self):
+        from blind_eval import export_judgments
+        schema = json.loads((self.E1 / "schemas" / "judgments.schema.json").read_text(encoding="utf-8"))
+        try:
+            import jsonschema
+            validate = lambda row: jsonschema.validate(row, schema)
+        except Exception:
+            required, allowed = set(schema['required']), set(schema['properties'])
+            def validate(row):
+                self.assertTrue(required <= set(row))
+                self.assertTrue(set(row) <= allowed)
+        for row in export_judgments(self._key(), [self._judgment()], 'technical'):
+            validate(row)
+
+    def test_export_takes_identity_from_the_key_not_invented(self):
+        from blind_eval import export_judgments
+        row = export_judgments(self._key(), [self._judgment()], 'technical')[0]
+        self.assertEqual(row['run_id'], 'r1')
+        self.assertEqual(row['task_id'], 't1')
+        self.assertEqual(row['repo'], 'x/y')
+
+    def test_export_never_writes_the_arm(self):
+        from blind_eval import export_judgments
+        row = export_judgments(self._key(), [self._judgment()], 'technical')[0]
+        self.assertNotIn('arm', row)
+        self.assertNotIn('C', [v for v in row.values() if isinstance(v, str)])
+
+    def test_export_refuses_to_default_kind_or_notes(self):
+        from blind_eval import export_judgments
+        # analyze does not read these, but the schema requires them. Defaulting
+        # would put a value in a record the judge never made.
+        for field in ('kind', 'notes'):
+            row = self._judgment()
+            row.pop(field)
+            with self.assertRaises(ValueError) as ctx:
+                export_judgments(self._key(), [row], 'technical')
+            self.assertIn(field, str(ctx.exception))
+
+    def test_export_rejects_unknown_blind_id(self):
+        from blind_eval import export_judgments
+        with self.assertRaises(ValueError):
+            export_judgments(self._key(), [self._judgment(blind_id='nope')], 'technical')

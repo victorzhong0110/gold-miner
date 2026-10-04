@@ -39,3 +39,4 @@
 
 - 本口径尚未用于任何判定；尚无 `judgments.jsonl`。
 - 判定记录字段以本文件加 schemas 为准。AGENTS.md 第 17 条所指“protocol.md 第 7 节”与当前协议节号不一致（记录格式现为第 5 节）；本口径以当前协议第 5 节字段为准，此差异已在此披露。
+- **盲判用另一套 schema**：盲判阶段按 `blind_id` 记录（来源组被遮蔽，判定人不知道 `run_id`/`task_id`/`repo`），输入形状见 [`schemas/judgments-blind.schema.json`](../schemas/judgments-blind.schema.json)；回填成 `judgments.schema.json` 形状用 `blind_eval.export_judgments`。两套形状此前不兼容（`blind_id` 会被 `additionalProperties:false` 拒绝，且缺三个必填身份字段），2026-10-05 补上桥与漂移棘轮，见 [记录](../docs/reports/2026-10-05-blind-record-schema-mismatch.md)。
