@@ -391,3 +391,77 @@ class JudgmentRecordShapeTests(unittest.TestCase):
             self.assertEqual(row['repo'], 'x/y')
             self.assertNotIn('blind_id', row)
             self.assertEqual(json.loads((out/'analysis.json').read_text())['judge_kind'], 'technical')
+
+
+class JudgeBundleTests(unittest.TestCase):
+    """The shipped material directory held blind-key.json next to blind-sheet.md.
+
+    That is wrong under every threat model: the one artifact that destroys the
+    masking sat inside what the judge receives. The bundle keeps the key out and
+    records the measured lower bound instead of implying a fix.
+    """
+
+    E1 = Path(__file__).resolve().parents[1]
+    MATERIAL = E1 / "evaluation" / "2026-10-04-minimax"
+    RUN = E1 / "runs" / "2026-10-04-bcm-minimax"
+    D_RUN = E1 / "runs" / "2026-10-04-d-minimax"
+
+    def _bundle(self, tmp, salt=None):
+        from blind_eval import build_judge_bundle
+        public = [json.loads(l) for l in
+                  (self.MATERIAL / "blind-candidates.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+        key = json.loads((self.MATERIAL / "blind-key.json").read_text(encoding="utf-8"))
+        if salt:
+            key = dict(key, salted=True)
+        sources = [
+            [json.loads(l) for l in (self.RUN / "candidates.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()],
+            [json.loads(l) for l in (self.D_RUN / "candidates.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()],
+        ]
+        disclosure = build_judge_bundle(public, key, source_arms=sources, out_dir=tmp)
+        return public, key, disclosure
+
+    def test_bundle_never_contains_the_key(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            self._bundle(tmp)
+            names = {p.name for p in Path(tmp).iterdir()}
+            self.assertNotIn("blind-key.json", names)
+            self.assertIn("blind-candidates.jsonl", names)
+            self.assertIn("disclosure.json", names)
+
+    def test_bundle_has_no_repo_to_arm_mapping(self):
+        import tempfile, re
+        with tempfile.TemporaryDirectory() as tmp:
+            self._bundle(tmp)
+            for path in Path(tmp).iterdir():
+                text = path.read_text(encoding="utf-8")
+                self.assertIsNone(re.search(r'"links"\s*:', text), path.name)
+                self.assertIsNone(re.search(r'"arm"\s*:', text), path.name)
+
+    def test_disclosure_reports_the_measured_lower_bound(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            public, _key, d = self._bundle(tmp)
+            self.assertEqual(d['rows'], len(public))
+            self.assertEqual(d['key_included'], False)
+            # The judge must know the query and the repo to judge at all, and
+            # both join to the public runs, so attribution is total.
+            self.assertEqual(d['rows_joinable_to_public_source_runs'], len(public))
+            self.assertEqual(d['attribution'], 'total')
+            self.assertEqual(d['strict_blinding'], 'not-established')
+
+    def test_disclosure_says_salt_does_not_help(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            _public, _key, d = self._bundle(tmp, salt='x')
+            self.assertTrue(d['salted'])
+            self.assertIn('does not change attribution', d['salt_effect'])
+            # A salt must not let the disclosure claim strict blinding.
+            self.assertEqual(d['strict_blinding'], 'not-established')
+
+    def test_disclosure_demands_disclosure_of_what_the_judge_has_seen(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            _public, _key, d = self._bundle(tmp)
+            self.assertIn('披露', d['judge_must_be_disclosed'])
+            self.assertIn('独立判定人', d['judge_must_be_disclosed'])

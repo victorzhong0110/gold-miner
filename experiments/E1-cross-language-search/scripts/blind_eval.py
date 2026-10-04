@@ -212,6 +212,69 @@ def analyze(key, judgments, judge_kind):
             'product_effect': 'not-concluded', 'missing_judgments': len(key['links']) - len(indexed)}
 
 
+def build_judge_bundle(public, key, source_arms=None, out_dir=None, sheet_text=None):
+    """Write what the judge actually receives, without the mapping key.
+
+    The shipped material directory held blind-key.json next to blind-sheet.md.
+    That is wrong under every threat model: the one artifact that destroys the
+    masking was sitting inside the material handed to the judge.
+
+    This writes only the rows, the sheet and a disclosure that states the
+    measured de-anonymizability. The key is never copied here.
+
+    It also records the lower bound rather than implying a fix. The judge must
+    know the query and the repository to judge anything, and both are join keys
+    into the public source runs, so while those runs are reachable the
+    attribution is total: 233/233 rows join by (task_id, repo). No hash, salt or
+    ID scheme can change that -- blinding here is a process control (who may see
+    which files), not a cryptographic one.
+    """
+    joinable = None
+    if source_arms:
+        source_pairs = set()
+        for rows in source_arms:
+            for row in rows or []:
+                if isinstance(row, dict) and row.get('task_id') and row.get('repo'):
+                    source_pairs.add((row['task_id'], str(row['repo']).lower()))
+        joinable = sum(1 for r in public
+                       if (r['task_id'], r['repo'].lower()) in source_pairs)
+    disclosure = {
+        'run_id': key.get('run_id'),
+        'arm_task_status': key.get('arm_task_status'),
+        'rows': len(public),
+        'key_included': False,
+        'rows_joinable_to_public_source_runs': joinable,
+        'total_rows': len(public),
+        'attribution': 'total' if joinable == len(public) and public else 'partial-or-unmeasured',
+        'strict_blinding': 'not-established',
+        'why': (
+            '判定必须知道查询与仓库才能判断，而两者都是公开运行记录的可连接键。'
+            ' 只要源运行记录可被判定人取用，按 (task_id, repo) 即可 100% 反推组别。'
+            ' 任何哈希、salt 或 ID 方案都无法改变这一点——本项目的遮蔽是流程控制'
+            '（谁能看到哪些文件），不是密码学控制。'
+        ),
+        'judge_must_be_disclosed': (
+            '判定前须披露：是否看过源运行记录、映射表或本仓库。'
+            ' 若由未接触源记录的独立判定人执行，本材料按来源遮蔽有效；'
+            ' 否则须在 notes 中写明已见信息。'
+        ),
+        'salted': bool(key.get('salted')),
+        'salt_effect': 'randomizes blind_id only; it does not hide task_id/repo, so it does not change attribution',
+    }
+    if out_dir is not None:
+        out = Path(out_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        (out / 'blind-candidates.jsonl').write_text(
+            ''.join(json.dumps(r, ensure_ascii=False) + '\n' for r in public),
+            encoding='utf-8')
+        if sheet_text:
+            (out / 'blind-sheet.md').write_text(sheet_text, encoding='utf-8')
+        (out / 'disclosure.json').write_text(
+            json.dumps(disclosure, ensure_ascii=False, indent=2) + '\n',
+            encoding='utf-8')
+    return disclosure
+
+
 def audit_masking(public, pipeline, salt=None):
     """Measure source recovery using hashes and public task/repo identities.
 
@@ -262,7 +325,7 @@ def audit_masking(public, pipeline, salt=None):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--pipeline'); p.add_argument('--d-run', help='optional completed same-batch D run directory'); p.add_argument('--key'); p.add_argument('--judgments'); p.add_argument('--judge-kind', choices=['human', 'technical']); p.add_argument('--out', required=True); p.add_argument('--audit-masking', action='store_true', help='report de-anonymizability only, without writing judge material'); p.add_argument('--salt-file', help='file holding the judge\'s private salt; must live outside this repository'); p.add_argument('--key-out', help='write blind-key.json here instead of into --out, so the mapping stays out of the repository')
+    p.add_argument('--pipeline'); p.add_argument('--d-run', help='optional completed same-batch D run directory'); p.add_argument('--key'); p.add_argument('--judgments'); p.add_argument('--judge-kind', choices=['human', 'technical']); p.add_argument('--out', required=True); p.add_argument('--audit-masking', action='store_true', help='report de-anonymizability only, without writing judge material'); p.add_argument('--salt-file', help='file holding the judge\'s private salt; must live outside this repository'); p.add_argument('--key-out', help='write blind-key.json here instead of into --out, so the mapping stays out of the repository'); p.add_argument('--judge-bundle', help='write a key-free judge bundle (rows + sheet + disclosure) to this directory'); p.add_argument('--sheet', help='existing blind-sheet.md to copy into the bundle')
     args = p.parse_args(); out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
     if args.pipeline:
         pipeline = json.loads(Path(args.pipeline).read_text())
@@ -274,12 +337,23 @@ def main():
         public, key = prepare(pipeline, salt)
         if args.d_run:
             key['source_runs'] = {'ABCM_pipeline': args.pipeline, 'D_run': args.d_run}
+        source_arms = None
+        if args.d_run:
+            source_arms = [
+                [json.loads(l) for l in (Path(args.d_run) / 'candidates.jsonl').read_text(encoding='utf-8').splitlines() if l.strip()],
+                [json.loads(l) for l in Path(args.pipeline).parent.joinpath('candidates.jsonl').read_text(encoding='utf-8').splitlines() if l.strip()],
+            ]
+        sheet_path = Path(args.sheet) if args.sheet else None
         if args.audit_masking:
             report = audit_masking(public, pipeline, salt)
             (out / 'masking-audit.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
             print(json.dumps(report, ensure_ascii=False, indent=2))
             return
         (out / 'blind-candidates.jsonl').write_text(''.join(json.dumps(r, ensure_ascii=False) + '\n' for r in public))
+        if args.judge_bundle:
+            build_judge_bundle(public, key, source_arms=source_arms,
+                               out_dir=args.judge_bundle,
+                               sheet_text=sheet_path.read_text(encoding='utf-8') if sheet_path and sheet_path.exists() else None)
         key_dest = Path(args.key_out) if args.key_out else out / 'blind-key.json'
         key_dest.parent.mkdir(parents=True, exist_ok=True)
         key_dest.write_text(json.dumps(key, ensure_ascii=False, indent=2) + '\n')

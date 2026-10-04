@@ -422,3 +422,35 @@ E6 探测本身仍是「未运行」，本轮只修好它的记录契约。详�
 **全仓库 13 个 schema 现已全部可满足。** 本轮未改任何已记录产物、
 提示词或冻结材料。详见
 [2026-10-05-schema-sweep-closeout.md](../reports/2026-10-05-schema-sweep-closeout.md)。
+
+## 2026-10-05 遮蔽下界：salt 无效，真遮蔽是流程控制
+
+发起人审查把 `strict_blinding` 标为 `not-established` 后，本轮把这件事做到底。
+
+**实测下界**（只用公开记录、完全忽略 `blind_id`）：按 `(task_id, repo)` 匹配，
+仅 A/B/C/M 的 `candidates.jsonl` 可归因 **140/233**；加上 D 组记录后
+**233/233** 全可归因，其中 **196** 行可确定单一组。
+
+原因是判定必须知道**查询**和**仓库**，而这两样恰好都是公开运行记录的可连接键。
+所以**只要源运行记录可被判定人取用，归因就是 100%**，任何哈希、salt 或 ID 方案
+都改变不了。
+
+**「salt 让 196 → 0」是错的**，已撤销：salt 只随机化 `blind_id`，而行里明文写着
+`task_id` 与 `repo`，实测加盐前后可归因数完全相同。那是一个无法生效的控制。
+审查已让 `audit_masking` 同时测两条路径（重算 ID / 匹配公开身份），现在如实报告。
+
+**修掉一处任何威胁模型下都错的缺陷**：材料目录里 `blind-key.json` 与
+`blind-sheet.md` 并排——毁掉遮蔽的那份文件就在交给判定人的材料里。
+新增 `build_judge_bundle()` 与 `--judge-bundle`：判定人目录只含
+`blind-candidates.jsonl`、可选 `blind-sheet.md`、以及 `disclosure.json`，**不含 key**。
+
+`disclosure.json` 记录的是**当场算出**的下界（`rows_joinable_to_public_source_runs`、
+`attribution`、`strict_blinding`、以及 salt 明确无效），判定人拿到材料时就知道
+能被反推到什么程度，而不是被告知「已遮蔽」。
+
+**真遮蔽只剩流程选择，属发起人决定**（本轮不代做）：① 独立判定人（无仓库访问权）
+② 判定完成前把源记录移出仓库 ③ 接受来源遮蔽 + 如实披露。
+
+验证：`test_blind_eval.py` 30 → 35 项；离线套件 **376 Python + 58 Node**；
+付费与 GitHub 请求均为 0；未改任何已记录产物或冻结材料。详见
+[2026-10-05-blinding-lower-bound.md](../reports/2026-10-05-blinding-lower-bound.md)。
