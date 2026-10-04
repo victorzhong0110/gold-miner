@@ -33,3 +33,9 @@
 模型或密钥配置变化后重新尝试模型，不复用旧 rules 结果阻止恢复。缓存按内容指纹、语言、模式和查询区分，24 小时过期，最多 100 条；旧版本没有时间戳的缓存不命中。导入模型结果不冒充本机已验证的模型配置。
 
 可选历史当前仅记录在本机，没有用于推荐排序；兴趣、当前仓库和显式反馈用于推荐。项目未宣称 stars 历史接入。
+
+## 0.1.4 探测与区域
+
+探测使用当前输入（无需先保存），显示实际主机/模型；修改输入立即使旧结果失效。探测不保存密钥，只有保存按钮会保存设置。HTTP200必须同时有最终pong答案才成功；空答案、仅think或length会显示失败，成功仅说明连接和最小输出，不保证检索JSON成功。工作请求和探测最多2048输出token（含推理），不自动重试；探测可能计费。
+
+MiniMax国际文档：https://platform.minimax.io/docs/api-reference/text-openai-api（api.minimax.io/v1）；大陆现行文档：https://platform.minimax.cn/docs/api-reference/text-openai-api（api.minimax.cn/v1）。api.minimaxi.com为本次用户已验证的旧入口。选择注册平台控制台给出的端点；鉴权拒绝时检查区域及密钥有效性，不能单凭401断定区域错配。

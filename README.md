@@ -4,11 +4,11 @@
 
 [English](README.en.md) · [10 分钟上手](docs/guides/getting-started.md) · [45 项工作包状态](docs/work-packages/STATUS.md)
 
-**当前版本 0.1.3，工程试验包。** 267 项 Python、53 项扩展回归通过；[0.1.3 的9项 Chromium fixture 验收](docs/reports/browser-acceptance-2026-10-03.json) 全部通过；本人 Chrome 安装、跨语言增益、真人探索和持续使用尚未验收。已有 A 组搜索、README 字段配对及六条 gtx 翻译记录，不能由它们推出产品有效。
+**当前版本 0.1.4，工程试验包。** 268 项 Python、58 项扩展回归通过；本次新增浏览器检查待CI。历史 [0.1.3 的9项 Chromium fixture 验收](docs/reports/browser-acceptance-2026-10-03.json) 全部通过；本人 Chrome 安装、跨语言增益、真人探索和持续使用尚未验收。已有 A 组搜索、README 字段配对及六条 gtx 翻译记录，不能由它们推出产品有效。
 
 ## 使用
 
-1. 克隆本仓库，或解压 [0.1.3 试验包](dist/gold-miner-extension-0.1.3.zip)。
+1. 克隆本仓库，或解压 [0.1.3 试验包](dist/gold-miner-extension-0.1.4.zip)。
 2. 在 `chrome://extensions` 开启开发者模式，加载 `extension/` 或解压后的目录。Chrome 102 及以上。
 3. 打开 GitHub 搜索或仓库页。点击扩展图标进入设置，选择阅读语言和兴趣。
 4. 可选配置自己的 OpenAI 兼容 API 端点、模型和密钥，并授权该端点。留空时使用有限词表和公开搜索。

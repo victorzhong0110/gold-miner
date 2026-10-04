@@ -117,40 +117,56 @@ document.getElementById("importFile").addEventListener("change", async (ev) => {
   });
 });
 
+let probeRevision = 0;
+let probeController = null;
+function currentByok() {
+  return {baseUrl: document.getElementById("baseUrl").value.trim(),
+    model: document.getElementById("model").value.trim(),
+    apiKey: document.getElementById("apiKey").value};
+}
+for (const id of ["baseUrl", "model", "apiKey"]) {
+  for (const event of ["input", "change"]) document.getElementById(id).addEventListener(event, () => {
+    probeRevision++;
+    probeController?.abort();
+    show("配置已修改，当前输入未探测 / Changed inputs have not been tested");
+  });
+}
+
 document.getElementById("probe").addEventListener("click", async () => {
-  const data = await chrome.storage.local.get({ byok: {} });
-  const byok = data.byok || {};
-  if (!byok.apiKey) {
-    show("未运行 / owner-blocked：没有 API key。");
-    return;
-  }
-  if (!GoldMinerShared.endpointUrl(byok.baseUrl)) {
-    show("invalid_endpoint");
-    return;
-  }
+  probeController?.abort();
+  const revision = ++probeRevision;
+  const byok = currentByok();
+  const current = () => revision === probeRevision;
+  const report = msg => { if (current()) show(redact(msg, byok.apiKey)); };
+  if (!byok.apiKey.trim()) { report("未运行 / owner-blocked：没有 API key。"); return; }
+  if (!byok.model) { report("invalid_model"); return; }
   const endpoint = GoldMinerShared.endpointUrl(byok.baseUrl);
-  if (!await chrome.permissions.contains({origins: [new URL(endpoint).origin + "/*"]})) { show("请先保存并授权端点 / Save and grant endpoint access first"); return; }
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12000);
+  if (!endpoint) { report("invalid_endpoint"); return; }
+  const host = new URL(endpoint).hostname;
   try {
-    const resp = await fetch(byok.baseUrl.replace(/\/$/, "") + "/chat/completions", {
-      method: "POST",
-      redirect: "error",
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + byok.apiKey,
-      },
-      body: JSON.stringify({
-        model: byok.model,
-        max_tokens: 8,
-        messages: [{ role: "user", content: "Reply with pong" }],
-      }),
-    });
-    show(redact("http " + resp.status + " " + (resp.ok ? "ok" : "failed"), byok.apiKey));
-  } catch (err) {
-    show(redact("network_error " + (err && err.name), byok.apiKey));
-  } finally { clearTimeout(timer); }
+    // Probe current inputs without saving credentials or other settings.
+    const granted = await chrome.permissions.request({origins: [new URL(endpoint).origin + "/*"]});
+    if (!current()) return;
+    if (!granted) { report("未授予端点权限 / Endpoint permission denied"); return; }
+    const controller = new AbortController();
+    probeController = controller;
+    const timer = setTimeout(() => controller.abort(), 12000);
+    report("探测中 / Testing " + host + " · " + byok.model);
+    try {
+      const resp = await fetch(endpoint + "/chat/completions", {
+        method: "POST", redirect: "error", signal: controller.signal,
+        headers: {"Content-Type": "application/json", Authorization: "Bearer " + byok.apiKey},
+        body: JSON.stringify({model: byok.model, max_tokens: 2048,
+          messages: [{role: "user", content: "Reply with the single word pong."}]}),
+      });
+      let data;
+      try { data = await resp.json(); } catch {}
+      let code = GoldMinerShared.modelResponseCode(resp.status, data);
+      if (code === "ok" && !/^pong[.!]?$/i.test(GoldMinerShared.finalModelText(data.choices[0].message.content))) code = "unexpected_model_output";
+      report("http " + resp.status + " " + code + " (" + host + " · " + byok.model + ")" +
+        (code === "auth_rejected" ? GoldMinerShared.authHint(endpoint) : ""));
+    } finally { clearTimeout(timer); if (probeController === controller) probeController = null; }
+  } catch (err) { report("network_error " + (err?.name || "Error") + " (" + host + ")"); }
 });
 
 load();
