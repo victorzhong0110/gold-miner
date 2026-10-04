@@ -76,4 +76,4 @@ Chromium 首跑发现真实设置页消息带有 sender.tab，旧权限判断使
 
 ## 2026-10-04 真机反馈
 
-已读取独立反馈分支的docs/session-issues.md。0.1.4修复S1/S3/S5/S6，S2保留官方大陆端点并补来源/区域说明；268 Python + 58 Node离线通过，新增浏览器fixture待CI。S4强对照D工具/模型/预算仍由发起人决定，没有运行或效果证据。[修复说明](../reports/2026-10-04-runtime-fixes.md)。
+已读取独立反馈分支的docs/session-issues.md。0.1.4修复S1/S3/S5/S6，S2保留官方大陆端点并补来源/区域说明；268 Python + 58 Node离线通过，11项Chromium fixture已通过，记录见docs/reports/browser-acceptance-2026-10-04.json，交付[PR14](https://github.com/victorzhong0110/gold-miner/pull/14)，合并状态以GitHub为准。S4强对照D工具/模型/预算仍由发起人决定，没有运行或效果证据。[修复说明](../reports/2026-10-04-runtime-fixes.md)。

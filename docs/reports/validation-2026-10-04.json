@@ -31,7 +31,14 @@
     "browser_installation": "not-run",
     "release_status": "experimental-not-beta"
   },
-  "browser": "pending CI",
+  "browser": {
+    "status": "passed",
+    "checks": 11,
+    "run_id": 37194278583,
+    "report": "browser-acceptance-2026-10-04.json",
+    "production_scripts_match_package": true,
+    "scope": "actual Chromium with fixture network/DOM and probe fetch; no real model calls"
+  },
   "paid_model_requests": 0,
   "human_followup": "not-run"
 }

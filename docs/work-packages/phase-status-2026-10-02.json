@@ -540,7 +540,11 @@
     "S2": "current official mainland docs list .cn; added source/region guidance",
     "S4": "owner-blocked: choose/freeze independent assistant/model/budget",
     "offline": "passed",
-    "browser": "pending CI",
-    "report": "docs/reports/2026-10-04-runtime-fixes.md"
+    "browser": "passed",
+    "report": "docs/reports/2026-10-04-runtime-fixes.md",
+    "checks": 11,
+    "run_id": 37194278583,
+    "delivery": "https://github.com/victorzhong0110/gold-miner/pull/14 (canonical merge state)",
+    "human_followup": "not-run"
   }
 }
