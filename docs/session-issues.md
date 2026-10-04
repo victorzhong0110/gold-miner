@@ -8,14 +8,14 @@
 
 ## 修复状态（2026-10-04）
 
-S1/S3/S5/S6 已在0.1.4源码修复并通过离线回归，11项Chromium fixture验收全部通过（docs/reports/browser-acceptance-2026-10-04.json）；真人修复后复测未运行。S2最新官方大陆文档已列api.minimax.cn，保留默认值并补区域/来源说明。S4仍为owner-blocked：D对照的工具、模型和预算须由发起人冻结；没有将stub标为已运行。下文原始观察保留供追溯。
+S1/S3/S5/S6 已在0.1.4源码修复并通过离线回归，11项Chromium fixture验收全部通过（docs/reports/browser-acceptance-2026-10-04.json）；真人修复后复测未运行。S2最新官方大陆文档已列api.minimax.cn，保留默认值并补区域/来源说明。S4的工具、模型和预算已由发起人在2026-10-04决定（docs/decisions/0004-minimax-d-group.md）：MiniMax-M3，不设任务条数上限。实跑未发生：本执行环境没有 `MINIMAX_API_KEY`、`OPENAI_API_KEY`、`GITHUB_TOKEN`，模型请求 0，没有创建 `runs/` 目录，没有候选。见 docs/reports/2026-10-04-e1-d-not-run.json。下文原始观察保留供追溯。
 
 | 编号 | 处理 | 验证范围 |
 |---|---|---|
 | S1 | 读取当前输入、输入变化取消探测、忽略迟到响应、显示实际主机/模型；探测不保存输入 | 选项页回归及新增Chromium fixture |
 | S2 | 已核对2026-10-04官方大陆文档列.cn；示例补官方链接和国际/大陆说明 | 官方文档核对，不重做个人密钥测试 |
 | S3 | HTTP401/403或业务1004保留auth_rejected，提示核对密钥和区域；不武断判断wrong_region | JS/Python模拟响应 |
-| S4 | 继续明确未运行；用户选择联网助手/模型/预算后才能冻结强对照 | owner-blocked，不改协议范围 |
+| S4 | 工具/模型/预算已决定为 MiniMax-M3、跑满 eval.batch_1。实跑未发生：执行环境没有密钥，模型请求 0 | 未运行。缺密钥，不是「尚未选定工具」 |
 | S5 | 固定在视口内，限制宽高并允许面板内滚动；原有关闭/取消保留 | 无main、6000px长页浏览器fixture |
 | S6 | 工作请求及两个探测均2048token；剥离think、拒绝length/空答案；探测要求pong | HTTP路径与解析回归；没有调用真实模型 |
 
