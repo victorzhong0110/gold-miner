@@ -32,7 +32,12 @@ class BlindTests(unittest.TestCase):
     def test_missing_judgments_do_not_become_zero_effect(self):
         result = analyze(self.key, [], 'human')
         self.assertEqual(result['missing_judgments'], 1)
-        self.assertEqual(result['differences']['task']['status'], 'incomplete-no-comparison')
+        # Every comparison must say "incomplete", never an empty list. An empty
+        # list reads as "this arm found nothing extra", which is a finding.
+        entry = result['differences']['task']
+        for field in ('c_minus_a', 'c_minus_m', 'c_minus_b'):
+            self.assertEqual(entry[field]['status'], 'incomplete-no-comparison', field)
+            self.assertNotIsInstance(entry[field], list)
     def test_duplicate_unknown_and_false_user_novelty_rejected(self):
         for rows in [[self.row, self.row], [dict(self.row, blind_id='unknown')], [dict(self.row, novel_to_judge='yes')]]:
             with self.assertRaises(ValueError): analyze(self.key, rows, 'technical')
@@ -170,3 +175,73 @@ class SaltTests(unittest.TestCase):
             _os.environ.pop(SALT_ENV, None)
             if previous is not None:
                 _os.environ[SALT_ENV] = previous
+
+
+class ProtocolComparisonTests(unittest.TestCase):
+    """Protocol section 6 names three comparisons; analyze must emit all three.
+
+    "A->C measures overall assistance; M->C is the closer read on language
+    extension at equal budget. B->C decides whether the complexity is worth it."
+    c_minus_b was missing, and the old completeness gate ignored B entirely.
+    """
+
+    def _key(self, statuses):
+        """One blind_id per (task, arm) with a suitable repo, so differences exist."""
+        links, groups = {}, {'task': {}}
+        for arm, repo in statuses.items():
+            blind = f'b{arm}'
+            links[blind] = [{'arm': arm, 'rank': 1, 'task_id': 'task', 'repo': repo}]
+            groups['task:' + arm] = {
+                'checked': 1, 'missing': 0, 'suitable': [repo],
+                'conditions_unknown': [], 'human_new_discoveries': []}
+        return {'run_id': 'r1', 'mode': 'live', 'links': links, 'groups': groups,
+                'arm_task_status': {arm: {'task': 'ok'} for arm in statuses}}
+
+    def _judgments(self, key, suitable=('yes', 'satisfied')):
+        return [{'blind_id': blind, 'purpose_fit': suitable[0],
+                 'hard_conditions': suitable[1], 'novel_to_judge': 'unknown',
+                 'worth_following': 'unknown', 'reason': 'r', 'judge': 'j',
+                 'judged_at': '2026-10-05T00:00:00Z'} for blind in key['links']]
+
+    def test_all_three_comparisons_are_emitted(self):
+        key = self._key({'A': 'a/only', 'B': 'b/only', 'C': 'c/only', 'M': 'm/only'})
+        result = analyze(key, self._judgments(key), 'human')
+        entry = result['differences']['task']
+        for field in ('c_minus_a', 'c_minus_m', 'c_minus_b'):
+            self.assertIn(field, entry, field)
+        self.assertEqual(entry['c_minus_a'], ['c/only'])
+        self.assertEqual(entry['c_minus_m'], ['c/only'])
+        # B->C is the comparison that decides whether the complexity is worth it.
+        self.assertEqual(entry['c_minus_b'], ['c/only'])
+        self.assertEqual(entry['protocol_basis'], 'E1 protocol section 6')
+
+    def test_missing_b_does_not_suppress_the_a_and_m_comparisons(self):
+        # B was partial in the recorded run. A->C and M->C stay valid; only
+        # B->C becomes unavailable. The old single gate hid all three.
+        key = self._key({'A': 'a/only', 'B': 'b/only', 'C': 'c/only', 'M': 'm/only'})
+        key['arm_task_status']['B']['task'] = 'partial'
+        result = analyze(key, self._judgments(key), 'human')
+        entry = result['differences']['task']
+        self.assertEqual(entry['c_minus_a'], ['c/only'])
+        self.assertEqual(entry['c_minus_m'], ['c/only'])
+        self.assertEqual(entry['c_minus_b']['status'], 'incomplete-no-comparison')
+        self.assertEqual(entry['c_minus_b']['needs'], ['B', 'C'])
+
+    def test_missing_judgment_for_b_only_kills_b_to_c(self):
+        key = self._key({'A': 'a/only', 'B': 'b/only', 'C': 'c/only', 'M': 'm/only'})
+        rows = [r for r in self._judgments(key) if r['blind_id'] != 'bB']
+        result = analyze(key, rows, 'human')
+        entry = result['differences']['task']
+        self.assertEqual(entry['c_minus_a'], ['c/only'])
+        self.assertEqual(entry['c_minus_b']['status'], 'incomplete-no-comparison')
+
+    def test_d_is_never_differenced(self):
+        # D used a different mechanism and budget; a D-C set difference would
+        # read as like-for-like when it is not.
+        key = self._key({'A': 'a/only', 'B': 'b/only', 'C': 'c/only', 'M': 'm/only', 'D': 'd/only'})
+        result = analyze(key, self._judgments(key), 'human')
+        entry = result['differences']['task']
+        self.assertFalse([f for f in entry if f.startswith('d_')], entry)
+        self.assertIn('D', result['d_not_differenced'])
+        # Its per-task set stays visible for a human to read.
+        self.assertEqual(result['groups']['task:D']['suitable'], ['d/only'])

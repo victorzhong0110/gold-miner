@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased — 2026-10-05 判定分析补上协议要求的 B→C
+
+- 协议第 6 节要求三个比较（A→C / M→C / **B→C 判断复杂程度是否值得**），
+  `blind_eval.analyze` 只产出前两个，**`c_minus_b` 缺失**——而这正是「这套复杂度
+  值不值得」的产品决策。B 的 suitable 早已算出，只是没参与差集。
+- 修前总开关只看 A/C/M，**不看 B**：B 组判定全缺失时 A→C、M→C 仍标 `complete`，
+  给出没兑现的保证。改为**每个比较项各自带完整性**，不完整写
+  `{'status':'incomplete-no-comparison','needs':[...]}`，绝不写空列表
+  （空列表会被读成「这组没有独有合适候选」，那是结论）。
+- B 缺失只影响 B→C，不连累 A→C/M→C。**D 刻意不做差集**：它走联网助手、
+  请求预算不同（模型请求 23 vs 60），协议明确 D 是子集试用不与全量平均混用；
+  D 的逐任务集合仍可见，另加 `d_not_differenced` 说明。
+- 用已记录运行的真实任务状态核对：两次失败吃掉比较项，**20 题里 13 题至少
+  有一项不可得**，最多约 7 题能给出完整三项比较（结构判断，非效果结论）。
+- `test_blind_eval.py` 15 → 19 项；离线套件 347 Python + 58 Node，付费请求 0。
+
 ## Unreleased — 2026-10-05 A/B/C/M 运行写 failures.jsonl
 
 - D 组运行写 `failures.jsonl`，A/B/C/M 不写，而 `schemas/failures.schema.json`

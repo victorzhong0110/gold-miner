@@ -210,3 +210,35 @@ prompts 是冻结材料（protocol：修复另开 `eval.batch_2`），**本轮�
 [2026-10-05-failures-ledger-gap.md](../reports/2026-10-05-failures-ledger-gap.md)。
 
 验证：离线套件 exit 0，**343 Python + 58 Node**（原 336 + 58），付费请求 0。
+
+## 2026-10-05 判定分析漏了协议要求的 B→C
+
+盲判材料即将由发起人判定，`blind_eval.py analyze` 是判定后立刻要跑的一步。
+核对其产出与协议第 6 节要求，发现对不上。
+
+协议第 6 节要求三个比较：`**A→C** 衡量整体辅助效果；**M→C** 更接近相同预算下的
+语言扩展贡献；**B→C** 判断复杂程度是否值得」。修前只产出 `c_minus_a` 与
+`c_minus_m`，**`c_minus_b` 不存在**——而 B→C 正是「这套复杂度值不值得」那个
+产品决策的直接答案。B 的 `suitable` 其实早已算出（`groups['<task>:B']`），
+只是没参与差集。
+
+更严重的是**「完整」标签过宽**：修前只有一个总开关，只看 A/C/M，**完全不看 B**。
+一个任务 B 组判定全部缺失时，A→C 与 M→C 照样标成 `complete`，
+给出了它没有兑现的保证。
+
+已改为**每个比较项各自带完整性**：`c_minus_a`/`c_minus_m`/`c_minus_b` 各自
+判断所需两臂是否完整，不完整写 `{'status':'incomplete-no-comparison','needs':[...]}`
+而**绝不写空列表**（空列表会被读成「这组没有独有合适候选」，那是结论）。
+B 缺失只影响 B→C，不连累 A→C 与 M→C。**D 刻意不做差集**——它走联网助手、
+请求预算不同（模型请求 23 vs 60），协议明确 D 是子集试用不与全量平均混用；
+D 的逐任务集合仍在 `groups` 里可见，并新增 `d_not_differenced` 说明。
+每项带 `protocol_basis: 'E1 protocol section 6'` 使映射可核对。
+
+**用已记录运行的真实任务状态核对（判定内容为模拟，只看结构可得性，非结果）**：
+`zh2en-eval-10`（B partial，GitHub 422）失去 B→C；`en2zh-eval-03`（C blocked，
+模型 JSON 解析失败）三项全失。**20 题里 13 题至少有一项比较不可得**，
+即这批材料最多在约 7 题上给出完整三项比较。是否值得按此规模判定属发起人决定。
+
+验证：离线套件 exit 0，**347 Python + 58 Node**（原 343 + 58），付费请求 0。
+`product_effect` 仍为 `not-concluded`，判定材料与既有运行记录均未改动。详见
+[2026-10-05-analysis-missing-b-comparison.md](../reports/2026-10-05-analysis-missing-b-comparison.md)。

@@ -108,13 +108,39 @@ def analyze(key, judgments, judge_kind):
                 elif judgment['hard_conditions'] == 'unknown': group['conditions_unknown'].append(ref['repo'])
             if judge_kind == 'human' and judgment['novel_to_judge'] == 'yes' and judgment['worth_following'] == 'yes':
                 group['human_new_discoveries'].append(ref['repo'])
+    # Protocol section 6 names three comparisons, not two:
+    #   A->C  measures overall assistance
+    #   M->C  is the closer read on language extension at equal budget
+    #   B->C  decides whether the extra complexity is worth it
+    # c_minus_b was missing, and the old single completeness gate ignored B
+    # entirely, so a task with every B judgment absent still reported as
+    # complete. Each difference now carries its own completeness: a task with a
+    # partial B run loses B->C but keeps A->C and M->C, which are valid on their
+    # own terms.
+    REQUIRED = (('c_minus_a', 'A'), ('c_minus_m', 'M'), ('c_minus_b', 'B'))
+
+    def _arm_ok(arm, task, group):
+        return (group is not None and group['missing'] == 0
+                and key['arm_task_status'].get(arm, {}).get(task) == 'ok')
+
     differences = {}
     for task in {name.split(':')[0] for name in groups}:
-        task_groups = {arm: groups.get(task + ':' + arm) for arm in ('A', 'C', 'M')}
-        complete = all(g is not None and g['missing'] == 0 and key['arm_task_status'].get(arm, {}).get(task) == 'ok' for arm, g in task_groups.items())
-        differences[task] = ({'c_minus_a': sorted(set(task_groups['C']['suitable']) - set(task_groups['A']['suitable'])),
-                              'c_minus_m': sorted(set(task_groups['C']['suitable']) - set(task_groups['M']['suitable']))} if complete else {'status': 'incomplete-no-comparison'})
+        entry = {}
+        for field, other in REQUIRED:
+            c_group, o_group = groups.get(task + ':C'), groups.get(task + ':' + other)
+            if _arm_ok('C', task, c_group) and _arm_ok(other, task, o_group):
+                entry[field] = sorted(set(c_group['suitable']) - set(o_group['suitable']))
+            else:
+                entry[field] = {'status': 'incomplete-no-comparison', 'needs': [other, 'C']}
+        entry['protocol_basis'] = 'E1 protocol section 6'
+        differences[task] = entry
+    # D is deliberately not differenced. It ran through a different mechanism
+    # (a web-enabled assistant) on a different request budget, and the protocol
+    # says it is a subset trial not to be mixed with full averages. A D-C set
+    # difference would read as like-for-like when it is not. Its per-task
+    # suitable sets stay visible under groups for a human to read.
     return {'mode': key['mode'], 'judge_kind': judge_kind, 'groups': groups, 'differences': differences,
+            'd_not_differenced': 'D uses a different mechanism and request budget; see E1 protocol sections 6-7',
             'product_effect': 'not-concluded', 'missing_judgments': len(key['links']) - len(indexed)}
 
 
