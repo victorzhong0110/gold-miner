@@ -234,11 +234,13 @@ def classify_model_response(status: int, body: str) -> dict:
     else:
         answer = extract_answer(parsed)
         status_text = str(parsed.get("status") or "")
-        finish = status_text or str(
-            (parsed.get("choices") or [{}])[0].get("finish_reason") or ""
-        )
-        if finish in {"length", "incomplete"} and not strip_think(answer):
+        choices = parsed.get("choices")
+        choice = choices[0] if isinstance(choices, list) and choices and isinstance(choices[0], dict) else {}
+        finish = status_text or str(choice.get("finish_reason") or "")
+        if finish in {"length", "incomplete"}:
             code = "model_output_truncated"
+        elif status_text and status_text != "completed":
+            code = "bad_response"
         elif not strip_think(answer):
             code = "empty_model_output"
         else:
@@ -645,15 +647,7 @@ def call_model(
         if classified["code"] != "ok":
             classified["error_excerpt"] = redact(body)[:500]
         attempts.append(classified)
-        message = body.lower()
-        if (
-            classified["code"] == "bad_response"
-            and include_cap
-            and classified.get("business_code") == 2013
-            and "max_output_tokens" in message
-        ):
-            include_cap = False
-            continue
+        # A rejected cap stays a failure; never silently resend without the frozen budget.
         break
     last = attempts[-1]
     parsed = last.get("parsed") if isinstance(last.get("parsed"), dict) else {}
@@ -1204,6 +1198,7 @@ def write_outputs(out_dir: Path, state: dict, tasks: list[dict]) -> dict:
                     "base_url",
                     "materials_commit",
                     "prompt_sha256",
+                    "tasks_sha256",
                     "started_at",
                     "finished_at",
                 ) if k in state},
@@ -1288,6 +1283,24 @@ def run_d_group(
             "started_at": utcnow(),
             "quota_waits": [],
         }
+    # Validate before changing the checkpoint or making any request.
+    expected = {"run_id": run_id, "model": model, "base_url": base_url.rstrip("/"),
+                "prompt_sha256": sha256_text(prompt_template)}
+    for field, value in expected.items():
+        prior = state.get(field)
+        if field == "base_url" and isinstance(prior, str): prior = prior.rstrip("/")
+        if prior != value:
+            raise ValueError("resume configuration mismatch: " + field)
+    task_hash = sha256_text(json.dumps(tasks, ensure_ascii=False, sort_keys=True))
+    if state.get("tasks_sha256") and state["tasks_sha256"] != task_hash:
+        raise ValueError("resume task set mismatch")
+    task_by_id = {t["id"]: t for t in tasks}
+    if len(task_by_id) != len(tasks): raise ValueError("duplicate task IDs")
+    for row in read_jsonl(out_dir / "model_calls.jsonl"):
+        task = task_by_id.get(row.get("task_id"))
+        if task is None or row.get("input_sha256") != sha256_text(render_prompt(prompt_template, task["query"])):
+            raise ValueError("resume recorded input mismatch")
+    state["tasks_sha256"] = task_hash
     state["historical_a_path"] = str(HISTORICAL_A)
     state.setdefault("invocations", []).append(
         {

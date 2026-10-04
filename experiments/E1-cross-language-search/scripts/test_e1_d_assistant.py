@@ -397,6 +397,7 @@ class RetryTests(unittest.TestCase):
             legacy = {
                 "run_id": "test-d",
                 "task_id": "zh2en-eval-08",
+                "input_sha256": d.sha256_text(d.render_prompt(PROMPT, "q")),
                 "code": "timeout",
                 "model_requests": 1,
                 "elapsed_ms": 300000,
@@ -546,3 +547,33 @@ class RedirectTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReviewRegressionTests(unittest.TestCase):
+    def test_incomplete_answer_is_not_success(self):
+        body = json.dumps({"status": "incomplete", "output_text": "real/repo"})
+        self.assertEqual(d.classify_model_response(200, body)["code"], "model_output_truncated")
+        self.assertEqual(d.classify_model_response(200, '{"choices":[null]}')["code"], "empty_model_output")
+
+    def test_budget_rejection_never_resends_uncapped(self):
+        posts=[]
+        def post(url, headers, payload, timeout):
+            posts.append(payload)
+            return {"status":400,"body":json.dumps({"base_resp":{"status_code":2013,"status_msg":"unknown parameter max_output_tokens"}})}
+        result=d.call_model(base_url="https://api.minimax.cn/v1",model="MiniMax-M3",api_key="fixture",prompt="q",http_post=post,timeout=1)
+        self.assertEqual(result["code"],"bad_response")
+        self.assertEqual(len(posts),1)
+        self.assertEqual(posts[0]["max_output_tokens"],8192)
+
+    def test_resume_mismatch_refuses_before_requests_or_writes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out=Path(tmp);tasks=[task("t1","original")]
+            run(out,tasks,lambda *args:model_response("real/repo"),simple_github)
+            snapshot={p.name:p.read_bytes() for p in out.iterdir() if p.is_file()}
+            def forbidden(*args):raise AssertionError("must not request")
+            for change in [{"model":"other"},{"base_url":"https://other.example/v1"},{"run_id":"other"},{"prompt_template":PROMPT+" changed"}]:
+                with self.assertRaisesRegex(ValueError,"resume configuration mismatch"):
+                    run(out,tasks,forbidden,forbidden,**change)
+            with self.assertRaisesRegex(ValueError,"resume task set mismatch"):
+                run(out,[task("t1","changed")],forbidden,forbidden)
+            self.assertEqual(snapshot,{p.name:p.read_bytes() for p in out.iterdir() if p.is_file()})
