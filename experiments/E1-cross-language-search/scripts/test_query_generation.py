@@ -298,3 +298,34 @@ class StrictParserTests(unittest.TestCase):
     def test_brace_free_prose_around_valid_json_is_accepted(self):
         rows = qg.parse_model_variants("C", "en2zh", 'Here: {"zh":["报表"],"en":["report"]} done')
         self.assertEqual([r["variant_query"] for r in rows], ["报表", "report"])
+
+
+class KnownOpenPathsTests(unittest.TestCase):
+    """Paths this session deliberately did NOT close, pinned so they stay visible.
+
+    Self-review of commit e5784ab found the change was diagnostics-only: across
+    70 old-vs-new comparisons the accept/reject set was identical and only the
+    error code changed. In particular a single JSON object wrapped in prose is
+    still accepted, so a model that echoes only an example and gives no real
+    answer still contributes that example as a candidate.
+
+    Closing this would mean reading intent out of prose, which this session
+    already got wrong twice (the materials check read 本步不要写 as permission;
+    the query-length probe truncated a whole sentence to vary its length). The
+    real defence is the C prompt forbidding prose, which it already does.
+    """
+
+    def test_single_object_in_prose_is_still_accepted(self):
+        rows = qg.parse_model_variants("C", "en2zh", 'Example: {"zh":["demo"]} -> your answer')
+        self.assertEqual([r["variant_query"] for r in rows], ["demo"])
+
+    def test_two_objects_are_rejected_with_a_specific_code(self):
+        # This is the case the fix actually improved: the reason is now explicit.
+        with self.assertRaises(qg.QueryClientError) as ctx:
+            qg.parse_model_variants("C", "en2zh",
+                                    '{"zh":["demo"]} and my answer: {"zh":["报表生成器"]}')
+        self.assertEqual(ctx.exception.code, "ambiguous_model_output")
+
+    def test_compliant_output_is_unaffected(self):
+        rows = qg.parse_model_variants("C", "en2zh", '<think>t</think>{"zh":["报表生成器"],"en":["report"]}')
+        self.assertEqual([r["variant_query"] for r in rows], ["报表生成器", "report"])
