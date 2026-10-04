@@ -6,23 +6,79 @@
   "source_query_task": "zh2en-eval-10",
   "source_query_arm": "B",
   "results": [
-    {"label": "full", "chars": 193, "http": 422, "total_count": null, "note": "与 2026-10-04 实跑记录的失败完全一致"},
-    {"label": "truncated", "chars": 141, "http": 200, "total_count": 0},
-    {"label": "truncated", "chars": 86, "http": 200, "total_count": 1},
-    {"label": "truncated", "chars": 65, "http": 200, "total_count": 1},
-    {"label": "truncated", "chars": 36, "http": 200, "total_count": 47},
-    {"label": "control", "chars": 22, "http": 200, "total_count": 151, "note": "同批 zh2en-eval-01 的 B 组查询"}
+    {
+      "label": "full",
+      "chars": 193,
+      "http": 422,
+      "total_count": null,
+      "note": "与 2026-10-04 实跑记录的失败完全一致"
+    },
+    {
+      "label": "truncated",
+      "chars": 141,
+      "http": 200,
+      "total_count": 0
+    },
+    {
+      "label": "truncated",
+      "chars": 86,
+      "http": 200,
+      "total_count": 1
+    },
+    {
+      "label": "truncated",
+      "chars": 65,
+      "http": 200,
+      "total_count": 1
+    },
+    {
+      "label": "truncated",
+      "chars": 36,
+      "http": 200,
+      "total_count": 47
+    },
+    {
+      "label": "control",
+      "chars": 22,
+      "http": 200,
+      "total_count": 151,
+      "note": "同批 zh2en-eval-01 的 B 组查询"
+    }
   ],
   "batch_query_length_distribution": {
-    "B": {"n": 20, "max_chars": 193, "p90_chars": 103},
-    "C": {"n": 76, "max_chars": 53, "p90_chars": 38},
-    "M": {"n": 60, "max_chars": 75, "p90_chars": 59}
+    "B": {
+      "n": 20,
+      "max_chars": 193,
+      "p90_chars": 103
+    },
+    "C": {
+      "n": 76,
+      "max_chars": 53,
+      "p90_chars": 38
+    },
+    "M": {
+      "n": 60,
+      "max_chars": 75,
+      "p90_chars": 59
+    }
   },
   "conclusion": "B 组查询长度结构性偏长（最大 193，是 C 组上限的 3.6 倍）。GitHub 搜索在 193 字符返回 422，在 65–141 字符区间虽不报错但 total_count 仅 0–1，而 22–36 字符区间为 47–151。",
   "caveats": [
     "仅 1 条查询、6 次请求，不足以给出精确的长度阈值",
     "未认证（公开配额），认证后行为可能不同",
     "total_count 随 GitHub 索引变化，不是稳定量；此处的用途是量级差异而非精确值",
-    "本记录不构成 E1 任何效果证据，也不改变已完成运行的任何结论"
-  ]
+    "本记录不构成 E1 任何效果证据，也不改变已完成运行的任何结论",
+    "结论已于同日撤回：截断探针同时改变了长度与语义完整性，不能据此归因长度；详见 corrected_record"
+  ],
+  "retracted_conclusion": {
+    "status": "retracted-by-run-data",
+    "was_claimed": "B 组查询与 GitHub 关键词检索结构性不匹配；C−B 被查询长度污染；B 是稻草人",
+    "why_retracted": [
+      "探针按词边界截断整句，截断后语义破碎，0-1 条结果测的是「半句话检索不到」而非「长查询检索不到」——同时操纵了长度与语义完整性",
+      "实跑数据显示 B 跨题去重 156 个仓库（A 为 51），B−A = 106，与「稻草人」相反",
+      "逐题看：11/20 题的 B 译句查询返回 ≥1 条；返回 0 的 9 题里有 4 题长度仅 13–21 字符，短查询同样返回 0"
+    ],
+    "what_survives": "zh2en-eval-10 那条 193 字符查询可复现返回 HTTP 422，为 20 题中的 1 题，该题 status=partial。",
+    "corrected_record": "docs/reports/2026-10-05-b-arm-query-length-confound.md"
+  }
 }
