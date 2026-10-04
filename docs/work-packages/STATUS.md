@@ -21,7 +21,7 @@ R1（模型缓存恢复）、R2（取消终态）、R3（导入链接）已修�
 | WP1-07 | 离线基线与操作说明 | verified | 统一离线套件含 E6/E8/内容脚本/源码与包一致性 |
 | WP2-01 | 预先登记判断标准 | partial | protocol、judgment-guide 已有标准；正式新批次须预登记具体模型 |
 | WP2-02 | 运行 E1 A/B/C/M | partial | A 组和 README 配对有历史 live 记录；B/C/M 尚未实测 |
-| WP2-03 | 运行强对照 D | pending-live | D 对照尚未运行，不能由 fixture 补齐 |
+| WP2-03 | 运行强对照 D | partial | 2026-10-04 MiniMax-M3 实跑 eval.batch_1 20/20 题（runs/2026-10-04-d-minimax）：169 个仓库存在，3 个 404 幻觉。人工用途判断未运行。见 docs/reports/2026-10-04-e1-d-run.json |
 | WP2-04 | 盲判和增量分析 | partial | blind_eval.py 已实现去重、遮蔽与回填；真人盲判尚未执行 |
 | WP2-05 | 运行 E2a | pending-human | 两对自检及 4–6 人会话未发生 |
 | WP2-06 | 运行 E3 基线 | partial | 六条 gtx 输出与技术核对已保留；两种翻译界面对照待测 |
@@ -77,3 +77,7 @@ Chromium 首跑发现真实设置页消息带有 sender.tab，旧权限判断使
 ## 2026-10-04 真机反馈
 
 已读取独立反馈分支的docs/session-issues.md。0.1.4修复S1/S3/S5/S6，S2保留官方大陆端点并补来源/区域说明；268 Python + 58 Node离线通过，11项Chromium fixture已通过，记录见docs/reports/browser-acceptance-2026-10-04.json，交付[PR14](https://github.com/victorzhong0110/gold-miner/pull/14)，合并状态以GitHub为准。S4强对照D工具/模型/预算仍由发起人决定，没有运行或效果证据。[修复说明](../reports/2026-10-04-runtime-fixes.md)。
+
+## 2026-10-04 D 组决定
+
+发起人已选定 MiniMax-M3，且不设 D 组任务上限，见 [0004](../decisions/0004-minimax-d-group.md)。第一次执行实跑入口时进程环境缺密钥，未发送请求；随后带密钥实跑 `runs/2026-10-04-d-minimax/`。首轮 3 题失败（2 超时、1 HTTP 400），修正 runner（失败题不算完成、可续跑重试；GitHub 301 跟随为改名后的仓库）后续跑，3 题各重试 1 次成功。结果：20/20 题完成，模型请求 23，GitHub 核对 177，提名 172，存在 169（3 个经 301 跟随），404 幻觉 3（1.7%），与 2026-09-22 A 组集合交集 0。这是名单是否存在的核对，不是用途适合度；人工判断、B/C/M 在本模型上未运行，费用未知。[记录](../reports/2026-10-04-e1-d-run.json)，[报告](../../experiments/E1-cross-language-search/runs/2026-10-04-d-minimax/report.md)。

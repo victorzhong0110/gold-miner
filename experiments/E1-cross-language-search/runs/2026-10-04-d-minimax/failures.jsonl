@@ -1,0 +1,8 @@
+{"run_id": "2026-10-04-d-minimax", "task_id": "zh2en-eval-04", "arm": "D", "code": "github_migrated", "message": "核对 twwch/Mako 失败，http 301"}
+{"run_id": "2026-10-04-d-minimax", "task_id": "zh2en-eval-05", "arm": "D", "code": "github_not_found", "message": "幻觉：Rabbendebiene/Gesturefy 不存在"}
+{"run_id": "2026-10-04-d-minimax", "task_id": "zh2en-eval-06", "arm": "D", "code": "github_not_found", "message": "幻觉：composer/composer-bin-plugin 不存在"}
+{"run_id": "2026-10-04-d-minimax", "task_id": "zh2en-eval-08", "arm": "D", "code": "timeout", "message": "模型请求失败，未核对仓库。"}
+{"run_id": "2026-10-04-d-minimax", "task_id": "en2zh-eval-01", "arm": "D", "code": "timeout", "message": "模型请求失败，未核对仓库。"}
+{"run_id": "2026-10-04-d-minimax", "task_id": "en2zh-eval-03", "arm": "D", "code": "bad_response", "message": "模型没有返回可解析的名单。"}
+{"run_id": "2026-10-04-d-minimax", "task_id": "en2zh-eval-07", "arm": "D", "code": "github_not_found", "message": "幻觉：b3log/baidu-netdisk-downloaderx 不存在"}
+{"run_id": "2026-10-04-d-minimax", "task_id": "en2zh-eval-07", "arm": "D", "code": "github_migrated", "message": "核对 Wjavan/Direct-download-link 失败，http 301"}

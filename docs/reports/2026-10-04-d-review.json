@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-04",
+  "reviewed_source_sha": "602b1acd0f24a73e467e4804c23888d6cf4e8899",
+  "mode": "offline-reconciliation-no-new-requests",
+  "tasks_completed": 20,
+  "model_requests": 23,
+  "github_verification_requests": 177,
+  "exists": 169,
+  "http404": 3,
+  "input_hashes_match": true,
+  "human_judgments": 0,
+  "paid_requests_during_review": 0,
+  "source_files_sha256": {
+    "judgments.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "manifest.json": "94779f490de1ac71e0646b2d8b1cd98f74aa42ca757e685af05b8846fe413857",
+    "checkpoint.json": "d7f01b71f78408874b44636698ae69c2768f6d3fae7e13fecb5344f0fb662383",
+    "model_calls.jsonl": "36f1e55afa89f60c0ced100d2aa8f29bfe2326fbcacb9d30edc4ff305d195000",
+    "report.md": "9fde9790ba74b0861c96d6661762be9951401a4bdaf990b9d36985c684cebce1",
+    "candidates.jsonl": "4b8294e081d956ed4ba2c14a6762f7663abf0fcdbaf73041b3327388e41f1c8e",
+    "failures.jsonl": "3691d702919a8b80f358e5b2e2a216c6e407ad84d7c79ffe9f3e45a4ae564ffe",
+    "verifications.jsonl": "6be2eae33ac4482afdb1769f6049273d8bf3ebe6b24574c0880dbd80b10d8b8d",
+    "latency_cost.jsonl": "9fda50da3d8b77235cafcd921718995712a4c19be8ee9d2c69be9d7e1d18aa73"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "run_id": "2026-10-04-d-minimax",
+  "batch": "eval.batch_1",
+  "model": "MiniMax-M3",
+  "base_url": "https://api.minimax.cn/v1",
+  "materials_commit": "eae2d4c14b52339f12af05ca1a41a28f82fb30bf",
+  "prompt_sha256": "0ebfbbb1b70b59e2bfcbb546d92b7173b8dd7db216abd6f343fa6b1fb5f18e8e",
+  "started_at": "2026-10-04T11:13:52Z",
+  "finished_at": "2026-10-04T12:50:25Z",
+  "stopped_before_task_id": null,
+  "stop_code": null,
+  "remaining_task_ids": [],
+  "failed_task_ids": [],
+  "quota_waits": [],
+  "sent_but_incomplete": [],
+  "invocations": [
+    {
+      "started_at": "2026-10-04T12:44:26Z",
+      "runner_materials_commit": "314c2a75e55f2455657500dcad3a49e99d9724e7",
+      "model_timeout_s": 600.0,
+      "model_attempts": 3,
+      "reverify_only": false
+    }
+  ]
+}

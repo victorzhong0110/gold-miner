@@ -33,7 +33,21 @@ python3 experiments/E1-cross-language-search/harness/e1_value_harness.py \
 
 `--mode live` 需要 `GITHUB_TOKEN`（可选）与（B/C/M）模型环境变量；没有配置时脚本必须拒绝并写 `owner-blocked`，不得编造命中。
 
-D 组只产生 stub：`blocked` / `未运行`。这是已知工具缺口，不是可执行强对照；发起人需先选择联网助手/模型与预算并冻结比较条件，不能从fixture补齐D结果。
+这条 fixture 命令里的 D 组仍然只产生 stub：`blocked` / `未运行`。不能把 fixture 抄进 `runs/` 当成强对照。
+
+正式 D 组是另一条命令（2026-10-04 决定见 `docs/decisions/0004-minimax-d-group.md`）。它调用 MiniMax-M3 的 Responses API 服务端 `web_search`，再核对仓库是否存在。没有密钥时退出码非 0，不创建运行目录。
+
+```bash
+export OPENAI_API_KEY="$MINIMAX_API_KEY"
+export OPENAI_BASE_URL=https://api.minimax.cn/v1
+export OPENAI_MODEL=MiniMax-M3
+python3 experiments/E1-cross-language-search/scripts/e1_d_assistant.py \
+  --live --wait-for-quota \
+  --run-id 2026-10-04-d-minimax \
+  --out experiments/E1-cross-language-search/runs/2026-10-04-d-minimax
+```
+
+配额或 GitHub 限流停在未完成任务上。同一 `--out` 再执行一次即从该任务继续。只有「模型返回可解析名单且核对跑完」的题算完成；超时、HTTP 错误、没有名单的题续跑时重新请求模型（每次调用每题最多 `--model-attempts` 次，默认 3；单次超时 `--model-timeout`，默认 300 秒）。GitHub 对改名/转移仓库返回的 301 会被跟随，按新名记为存在；跟不到的核对续跑时重核，不再请求模型（`--reverify-only` 只做这一步）。人工用途判断不在这条命令里。
 
 ## 3 BYOK 连接探测
 

@@ -1,0 +1,64 @@
+{
+  "run_id": "2026-10-04-d-minimax",
+  "batch": "eval.batch_1",
+  "arm": "D",
+  "materials_commit": "eae2d4c14b52339f12af05ca1a41a28f82fb30bf",
+  "prompt_version": "prompts/d-assistant.txt sha256:0ebfbbb1b70b59e2bfcbb546d92b7173b8dd7db216abd6f343fa6b1fb5f18e8e",
+  "model": "MiniMax-M3",
+  "base_url_host": "api.minimax.cn",
+  "endpoint": "POST /v1/responses",
+  "server_tool": "web_search",
+  "max_output_tokens": 8192,
+  "reading_setup": "reading-baseline.md v1",
+  "reading_applied": false,
+  "method": "D",
+  "field_config": "not-a-github-search",
+  "requested_budget": "eval.batch_1 full; no task cap; GitHub search budget 0",
+  "actual_requests": {
+    "model": 23,
+    "github_verification": 177,
+    "web_search_calls_visible": 126
+  },
+  "tasks": {
+    "total": 20,
+    "completed": 20,
+    "failed": 0,
+    "not_attempted": 0,
+    "failed_task_ids": []
+  },
+  "repos": {
+    "proposed": 172,
+    "exists": 169,
+    "exists_public": 169,
+    "exists_private": 0,
+    "redirected": 3,
+    "hallucinated_404": 3,
+    "unresolved": 0,
+    "hallucination_rate_of_proposed": 0.0174,
+    "candidates_public_distinct": 169
+  },
+  "started_at": "2026-10-04T11:13:52Z",
+  "finished_at": "2026-10-04T12:50:25Z",
+  "invocations": [
+    {
+      "started_at": "2026-10-04T12:44:26Z",
+      "runner_materials_commit": "314c2a75e55f2455657500dcad3a49e99d9724e7",
+      "model_timeout_s": 600.0,
+      "model_attempts": 3,
+      "reverify_only": false
+    }
+  ],
+  "elapsed_note": "per-task elapsed_ms is in latency_cost.jsonl",
+  "errors": null,
+  "visible_cost": "未知",
+  "usage_tokens": {
+    "input_tokens": 1151179,
+    "output_tokens": 9356,
+    "cached_tokens": 626595
+  },
+  "human_judgment": "未运行",
+  "status": "complete",
+  "stopped_before_task_id": null,
+  "remaining_task_ids": [],
+  "decision": "docs/decisions/0004-minimax-d-group.md"
+}

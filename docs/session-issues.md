@@ -8,14 +8,14 @@
 
 ## 修复状态（2026-10-04）
 
-S1/S3/S5/S6 已在0.1.4源码修复并通过离线回归，11项Chromium fixture验收全部通过（docs/reports/browser-acceptance-2026-10-04.json）；真人修复后复测未运行。S2最新官方大陆文档已列api.minimax.cn，保留默认值并补区域/来源说明。S4仍为owner-blocked：D对照的工具、模型和预算须由发起人冻结；没有将stub标为已运行。下文原始观察保留供追溯。
+S1/S3/S5/S6 已在0.1.4源码修复并通过离线回归，11项Chromium fixture验收全部通过（docs/reports/browser-acceptance-2026-10-04.json）；真人修复后复测未运行。S2最新官方大陆文档已列api.minimax.cn，保留默认值并补区域/来源说明。S4的工具、模型和预算已由发起人在2026-10-04决定（docs/decisions/0004-minimax-d-group.md）：MiniMax-M3，不设任务条数上限。实跑已完成（`runs/2026-10-04-d-minimax`，2026-10-04T11:13:52Z–12:50:25Z UTC）：20/20 题完成，其中 zh2en-eval-08、en2zh-eval-01（超时）和 en2zh-eval-03（HTTP 400）首轮失败、续跑重试 1 次后成功；模型请求 23，GitHub 核对请求 177，可见 web_search 126 次；提名 172 个仓库，GitHub 存在 169（其中 3 个经 301 改名/转移跟随），404 幻觉 3（1.7%）；与 2026-09-22 A 组仓库集合交集 0。人工用途判断、B/C/M 在本模型上、费用均未运行或未知，不能据此下跨语言增益结论。见 experiments/E1-cross-language-search/runs/2026-10-04-d-minimax/report.md 与 docs/reports/2026-10-04-e1-d-run.json（取代早先的 e1-d-not-run 记录：那次是首轮执行时进程缺密钥）。下文原始观察保留供追溯。
 
 | 编号 | 处理 | 验证范围 |
 |---|---|---|
 | S1 | 读取当前输入、输入变化取消探测、忽略迟到响应、显示实际主机/模型；探测不保存输入 | 选项页回归及新增Chromium fixture |
 | S2 | 已核对2026-10-04官方大陆文档列.cn；示例补官方链接和国际/大陆说明 | 官方文档核对，不重做个人密钥测试 |
 | S3 | HTTP401/403或业务1004保留auth_rejected，提示核对密钥和区域；不武断判断wrong_region | JS/Python模拟响应 |
-| S4 | 继续明确未运行；用户选择联网助手/模型/预算后才能冻结强对照 | owner-blocked，不改协议范围 |
+| S4 | 工具/模型/预算已决定为 MiniMax-M3、跑满 eval.batch_1。runner 已实现（Responses API web_search + GitHub 核对；失败任务可续跑重试，301 跟随） | 已实跑 20/20 题，169 存在 / 3 幻觉；人工用途判断未运行 |
 | S5 | 固定在视口内，限制宽高并允许面板内滚动；原有关闭/取消保留 | 无main、6000px长页浏览器fixture |
 | S6 | 工作请求及两个探测均2048token；剥离think、拒绝length/空答案；探测要求pong | HTTP路径与解析回归；没有调用真实模型 |
 
@@ -61,6 +61,7 @@ S1/S3/S5/S6 已在0.1.4源码修复并通过离线回归，11项Chromium fixture
 - 影响：阶段清单第 3 项要求跑 E1 的强对照 D，当前工具拿不到真实结果。
   这不是回归，是已知缺口，但它卡住了一个清单项。
 - 需要决定：实现 D 组，还是明确写「本阶段不授权 D」。
+- 处理（2026-10-04）：发起人决定实现，见 docs/decisions/0004-minimax-d-group.md；`experiments/E1-cross-language-search/scripts/e1_d_assistant.py` 已实跑 `runs/2026-10-04-d-minimax`，结果见上方修复状态。
 
 ### S5 面板挂载点回退到 body，长页面上等于不可见
 
