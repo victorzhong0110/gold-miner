@@ -24,6 +24,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
+from secret_scrub import redact, sha256_text
+
 E1 = Path(__file__).resolve().parents[1]
 ROOT = E1.parents[1]
 FIXTURES = E1 / "harness" / "fixtures" / "query_variants.json"
@@ -35,14 +37,35 @@ PROMPTS = {
 
 MAX_OUTPUT_TOKENS = 2048
 
+# How much raw model text a failure record may carry. Enough to diagnose a
+# parse failure, small enough that a run record stays readable in git.
+RAW_CAPTURE_LIMIT = 16000
+EXCERPT_LIMIT = 500
+
 HttpPost = Callable[[str, dict[str, str], dict[str, Any], float], dict[str, Any]]
 
 
 class QueryClientError(Exception):
-    def __init__(self, code: str, notes: str = "") -> None:
+    """A model call failed.
+
+    `raw_output` / `answer_text` carry the provider's actual reply so the
+    failure can be diagnosed from the committed record. Without them a parse
+    failure is unrecoverable: the run may not be re-driven into the same
+    batch, so the evidence has to be written down the first time.
+    """
+
+    def __init__(
+        self,
+        code: str,
+        notes: str = "",
+        raw_output: str = "",
+        answer_text: str = "",
+    ) -> None:
         super().__init__(code)
         self.code = code
         self.notes = notes
+        self.raw_output = raw_output
+        self.answer_text = answer_text
 
 
 class QueryClient(Protocol):
@@ -124,15 +147,87 @@ def record_row(
     }
 
 
+def _strip_think(text: str) -> str:
+    """Drop inline <think> reasoning, matching the parser's own rule."""
+    out = re.sub(r"<think\b[^>]*>[\s\S]*?</think\s*>", "", text or "", flags=re.I)
+    return re.sub(r"<think\b[^>]*>[\s\S]*$", "", out, flags=re.I).strip()
+
+
+def _failure_diagnostics(exc: QueryClientError) -> dict:
+    """Model text to store with a failed row, scrubbed and bounded.
+
+    Mirrors what e1_d_assistant.py already records for the D arm, so a B/C/M
+    parse failure is diagnosable from the committed run the same way a D
+    failure is.
+    """
+    if not exc.raw_output and not exc.answer_text:
+        return {}
+    raw = exc.raw_output or ""
+    answer = exc.answer_text or ""
+    fields = {
+        "raw_output_sha256": sha256_text(raw),
+        "raw_output_chars": len(raw),
+        "think_present": "<think" in raw.lower(),
+    }
+    if answer:
+        fields["answer_text"] = redact(answer)[:EXCERPT_LIMIT]
+    if raw and len(raw) <= RAW_CAPTURE_LIMIT:
+        fields["raw_output"] = redact(raw)
+    return fields
+
+
+def _top_level_brace_groups(text: str) -> list[str]:
+    """Return every balanced top-level {...} span, ignoring braces in strings.
+
+    Used to refuse an ambiguous reply instead of guessing. `find("{")` /
+    `rfind("}")` silently returns the FIRST brace group, so a reply shaped
+    like `Example: {"zh":["demo"]} -> your answer` would have "demo" recorded
+    as a real search query with no trace that it came from a prose example.
+    """
+    groups: list[str] = []
+    depth = 0
+    start = -1
+    in_string = False
+    escaped = False
+    for index, char in enumerate(text):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            if depth == 0:
+                start = index
+            depth += 1
+        elif char == "}":
+            if depth > 0:
+                depth -= 1
+                if depth == 0 and start >= 0:
+                    groups.append(text[start : index + 1])
+                    start = -1
+    return groups
+
+
 def _extract_json_object(text: str) -> dict:
-    raw = re.sub(r"<think\b[^>]*>[\s\S]*?</think\s*>", "", text or "", flags=re.I)
-    raw = re.sub(r"<think\b[^>]*>[\s\S]*$", "", raw, flags=re.I).strip()
-    start = raw.find("{")
-    end = raw.rfind("}")
-    if start < 0 or end <= start:
+    raw = _strip_think(text)
+    groups = _top_level_brace_groups(raw)
+    if not groups:
         raise QueryClientError("bad_response", "model output was not a JSON object")
+    if len(groups) > 1:
+        # More than one object means we cannot tell which one the model meant.
+        # Refusing is the honest outcome; guessing would put an unrelated
+        # string into the candidate set as if it were a real query.
+        raise QueryClientError(
+            "ambiguous_model_output",
+            f"model output contained {len(groups)} JSON objects; refusing to guess which was the answer",
+        )
     try:
-        data = json.loads(raw[start : end + 1])
+        data = json.loads(groups[0])
     except json.JSONDecodeError as exc:
         raise QueryClientError("bad_response", "model output JSON parse failed") from exc
     if not isinstance(data, dict):
@@ -275,15 +370,40 @@ class HttpQueryClient:
         if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
             raise QueryClientError("bad_response", "response missing valid choices")
         choice = choices[0]
-        if choice.get("finish_reason") == "length":
-            raise QueryClientError("model_output_truncated", "completion exceeded the 2048-token cap")
+        finish_reason = choice.get("finish_reason")
         message = choice.get("message")
         content = message.get("content") if isinstance(message, dict) else None
         if not isinstance(content, str) or not content.strip():
-            raise QueryClientError("empty_model_output", "response missing a final answer")
-        variants = parse_model_variants(arm, task["direction"], str(content))
+            raise QueryClientError(
+                "empty_model_output",
+                "response missing a final answer",
+                raw_output=json.dumps(content)[:RAW_CAPTURE_LIMIT]
+                if content is not None
+                else "",
+            )
+        if finish_reason == "length":
+            # Truncated before the JSON closed: keep the partial text so the
+            # record shows how far the model got instead of just a code.
+            raise QueryClientError(
+                "model_output_truncated",
+                f"completion exceeded the {MAX_OUTPUT_TOKENS}-token cap",
+                raw_output=content,
+                answer_text=_strip_think(content),
+            )
+        try:
+            variants = parse_model_variants(arm, task["direction"], str(content))
+        except QueryClientError as exc:
+            # The reply is the only evidence of what the model actually said.
+            exc.raw_output = exc.raw_output or content
+            exc.answer_text = exc.answer_text or _strip_think(content)
+            raise
         if not variants:
-            raise QueryClientError("bad_response", "model returned no variants")
+            raise QueryClientError(
+                "bad_response",
+                "model returned no variants",
+                raw_output=content,
+                answer_text=_strip_think(content),
+            )
         return variants
 
 
@@ -380,7 +500,7 @@ def generate(
     try:
         variants = client.generate_variants(task, arm, prompt)
     except QueryClientError as exc:
-        return recorded(
+        row = recorded(
             task=task,
             arm=arm,
             mode="live",
@@ -388,6 +508,9 @@ def generate(
             code=exc.code,
             notes=exc.notes or exc.code,
         )
+        # Keep the evidence: without it this failure cannot be diagnosed later.
+        row.update(_failure_diagnostics(exc))
+        return row
     return recorded(
         task=task,
         arm=arm,

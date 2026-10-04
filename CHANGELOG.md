@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased — 2026-10-05 B/C/M 模型失败证据补齐
+
+- 失败时保存脱敏、限长的模型原文（与 D 组 `e1_d_assistant.py` 已有做法一致），
+  此前 B/C/M 路径把原文丢掉，`en2zh-eval-03` C 组的失败原因至今不可知。
+  不改变解析行为，不影响已完成运行；成功路径不写这些字段。
+- 修掉 `_extract_json_object` 的 `find("{")`/`rfind("}")` 取法：模型同时给出
+  示例与答案时，示例内容会被当成真实查询记进候选集且不留痕迹。
+  改为数顶层平衡括号组，多于一个即拒绝并报 `ambiguous_model_output`。
+- 新增 `scripts/secret_scrub.py` 供新记录写入方脱敏；
+  `e1_d_assistant.py` 故意不动（其输出已落盘并经 PR15 审查）。
+- 已审计两个已完成运行，**未发现污染，既有结论不变**。
+- 离线套件 316 Python + 58 Node 通过，付费请求 0。
+
 ## 0.1.0-trial — review follow-up (Draft PR #2)
 
 - 存储隔离改为 `chrome.storage.local.setAccessLevel`；失败则拒存密钥。

@@ -95,3 +95,27 @@ PR15已合并（065ff0605cac5f641c5fd6511bda34bf8f11397a），原始记录未修
 运行前修复并提交（ae5eeea）：GitHub 搜索间隔原为 0（会超过每分钟 30 次限额）、输出目录非空即拒绝（保护 D 目录）、冻结设置与客户端参数核对、记录可见 token/耗时。冻结设置提交 48b074d（BYOK_TIMEOUT_SECONDS=300，2048 输出 token，不自动重试，无密钥）。失败未重跑：B zh2en-eval-10 长句直译 GitHub 422；C en2zh-eval-03 模型输出 JSON 解析失败（原文未保存）。可见 token：B 输入8330/输出1989，C 10894/4714，M 10170/4834；费用未知。[报告](../../experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/report.md)，[机器记录](../reports/2026-10-04-e1-bcm-run.json)。WP2-04 盲判仍待发起人。
 
 2026-10-04 PR17 审查：原始记录与冻结设置一致；A/B/C/M 题级并集465，跨题独立仓库391，与D独立仓库169交集9。已准备五组前5判定材料（evaluation/2026-10-04-minimax），人工判断尚未发生。没有重跑失败项或新增付费请求。
+
+## 2026-10-05 B/C/M 失败证据补齐
+
+复核 `runs/2026-10-04-bcm-minimax` 时发现 C 组 `en2zh-eval-03` 的失败记录
+**没有保存模型原文**（232 completion token，其中 171 思考），因此无法判断
+失败是散文包裹、schema 不匹配、拒绝还是截断；而协议禁止把失败项重跑进同一批次，
+证据只有第一次机会。
+
+已修两点，记录见 [2026-10-05-bcm-failure-evidence.md](../reports/2026-10-05-bcm-failure-evidence.md)：
+
+1. 失败时按 D 组已有做法保存脱敏、限长的模型原文（`raw_output_sha256`、
+   `raw_output_chars`、`think_present`、`answer_text`、`raw_output`），
+   **不改变解析行为**，故不影响已完成运行的有效性；成功路径不写这些字段。
+2. 顺带修掉 `_extract_json_object` 用 `find("{")`/`rfind("}")` 的取法：
+   只有一个花括号组时正常，但模型同时给示例和答案时会把示例内容当真实查询记进
+   候选集且不留痕迹。改为数顶层平衡括号组，多于一个即报 `ambiguous_model_output` 拒绝猜。
+   C 组提示词禁止输出散文，合规回复行为不变。
+
+**已回头审计两个已完成运行**（`2026-10-04-bcm-minimax` 60 条生成记录、
+`2026-10-04-d-minimax`）：未发现散文污染，初筛 6 条命中全为误报
+（`zh2en-eval-09` 的 "todo" 是正常应用名，两条「超长」是 B 组忠实翻译）。
+**既有结论不因此改变。** `en2zh-eval-03` C 组那一题的具体失败原因仍不可知，不作猜测。
+
+验证：离线套件 exit 0，**316 Python + 58 Node**（原 305 + 58），全程付费请求 0。

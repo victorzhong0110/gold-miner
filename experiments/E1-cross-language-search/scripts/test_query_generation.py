@@ -193,3 +193,108 @@ class VisibleUsageTests(unittest.TestCase):
         row = qg.generate(task, "B", "live", client)
         self.assertEqual(row["code"], "timeout")
         self.assertIsNone(row["usage"])
+
+
+class FailureEvidenceTests(unittest.TestCase):
+    """A failed model call must leave enough evidence to diagnose it.
+
+    On 2026-10-04 the C arm failed at en2zh-eval-03 with "model output JSON
+    parse failed" and no stored output, so the reply was unrecoverable: the
+    protocol forbids re-driving a failed item into the same batch, and nothing
+    recorded whether it was prose-wrapped JSON, a schema mismatch or a refusal.
+    These tests pin the fix.
+    """
+
+    def _client(self, content, finish="stop"):
+        def post(*args):
+            return {"status": 200, "body": json.dumps({"choices": [
+                {"finish_reason": finish, "message": {"content": content}}]})}
+        return qg.HttpQueryClient(post, base_url="https://fixture.example/v1",
+                                  model="MiniMax-M3", api_key="k")
+
+    def _row(self, content, arm="C", finish="stop"):
+        task = {"id": "en2zh-eval-03", "query": "weekly report generator", "direction": "en2zh"}
+        return qg.generate(task, arm, "live", self._client(content, finish))
+
+    def test_parse_failure_records_the_model_reply(self):
+        row = self._row("<think>let me think about {} braces</think>Sorry, I cannot help.")
+        self.assertEqual(row["code"], "bad_response")
+        self.assertEqual(row["variants"], [])
+        # The evidence that was previously thrown away.
+        self.assertIn("cannot help", row["answer_text"])
+        self.assertIn("raw_output_chars", row)
+        self.assertTrue(row["think_present"])
+        self.assertEqual(len(row["raw_output_sha256"]), 64)
+
+    def test_truncated_output_keeps_how_far_the_model_got(self):
+        row = self._row('<think>reasoning</think>{"zh": ["a', finish="length")
+        self.assertEqual(row["code"], "model_output_truncated")
+        self.assertIn('"zh": ["a', row["raw_output"])
+        self.assertEqual(row["answer_text"], '{"zh": ["a')
+
+    def test_empty_answer_is_recorded_without_inventing_text(self):
+        row = self._row("")
+        self.assertEqual(row["code"], "empty_model_output")
+        self.assertEqual(row["variants"], [])
+
+    def test_model_output_that_parsed_keeps_no_raw_copy(self):
+        row = self._row('<think>t</think>{"zh":["报表生成器"],"en":["weekly report generator"]}')
+        self.assertEqual(row["code"], "ok")
+        self.assertEqual(len(row["variants"]), 2)
+        # A successful row stays small; the raw copy exists only to debug failures.
+        for key in ("raw_output", "answer_text", "raw_output_sha256"):
+            self.assertNotIn(key, row)
+
+    def test_recorded_output_is_scrubbed_and_bounded(self):
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "sk-abcdefghijklmnop"}):
+            row = self._row("<think>t</think>here is sk-abcdefghijklmnop and Bearer abc.def-123")
+        self.assertNotIn("sk-abcdefghijklmnop", json.dumps(row, ensure_ascii=False))
+        self.assertNotIn("abc.def-123", json.dumps(row, ensure_ascii=False))
+        self.assertIn("[redacted]", row["answer_text"])
+
+    def test_oversized_output_records_a_hash_but_not_the_body(self):
+        row = self._row("x" * (qg.RAW_CAPTURE_LIMIT + 10))
+        self.assertNotIn("raw_output", row)
+        self.assertEqual(row["raw_output_chars"], qg.RAW_CAPTURE_LIMIT + 10)
+        self.assertEqual(len(row["raw_output_sha256"]), 64)
+
+    def test_strip_think_matches_the_parser_rule(self):
+        self.assertEqual(qg._strip_think('<think>a{}b</think>{"zh":["x"]}'), '{"zh":["x"]}')
+        self.assertEqual(qg._strip_think("<think>never closed"), "")
+
+
+class StrictParserTests(unittest.TestCase):
+    """The prompts forbid prose around the JSON, so the parser stays strict.
+
+    Recorded here because a strict parser plus a lost raw output made the
+    2026-10-04 failure uninvestigable. Now that the reply is stored, a stray
+    brace is diagnosable rather than mysterious.
+    """
+
+    def test_prose_example_object_is_refused_not_recorded_as_a_query(self):
+        # find("{")/rfind("}") spans from the first "{" to the last "}", so a
+        # reply with an example object plus a real one could put either into
+        # the candidate set with no trace of which was intended.
+        reply = 'Example: {"zh":["demo"]} and my answer: {"zh":["报表生成器"]}'
+        with self.assertRaises(qg.QueryClientError) as ctx:
+            qg.parse_model_variants("C", "en2zh", reply)
+        self.assertEqual(ctx.exception.code, "ambiguous_model_output")
+        self.assertIn("2 JSON objects", ctx.exception.notes)
+
+    def test_single_object_with_prose_around_it_is_still_accepted(self):
+        # One object plus brace-free prose is unambiguous; keep accepting it.
+        rows = qg.parse_model_variants("C", "en2zh", 'Answer: {"zh":["报表"]} hope that helps')
+        self.assertEqual([r["variant_query"] for r in rows], ["报表"])
+
+    def test_brace_counting_ignores_braces_inside_strings(self):
+        self.assertEqual(
+            len(qg._top_level_brace_groups('{"zh":["a } b"],"en":[]}')), 1
+        )
+        self.assertEqual(
+            len(qg._top_level_brace_groups('{"a":"\\""} {"b":"x"}')), 2
+        )
+        self.assertEqual(qg._top_level_brace_groups('{"unclosed": "x"'), [])
+
+    def test_brace_free_prose_around_valid_json_is_accepted(self):
+        rows = qg.parse_model_variants("C", "en2zh", 'Here: {"zh":["报表"],"en":["report"]} done')
+        self.assertEqual([r["variant_query"] for r in rows], ["报表", "report"])
