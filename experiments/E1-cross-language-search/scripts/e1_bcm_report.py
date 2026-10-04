@@ -85,6 +85,11 @@ def summarize(pipeline: dict, d_rows: list[dict], hist_a_rows: list[dict] | None
     pair['ABCM_union_task_level'] = sum(len(s) for s in any_bcm.values())
     pair['ABCM_union_overlap_with_D'] = sum(len(any_bcm[t] & d_sets.get(t, set())) for t in task_ids)
     pair['D_task_level'] = sum(len(d_sets.get(t, set())) for t in task_ids)
+    abcm_global = set().union(*any_bcm.values())
+    d_global = set().union(*(d_sets.get(t, set()) for t in task_ids))
+    pair['ABCM_distinct_repos_all_tasks'] = len(abcm_global)
+    pair['D_distinct_repos_all_tasks'] = len(d_global)
+    pair['ABCM_D_distinct_repo_overlap_all_tasks'] = len(abcm_global & d_global)
     hist_overlap = None
     if hist:
         hist_overlap = {'historical_A_task_level': sum(len(hist.get(t, set())) for t in task_ids),
@@ -135,6 +140,7 @@ def render_report(pipeline: dict, s: dict, *, settings_path: str, d_run: str, hi
     p = s['pairwise']
     L += ['', f"合计：A/B/C/M 题级并集 {p['ABCM_union_task_level']}，其中也在 D 中 {p['ABCM_union_overlap_with_D']}；D 题级 {p['D_task_level']}。C 有而 M 没有 {p['C-M']}，M 有而 C 没有 {p['M-C']}，C 有而 B 没有 {p['C-B']}。"]
     h = s.get('historical_a_overlap')
+    L += ['', f"跨题按仓库全名再去重：A/B/C/M 共 {p['ABCM_distinct_repos_all_tasks']} 个仓库，D 共 {p['D_distinct_repos_all_tasks']} 个，交集 {p['ABCM_D_distinct_repo_overlap_all_tasks']} 个。题级并集会在不同任务重复计入同一仓库，不能称为跨题独立仓库数。"]
     if h:
         L += ['', f"今日 A 与历史 A（`{hist_run}`）：今日 {h['today_A_task_level']}，历史 {h['historical_A_task_level']}（仅本批 20 题），题级交集 {h['overlap']}。差异原因未逐条诊断（可能包括 GitHub 索引随时间变化）。"]
     L += ['', '## 不能下的结论', '',

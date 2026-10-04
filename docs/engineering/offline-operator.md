@@ -117,3 +117,5 @@ python3 $E/scripts/e1_bcm_report.py --run $E/runs/2026-10-04-bcm-minimax \
 ```
 
 pipeline 不续跑、不覆盖：失败照实保留；要重跑须新 run-id 与新目录，旧记录不删。
+
+2026-10-04 审查更新：五组前5判定材料已准备于 `experiments/E1-cross-language-search/evaluation/2026-10-04-minimax/`，包含233个题目/仓库组合；来源映射与判定表分文件，不能保证判定人从未看过组别。A/B/C/M题级并集465不等于独立仓库数；跨题去重后391，与D169交集9。原始实跑记录不改，不重跑失败项。

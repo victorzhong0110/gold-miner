@@ -39,11 +39,11 @@
     {
       "id": "WP1-03",
       "title": "真实模型客户端和配置",
-      "status": "partial",
-      "evidence": "HTTP 客户端与恢复回归已测；个人模型实测缺凭据",
-      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
+      "status": "verified",
+      "evidence": "MiniMax-M3 真实 B/C/M 60 次调用已记录；超时/认证/解析回归通过；个人 Chrome 复测单列 WP3",
+      "owner": "Codex: reviewed machine evidence; Owner: human judgment and decisions",
       "merged": true,
-      "actual_acceptance": "not-complete",
+      "actual_acceptance": "live-client-verified",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
@@ -59,11 +59,11 @@
     {
       "id": "WP1-05",
       "title": "冻结评估材料",
-      "status": "partial",
-      "evidence": "历史冻结材料已保留；正式比较须冻结具体模型与新代码 SHA",
-      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
+      "status": "verified",
+      "evidence": "2026-10-04 设置冻结于已存在 ae5eeea；运行源码 48b074d 仅新增设置；题目/提示词/种子哈希全匹配",
+      "owner": "Codex: reviewed machine evidence; Owner: human judgment and decisions",
       "merged": true,
-      "actual_acceptance": "not-complete",
+      "actual_acceptance": "freeze-verified",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
@@ -89,39 +89,39 @@
     {
       "id": "WP2-01",
       "title": "预先登记判断标准",
-      "status": "partial",
-      "evidence": "protocol、judgment-guide 已有标准；正式新批次须预登记具体模型",
-      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
+      "status": "verified",
+      "evidence": "判定口径、预算、字段、排序与失败处理预先保留；本次模型/设置在运行前冻结，未改判断门槛",
+      "owner": "Codex: reviewed machine evidence; Owner: human judgment and decisions",
       "merged": true,
-      "actual_acceptance": "not-complete",
+      "actual_acceptance": "preregistered-materials-verified",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP2-02",
       "title": "运行 E1 A/B/C/M",
-      "status": "partial",
-      "evidence": "2026-10-04 MiniMax-M3 实跑 eval.batch_1（runs/2026-10-04-bcm-minimax）：A 20/20、B 19+1部分、C 19+1阻断、M 20/20；模型请求60、GitHub请求208；人工用途判断未运行；见 docs/reports/2026-10-04-e1-bcm-run.json",
-      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
+      "status": "verified",
+      "evidence": "MiniMax-M3 全批 A/B/C/M 已运行并保存 60 模型/208 GitHub 请求，1 GitHub422、1解析失败未重跑；人工判断归 WP2-04",
+      "owner": "Codex: reviewed machine evidence; Owner: human judgment and decisions",
       "merged": true,
-      "actual_acceptance": "not-complete",
+      "actual_acceptance": "live-run-complete-with-recorded-failures",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP2-03",
       "title": "运行强对照 D",
-      "status": "partial",
-      "evidence": "2026-10-04 MiniMax-M3 D组20/20题实跑；169存在、3个404；同日B/C/M已实跑（runs/2026-10-04-bcm-minimax）；人工用途判断未运行",
-      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
+      "status": "verified",
+      "evidence": "MiniMax-M3 D 全批 20 题已运行并审查，169 仓库存在；人工判断归 WP2-04",
+      "owner": "Codex: reviewed machine evidence; Owner: human judgment and decisions",
       "merged": true,
-      "actual_acceptance": "not-complete",
+      "actual_acceptance": "live-run-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
     },
     {
       "id": "WP2-04",
       "title": "盲判和增量分析",
       "status": "partial",
-      "evidence": "blind_eval.py 已实现去重、遮蔽与回填；真人盲判尚未执行",
-      "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
+      "evidence": "五组前5来源遮蔽材料已生成：233 题目/仓库组合、311 组内位置；真人判断未运行",
+      "owner": "Codex: reviewed machine evidence; Owner: human judgment and decisions",
       "merged": true,
       "actual_acceptance": "not-complete",
       "merge_scope": "recorded implementation/materials only; status remains authoritative"
@@ -580,6 +580,14 @@
     "report": "docs/reports/2026-10-04-e1-bcm-run.json",
     "human_judgment": "not-run",
     "cost": "unknown",
-    "effectiveness": "not-concluded"
+    "effectiveness": "not-concluded",
+    "review": "docs/reports/2026-10-04-bcm-review.json",
+    "pr": 17
+  },
+  "e1_judgment_material": {
+    "status": "prepared-not-judged",
+    "directory": "experiments/E1-cross-language-search/evaluation/2026-10-04-minimax",
+    "unique_task_repo": 233,
+    "group_slots": 311
   }
 }

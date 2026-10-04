@@ -126,7 +126,10 @@
     "C-B": 220,
     "ABCM_union_task_level": 465,
     "ABCM_union_overlap_with_D": 9,
-    "D_task_level": 169
+    "D_task_level": 169,
+    "ABCM_distinct_repos_all_tasks": 391,
+    "D_distinct_repos_all_tasks": 169,
+    "ABCM_D_distinct_repo_overlap_all_tasks": 9
   },
   "historical_a_overlap": {
     "historical_A_task_level": 68,

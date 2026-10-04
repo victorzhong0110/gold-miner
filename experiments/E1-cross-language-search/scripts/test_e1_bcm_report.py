@@ -1,4 +1,5 @@
 import json
+import copy
 import tempfile
 import unittest
 from pathlib import Path
@@ -40,6 +41,16 @@ PIPELINE = {
 
 
 class ReportTests(unittest.TestCase):
+    def test_cross_task_duplicates_and_cross_task_overlap_are_separate(self):
+        p = copy.deepcopy(PIPELINE)
+        for arm in rep.ARMS:
+            p['arms'][arm]['task_results'].append(task('t2', ['x/one']))
+        s = rep.summarize(p, [{'task_id': 't2', 'repo': 'D/Hit'}])
+        self.assertEqual(s['pairwise']['ABCM_union_task_level'], 4)
+        self.assertEqual(s['pairwise']['ABCM_distinct_repos_all_tasks'], 3)
+        self.assertEqual(s['pairwise']['ABCM_union_overlap_with_D'], 0)
+        self.assertEqual(s['pairwise']['ABCM_D_distinct_repo_overlap_all_tasks'], 1)
+
     def test_counts_failures_and_d_overlap_from_records_only(self):
         s = rep.summarize(PIPELINE, [{'task_id': 't1', 'repo': 'D/Hit'}], [{'task_id': 't1', 'repo': 'x/one'}])
         self.assertEqual(s['arms']['B']['overlap_with_d_task_level'], 1)

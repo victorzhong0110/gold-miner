@@ -1,0 +1,56 @@
+{
+  "kind": "offline-review-of-recorded-live-run",
+  "reviewed_pr": 17,
+  "reviewed_head": "89b2fddc6185945a10b9798625321988522111c8",
+  "run_source_sha": "48b074dec34dfa093b072d1693402fb09804d851",
+  "freeze_sha": "ae5eeea11aff381b1f91bf941cb1368c18803f25",
+  "raw_hashes": {
+    "experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/pipeline.json": "8dd99c86ad2ea13fb8ea1c1038a2323bcd684ce6938f916e813d1ed680db773c",
+    "experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/generation.jsonl": "1804ca2f111fac6a4108d447821b809bc00e1246d59dc169e9e0b84de4709ad9",
+    "experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/candidates.jsonl": "541f7a7af98b5763520cfada814b53ad8ce6b316b185aa07313aa501af6c9dc4",
+    "experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/judgments.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/E1-cross-language-search/run-settings-2026-10-04-bcm-minimax.json": "e27d571d47a257050ecb62f0ff723d06640e5cfb49b985cc15a03c0fa3446350"
+  },
+  "checks": {
+    "settings_sha256_matches": true,
+    "frozen_material_hashes_match": true,
+    "source_code_matches_freeze": true,
+    "generation_jsonl_matches_pipeline": true,
+    "candidate_jsonl_matches_pipeline": true,
+    "original_d_records_unchanged": true,
+    "raw_bcm_records_unchanged": true,
+    "judgments_empty": true
+  },
+  "actual_run": {
+    "elapsed_seconds": 1065,
+    "model_requests": 60,
+    "github_requests": 208,
+    "github_failed": 1,
+    "generation_failed": 1,
+    "task_level_abcm_union": 465,
+    "distinct_abcm_repos": 391,
+    "distinct_d_repos": 169,
+    "distinct_repo_overlap": 9
+  },
+  "human_judgment": "not-run",
+  "cost": "unknown",
+  "judgment_material": {
+    "unique_task_repo": 233,
+    "group_slots": 311,
+    "strict_blinding": "not-established; source key public, prior exposure must be disclosed"
+  },
+  "limitations": [
+    "B HTTP422 cause not provable from saved exception alone",
+    "C invalid JSON raw response not retained; parser cause cannot be reproduced",
+    "same-day D and BCM have different times, tools and output budgets",
+    "dev probe 1 request disclosed separately in PR17; usage unknown"
+  ],
+  "new_paid_model_or_github_search_requests": 0,
+  "validation": {
+    "python": 305,
+    "node": 58,
+    "offline": "passed",
+    "original_pr_ci": 37208235657,
+    "browser": "original PR CI passed; updated head CI required"
+  }
+}

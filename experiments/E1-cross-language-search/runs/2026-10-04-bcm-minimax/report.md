@@ -56,6 +56,8 @@ D 组来自 `experiments/E1-cross-language-search/runs/2026-10-04-d-minimax`（�
 
 合计：A/B/C/M 题级并集 465，其中也在 D 中 9；D 题级 169。C 有而 M 没有 237，M 有而 C 没有 41，C 有而 B 没有 220。
 
+跨题按仓库全名再去重：A/B/C/M 共 391 个仓库，D 共 169 个，交集 9 个。题级并集会在不同任务重复计入同一仓库，不能称为跨题独立仓库数。
+
 今日 A 与历史 A（`experiments/E1-cross-language-search/runs/2026-09-22-w4-first`）：今日 70，历史 68（仅本批 20 题），题级交集 67。差异原因未逐条诊断（可能包括 GitHub 索引随时间变化）。
 
 ## 不能下的结论

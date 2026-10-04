@@ -1,7 +1,21 @@
 import json
 import unittest
-from blind_eval import prepare, analyze
+from blind_eval import prepare, analyze, include_d
 class BlindTests(unittest.TestCase):
+    def test_combined_d_uses_recorded_rank_and_masks_source(self):
+        p = {'run_id': 'bcm', 'mode': 'live', 'batch': 'eval', 'arms': {'A': {'task_results': [
+            {'task_id': 't', 'status': 'ok', 'merged_candidates': [{'repo': 'same/repo'}]}]}}}
+        m = {'run_id': 'd', 'arm': 'D', 'status': 'complete', 'batch': 'eval', 'tasks': {'completed': 1}}
+        rows = [{'run_id': 'd', 'arm': 'D', 'task_id': 't', 'repo': 'same/repo', 'rank': 1}]
+        combined = include_d(p, rows, m)
+        public, key = prepare(combined)
+        self.assertNotIn('D', p['arms'])
+        self.assertEqual(len(public), 1)
+        self.assertEqual({r['arm'] for r in next(iter(key['links'].values()))}, {'A', 'D'})
+        for invalid in [dict(m, batch='other'), dict(m, status='partial')]:
+            with self.assertRaises(ValueError): include_d(p, rows, invalid)
+        with self.assertRaises(ValueError): include_d(p, rows + rows, m)
+
     def setUp(self):
         self.pipeline = {'run_id': 'fixture', 'mode': 'fixture', 'arms': {arm: {'task_results': [{'task_id': 'task', 'status': 'ok', 'merged_candidates': [{'repo': 'safe/repo', 'arm': arm, 'rank': 1, 'sources': ['secret-lane']}]}]} for arm in ('A', 'C', 'M')}}
         self.public, self.key = prepare(self.pipeline)
