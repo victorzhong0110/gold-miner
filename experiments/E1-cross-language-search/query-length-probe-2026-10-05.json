@@ -1,0 +1,28 @@
+{
+  "measurement": "github-search-response-vs-query-length",
+  "measured_at": "2026-10-05",
+  "why": "E1 B 组为整句忠实直译，查询长度结构性偏长；需确认长查询是否系统性影响检索，从而污染协议第 6 节的 B→C 比较。",
+  "method": "未认证请求 GitHub 公开 search/repositories，逐步截断 B 组实际失败查询至词边界，另取同批短查询作对照。共 6 次请求，间隔 7 秒。",
+  "source_query_task": "zh2en-eval-10",
+  "source_query_arm": "B",
+  "results": [
+    {"label": "full", "chars": 193, "http": 422, "total_count": null, "note": "与 2026-10-04 实跑记录的失败完全一致"},
+    {"label": "truncated", "chars": 141, "http": 200, "total_count": 0},
+    {"label": "truncated", "chars": 86, "http": 200, "total_count": 1},
+    {"label": "truncated", "chars": 65, "http": 200, "total_count": 1},
+    {"label": "truncated", "chars": 36, "http": 200, "total_count": 47},
+    {"label": "control", "chars": 22, "http": 200, "total_count": 151, "note": "同批 zh2en-eval-01 的 B 组查询"}
+  ],
+  "batch_query_length_distribution": {
+    "B": {"n": 20, "max_chars": 193, "p90_chars": 103},
+    "C": {"n": 76, "max_chars": 53, "p90_chars": 38},
+    "M": {"n": 60, "max_chars": 75, "p90_chars": 59}
+  },
+  "conclusion": "B 组查询长度结构性偏长（最大 193，是 C 组上限的 3.6 倍）。GitHub 搜索在 193 字符返回 422，在 65–141 字符区间虽不报错但 total_count 仅 0–1，而 22–36 字符区间为 47–151。",
+  "caveats": [
+    "仅 1 条查询、6 次请求，不足以给出精确的长度阈值",
+    "未认证（公开配额），认证后行为可能不同",
+    "total_count 随 GitHub 索引变化，不是稳定量；此处的用途是量级差异而非精确值",
+    "本记录不构成 E1 任何效果证据，也不改变已完成运行的任何结论"
+  ]
+}
