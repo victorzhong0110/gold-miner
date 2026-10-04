@@ -1,5 +1,5 @@
 import unittest
-from e1_pipeline import search_variants, run_pipeline
+from e1_pipeline import search_variants, run_pipeline, failure_rows
 TASK = {'id': 'zh2en-dev-01', 'direction': 'zh2en', 'query': '剪贴板历史 工具'}
 def row(q, lang): return {'variant_query': q, 'variant_lang': lang, 'api_query': q}
 class PipelineTests(unittest.TestCase):
@@ -108,3 +108,101 @@ class FrozenRunGuardTests(unittest.TestCase):
         self.assertEqual(summary['B']['requests_without_usage'], 1)
         self.assertEqual(summary['B']['completion_tokens'], 7)
         self.assertEqual(summary['C']['model_requests'], 0)
+
+
+class FailureLedgerTests(unittest.TestCase):
+    """The A/B/C/M runner must write the ledger schemas/failures.schema.json
+    defines. It used to detect failures, signal them through the exit code, and
+    persist nothing -- while the D runner did write failures.jsonl, so the two
+    record shapes differed for the same experiment."""
+
+    def _result(self, generation=None, tasks=None):
+        arms = {}
+        for arm, results in (tasks or {}).items():
+            arms[arm] = {'task_results': results}
+        return {'run_id': 'r1', 'generation_records': generation or [], 'arms': arms}
+
+    def test_generation_failure_becomes_a_ledger_row(self):
+        rows = failure_rows(self._result(generation=[
+            {'task_id': 't1', 'arm': 'C', 'code': 'bad_response', 'notes': 'parse failed'},
+            {'task_id': 't2', 'arm': 'B', 'code': 'ok', 'notes': 'live model client'},
+        ]))
+        self.assertEqual(len(rows), 1, 'a successful generation must not appear')
+        self.assertEqual(rows[0], {'run_id': 'r1', 'task_id': 't1', 'arm': 'C',
+                                   'code': 'bad_response', 'message': 'parse failed'})
+
+    def test_partial_task_records_the_error(self):
+        rows = failure_rows(self._result(tasks={'B': [
+            {'task_id': 't9', 'status': 'partial',
+             'errors': [{'api_query': 'x', 'error': 'HTTPError: HTTP Error 422: Unprocessable Entity'}]}]}))
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['code'], 'partial')
+        self.assertIn('422', rows[0]['message'])
+        # additionalProperties is false, so the query must not leak into the row.
+        self.assertNotIn('api_query', rows[0])
+        self.assertEqual(set(rows[0]), {'run_id', 'task_id', 'arm', 'code', 'message'})
+
+    def test_blocked_task_records_its_reason(self):
+        rows = failure_rows(self._result(tasks={'C': [
+            {'task_id': 't3', 'status': 'blocked', 'errors': [], 'reason': 'coverage miss'}]}))
+        self.assertEqual(rows[0]['code'], 'blocked')
+        self.assertEqual(rows[0]['message'], 'coverage miss')
+
+    def test_ok_tasks_are_absent(self):
+        rows = failure_rows(self._result(tasks={'A': [
+            {'task_id': 't1', 'status': 'ok', 'errors': []},
+            {'task_id': 't2', 'status': 'ok', 'errors': []}]}))
+        self.assertEqual(rows, [])
+
+    def test_one_cause_can_produce_two_layers(self):
+        # Generation failed AND the task ended blocked: two facts, two rows.
+        rows = failure_rows(self._result(
+            generation=[{'task_id': 't1', 'arm': 'C', 'code': 'bad_response', 'notes': 'x'}],
+            tasks={'C': [{'task_id': 't1', 'status': 'blocked', 'errors': [], 'reason': 'y'}]}))
+        self.assertEqual({r['code'] for r in rows}, {'bad_response', 'blocked'})
+        self.assertEqual(len({r['task_id'] for r in rows}), 1, 'same task, not two tasks')
+
+    def test_rows_validate_against_the_failures_schema(self):
+        import json
+        from pathlib import Path
+        schema = json.loads(
+            (Path(__file__).resolve().parents[1] / 'schemas' / 'failures.schema.json')
+            .read_text(encoding='utf-8'))
+        try:
+            import jsonschema
+            validate = lambda row: jsonschema.validate(row, schema)
+        except Exception:
+            required = set(schema['required'])
+            allowed = set(schema['properties'])
+            arms = set(schema['properties']['arm']['enum'])
+            def validate(row):
+                self.assertTrue(required <= set(row), f'missing {required - set(row)}')
+                self.assertTrue(set(row) <= allowed, f'extra {set(row) - allowed}')
+                self.assertIn(row['arm'], arms)
+                for field in ('run_id', 'task_id', 'code'):
+                    self.assertTrue(isinstance(row[field], str) and row[field])
+        result = self._result(
+            generation=[{'task_id': 't1', 'arm': 'C', 'code': 'bad_response', 'notes': 'x'}],
+            tasks={'B': [{'task_id': 't2', 'status': 'partial', 'errors': [{'error': 'boom'}]}]})
+        rows = failure_rows(result)
+        self.assertEqual(len(rows), 2)
+        for row in rows:
+            validate(row)
+
+    def test_run_writes_failures_jsonl_even_when_empty(self):
+        import json, sys, tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from e1_pipeline import main
+        stub = {'run_id': 'r1', 'generation_records': [
+            {'task_id': 't1', 'arm': 'A', 'code': 'ok', 'notes': 'ok'}],
+            'arms': {'A': {'task_results': [{'task_id': 't1', 'status': 'ok', 'errors': [],
+                                             'merged_candidates': []}], 'totals': {}}}}
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch('e1_pipeline.run_pipeline', return_value=stub), \
+                 patch.object(sys, 'argv', ['e1_pipeline.py', '--out', tmp]):
+                main()
+            ledger = Path(tmp) / 'failures.jsonl'
+            # A missing file is indistinguishable from a run that never checked.
+            self.assertTrue(ledger.exists(), 'failures.jsonl must always be written')
+            self.assertEqual(ledger.read_text(encoding='utf-8'), '')

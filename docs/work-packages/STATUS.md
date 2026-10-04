@@ -179,3 +179,34 @@ prompts 是冻结材料（protocol：修复另开 `eval.batch_2`），**本轮�
 验证：离线套件 exit 0，**336 Python + 58 Node**，付费请求 0。
 已完成两个运行均未触发该矛盾，结论不变。详见
 [2026-10-05-prompt-pipeline-contradiction.md](../reports/2026-10-05-prompt-pipeline-contradiction.md)。
+
+## 2026-10-05 A/B/C/M 运行缺 failures.jsonl
+
+记录形状不一致：D 组运行写 `failures.jsonl`，A/B/C/M 不写，
+而 `schemas/failures.schema.json` 定义了该文件。后果是同一个实验的两类记录
+形状不同，消费方要为 A/B/C/M 特判。
+
+**先澄清：失败信息没有丢**，逐任务失败本来就在 `pipeline.json` 里机器可读
+（B `zh2en-eval-10` 的 422 带 `api_query`、C `en2zh-eval-03` 的 blocked 带 `reason`）。
+问题是「schema 规定的独立账本没生成」，不是「无法诊断」。
+
+`e1_pipeline.py:194` 早已检测失败并据此返回 exit 2，却只交给退出码、不落盘。
+已新增 `failure_rows(result)` 并在 `main()` 写出 `failures.jsonl`：字段全部取自
+已有的 `generation_records` 与 per-task `status`/`errors`/`reason`，不编造；
+遵守 `additionalProperties: false`，一行仅 `run_id`/`task_id`/`arm`/`code`/`message`
+（出问题的 `api_query` 留在 `pipeline.json`）；**空也写文件**，因为缺文件与
+「跑过但没失败」无法区分。
+
+从已记录的 `2026-10-04-bcm-minimax` 派生的 3 行显示：一次查询生成失败会让同一
+`task_id` 出现两行（`bad_response` 与 `blocked`，两个层次），**行数不等于失败任务数**，
+统计须去重 `task_id`。
+
+**没有回填历史运行**：那次运行没产生该文件，事后补等于伪造记录。
+本条只对后续运行生效，历史运行的失败仍从 `pipeline.json` 读。
+
+**顺带发现、本轮不改**：`:194` 判定失败不含 `tasks_partial`，
+即只有 partial 而 `failed_requests` 为 0 时会 exit 0 却有账本行，口径不一致。
+是否让 partial 也算失败属发起人决定。详见
+[2026-10-05-failures-ledger-gap.md](../reports/2026-10-05-failures-ledger-gap.md)。
+
+验证：离线套件 exit 0，**343 Python + 58 Node**（原 336 + 58），付费请求 0。

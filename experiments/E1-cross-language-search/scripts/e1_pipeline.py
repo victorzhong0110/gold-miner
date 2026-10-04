@@ -143,6 +143,46 @@ def _utcnow():
     return datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z')
 
 
+def failure_rows(result: dict) -> list[dict]:
+    """Machine-readable failure ledger, derived only from what is already here.
+
+    The A/B/C/M runner detected failures and signalled them through the exit
+    code, but never wrote the ledger that schemas/failures.schema.json defines
+    and that the D runner does write. Consumers therefore had to special-case
+    these runs, and the two recorded runs in this repository have no
+    failures.jsonl at all.
+
+    Nothing is invented: every field comes from generation_records or from the
+    per-task status/errors already present in the result. The schema sets
+    additionalProperties false, so a row carries exactly run_id, task_id, arm,
+    code and message -- the offending api_query stays in pipeline.json.
+
+    Rows are per (task, layer), not per failed task, and are not deduplicated:
+    a task whose query generation failed also ends up blocked, so it appears
+    twice with different codes. Count distinct task_ids, not rows.
+    """
+    run_id = result.get('run_id') or ''
+    rows: list[dict] = []
+    for record in result.get('generation_records') or []:
+        code = record.get('code')
+        if code and code != 'ok':
+            rows.append({'run_id': run_id, 'task_id': record.get('task_id') or '',
+                         'arm': record.get('arm') or '', 'code': code,
+                         'message': str(record.get('notes') or '')})
+    for arm, arm_result in (result.get('arms') or {}).items():
+        for task in arm_result.get('task_results') or []:
+            status = task.get('status')
+            if not status or status == 'ok':
+                continue
+            parts = [str(e.get('error') or e) for e in (task.get('errors') or [])]
+            if task.get('reason'):
+                parts.append(str(task['reason']))
+            rows.append({'run_id': run_id, 'task_id': task.get('task_id') or '',
+                         'arm': arm, 'code': str(status),
+                         'message': '; '.join(p for p in parts if p)})
+    return rows
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--live', action='store_true')
@@ -189,7 +229,10 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     (out / 'pipeline.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
     for kind, rows in [('generation', result['generation_records']),
-                       ('candidates', [r for arm in result['arms'].values() for task in arm['task_results'] for r in task['merged_candidates']])]:
+                       ('candidates', [r for arm in result['arms'].values() for task in arm['task_results'] for r in task['merged_candidates']]),
+                       ('failures', failure_rows(result))]:
+        # Written even when empty: a missing file is indistinguishable from a
+        # run that never checked, an empty one says "checked, nothing failed".
         (out / (kind + '.jsonl')).write_text(''.join(json.dumps(r, ensure_ascii=False) + '\n' for r in rows))
     failed = any(r['code'] != 'ok' for r in result['generation_records']) or any(
         arm['totals'].get('failed_requests', 0) or arm['totals'].get('tasks_blocked', 0) for arm in result['arms'].values())

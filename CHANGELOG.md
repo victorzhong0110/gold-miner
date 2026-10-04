@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased — 2026-10-05 A/B/C/M 运行写 failures.jsonl
+
+- D 组运行写 `failures.jsonl`，A/B/C/M 不写，而 `schemas/failures.schema.json`
+  定义了该文件——同一实验的两类记录形状不同，消费方需特判。
+- `e1_pipeline` 早已检测失败并据此返回 exit 2（`:194`），却只交给退出码、不落盘。
+  新增 `failure_rows(result)` 并在 `main()` 写出账本：字段全部取自已有的
+  `generation_records` 与 per-task `status`/`errors`/`reason`，不编造；
+  遵守 `additionalProperties: false`；空也写文件（缺文件与「没失败」无法区分）。
+- **未回填历史运行**：三次历史运行当时没产生该文件，事后补等于伪造记录。
+- 顺带记录但不改：`:194` 判定失败不含 `tasks_partial`，
+  只有 partial 而 `failed_requests` 为 0 时会 exit 0 却有账本行，口径不一致，
+  是否让 partial 也算失败属发起人决定。
+- 离线套件 343 Python + 58 Node 通过，付费请求 0。
+
 ## Unreleased — 2026-10-05 提示词与 pipeline 查询规则矛盾
 
 - 查实一条已记录但未处理的矛盾：`prompts/c-rewrite.txt:13` 许可
