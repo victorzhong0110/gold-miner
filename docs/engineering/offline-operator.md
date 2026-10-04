@@ -33,7 +33,21 @@ python3 experiments/E1-cross-language-search/harness/e1_value_harness.py \
 
 `--mode live` 需要 `GITHUB_TOKEN`（可选）与（B/C/M）模型环境变量；没有配置时脚本必须拒绝并写 `owner-blocked`，不得编造命中。
 
-D 组只产生 stub：`blocked` / `未运行`。
+D 组是**真人强对照**，工具不执行、只录入与比较。按
+`experiments/E1-cross-language-search/prompts/README.md` 逐题发给联网助手并核实每个仓库后，
+把结果写成 `prompts/d-control.template.jsonl` 那种 JSONL，再录入：
+
+```bash
+python3 experiments/E1-cross-language-search/scripts/e1_d_control.py \
+  --input <记录的.jsonl> --run-id <run-id>
+
+# 或并入一次批次运行，--arms 里带 D：
+python3 experiments/E1-cross-language-search/harness/e1_value_harness.py \
+  --batch dev --arms A,D --out /tmp/e1-fixture-run --d-input <记录的.jsonl>
+```
+
+命中、幻觉、未核实三者分开计数；没记录的任务保持 `owner_blocked` / 未运行。
+没有记录时 D 仍只产生 `blocked` / `未运行`，不会补出结果。
 
 ## 3 BYOK 连接探测
 

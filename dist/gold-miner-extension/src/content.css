@@ -7,6 +7,20 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* No content anchor found: keep the panel on screen instead of silently
+   appending it to the end of a long document. */
+#gold-miner-root.gm-floating {
+  position: fixed;
+  top: auto;
+  right: 16px;
+  bottom: 16px;
+  width: min(360px, calc(100vw - 32px));
+  max-height: 70vh;
+  overflow-y: auto;
+  margin: 0;
+  max-width: none;
+}
+
 #gold-miner-root .gm-panel {
   background: #fff;
   border: 1px solid #d0d7de;

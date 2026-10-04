@@ -117,11 +117,36 @@ document.getElementById("importFile").addEventListener("change", async (ev) => {
   });
 });
 
+// S1: a green light that survives an edit is a false success. Any change to the
+// three BYOK fields invalidates the previous probe result, so clear it at once.
+function currentByok() {
+  return {
+    baseUrl: document.getElementById("baseUrl").value.trim(),
+    model: document.getElementById("model").value.trim(),
+    apiKey: document.getElementById("apiKey").value,
+  };
+}
+
+function bindInvalidation() {
+  ["baseUrl", "model", "apiKey"].forEach(function (id) {
+    const el = document.getElementById(id);
+    ["input", "change"].forEach(function (evt) {
+      el.addEventListener(evt, function () {
+        show("配置已修改，请重新探测。 / Configuration changed, re-probe required.");
+      });
+    });
+  });
+}
+
 document.getElementById("probe").addEventListener("click", async () => {
-  const data = await chrome.storage.local.get({ byok: {} });
-  const byok = data.byok || {};
+  // S1: probe what is on screen, not what was last saved.
+  const byok = currentByok();
   if (!byok.apiKey) {
     show("未运行 / owner-blocked：没有 API key。");
+    return;
+  }
+  if (!byok.model) {
+    show("请填写模型名。 / Model is required.");
     return;
   }
   if (!GoldMinerShared.endpointUrl(byok.baseUrl)) {
@@ -129,9 +154,14 @@ document.getElementById("probe").addEventListener("click", async () => {
     return;
   }
   const endpoint = GoldMinerShared.endpointUrl(byok.baseUrl);
-  if (!await chrome.permissions.contains({origins: [new URL(endpoint).origin + "/*"]})) { show("请先保存并授权端点 / Save and grant endpoint access first"); return; }
+  const host = new URL(endpoint).host;
+  // The grant is on the origin, matching what the save path requested.
+  if (!await chrome.permissions.contains({origins: [new URL(endpoint).origin + "/*"]})) {
+    show("请先保存并授权端点 / Save and grant endpoint access first");
+    return;
+  }
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12000);
+  const timer = setTimeout(() => controller.abort(), 20000);
   try {
     const resp = await fetch(byok.baseUrl.replace(/\/$/, "") + "/chat/completions", {
       method: "POST",
@@ -141,16 +171,42 @@ document.getElementById("probe").addEventListener("click", async () => {
         "Content-Type": "application/json",
         Authorization: "Bearer " + byok.apiKey,
       },
+      // S6: use the production budget. A probe that spends 8 tokens proves
+      // nothing about a path that needs thousands for a reasoning model.
       body: JSON.stringify({
         model: byok.model,
-        max_tokens: 8,
-        messages: [{ role: "user", content: "Reply with pong" }],
+        max_tokens: GoldMinerShared.MODEL_MAX_TOKENS,
+        messages: [{ role: "user", content: "Reply with the single word: pong" }],
       }),
     });
-    show(redact("http " + resp.status + " " + (resp.ok ? "ok" : "failed"), byok.apiKey));
+    // S3: a bare 401 is usually a key/region mismatch, not a dead key.
+    if (resp.status === 401 || resp.status === 403) {
+      show(redact("wrong_region " + resp.status + " —— 换用与该 key 同区域的主机再试。 (" + host + ")", byok.apiKey));
+      return;
+    }
+    if (!resp.ok) {
+      show(redact("http " + resp.status + " failed (" + host + ")", byok.apiKey));
+      return;
+    }
+    const data = await resp.json();
+    let content;
+    try {
+      content = GoldMinerShared.readModelChoice(data);
+    } catch (err) {
+      // S6: status 200 with no usable content is a failure, not a success.
+      const code = (err && err.message) || "model_bad_response";
+      const hint =
+        code === "model_output_truncated"
+          ? " 输出被 max_tokens 截断，模型没写完。 (" + host + ")"
+          : " 响应没有可用内容。 (" + host + ")";
+      show(redact(code + hint, byok.apiKey));
+      return;
+    }
+    show(redact("http " + resp.status + " ok (" + host + ")，收到内容 " + content.length + " 字符", byok.apiKey));
   } catch (err) {
     show(redact("network_error " + (err && err.name), byok.apiKey));
   } finally { clearTimeout(timer); }
 });
 
+bindInvalidation();
 load();

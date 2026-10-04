@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
-"""Offline/fixture E1 A/B/C/M harness (+ D stub).
+"""Offline/fixture E1 A/B/C/M harness, plus a group D ingest path.
 
 Default mode=fixture never touches the network. Live mode without credentials
 writes owner-blocked rows and refuses to fabricate hits.
+
+Group D is a human procedure, not an automatable arm: prompts/d-assistant.txt
+goes to a general web-enabled assistant under a 5-minute timebox and every
+named repo is existence-checked. ``--d-input`` ingests what the operator
+actually recorded (prompts/d-control.template.jsonl) so D becomes comparable
+with A/B/C/M. With no recorded row the task stays owner-blocked/未运行.
 """
 
 from __future__ import annotations
@@ -19,6 +25,7 @@ E1 = HARNESS.parent
 SCRIPTS = E1 / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
+import e1_d_control as d_control  # noqa: E402
 from e1_batch import load_queries  # noqa: E402
 from e1_minimal_runner import run_method  # noqa: E402
 from query_generation import (  # noqa: E402
@@ -82,12 +89,32 @@ def write_jsonl(path: Path, rows: list[dict]) -> None:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
-def run_fixture_batch(batch: str, arms: list[str], out_dir: Path) -> dict:
+def run_fixture_batch(batch: str, arms: list[str], out_dir: Path, d_input: str | None = None) -> dict:
     queries = load_queries(E1 / "queries.yaml")
     tasks = queries[batch]
     fixtures = load_fixtures()
     run_id = f"fixture-{_utcnow()}"
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Recorded group D rows, if the operator supplied any. Absent file or an
+    # unparsable one must not silently become "no hallucinations".
+    d_rows: dict[str, dict] = {}
+    d_report: dict | None = None
+    if d_input:
+        try:
+            d_rows = {
+                row["task_id"]: row
+                for row in d_control.load_rows(Path(d_input))
+            }
+        except (OSError, ValueError) as exc:
+            raise SystemExit(json.dumps({"code": "bad_input", "message": str(exc)}, ensure_ascii=False))
+        expected = [t["id"] for t in tasks]
+        d_report = d_control.build_report(
+            [d_rows[t] for t in expected if t in d_rows], expected, run_id
+        )
+        (out_dir / "d_control.json").write_text(
+            json.dumps(d_report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
 
     query_rows = []
     hit_rows = []
@@ -102,24 +129,72 @@ def run_fixture_batch(batch: str, arms: list[str], out_dir: Path) -> dict:
             pass
         for arm in arms:
             if arm == "D":
-                fail_rows.append(
-                    {
-                        "run_id": run_id,
-                        "task_id": task["id"],
-                        "arm": "D",
-                        "code": "owner_blocked",
-                        "message": "D stub：联网助手对照未运行 / owner-blocked。",
-                    }
-                )
+                recorded = d_rows.get(task["id"])
+                if recorded is None:
+                    fail_rows.append(
+                        {
+                            "run_id": run_id,
+                            "task_id": task["id"],
+                            "arm": "D",
+                            "code": "owner_blocked",
+                            "message": "D 组为真人强对照：未记录到结果 / group D not recorded.",
+                        }
+                    )
+                    cost_rows.append(
+                        {
+                            "run_id": run_id,
+                            "task_id": task["id"],
+                            "arm": "D",
+                            "elapsed_ms": 0,
+                            "github_requests": 0,
+                            "model_requests": 0,
+                            "visible_cost": "unknown",
+                        }
+                    )
+                    continue
+                # Real recorded control rows: verified hits and hallucinations
+                # both stay in the record, with hallucinated names kept visible.
+                scored = d_control.score_row(recorded)
+                for rank, name in enumerate(recorded["repos"], start=1):
+                    verified = recorded["verified"].get(name.lower())
+                    hit_rows.append(
+                        {
+                            "run_id": run_id,
+                            "task_id": task["id"],
+                            "arm": "D",
+                            "repo": name,
+                            "rank": rank,
+                            "stars": None,
+                            "matched_fields": ["owner-recorded"],
+                            "source": "owner-recorded",
+                            # null means the operator has not checked it yet,
+                            # which is not the same as "does not exist".
+                            "verified": True if verified is True else (False if verified is False else None),
+                            "hallucination": verified is False,
+                        }
+                    )
                 cost_rows.append(
                     {
                         "run_id": run_id,
                         "task_id": task["id"],
                         "arm": "D",
-                        "elapsed_ms": 0,
+                        "elapsed_ms": scored["elapsed_ms"] or 0,
                         "github_requests": 0,
                         "model_requests": 0,
                         "visible_cost": "unknown",
+                    }
+                )
+                fail_rows.append(
+                    {
+                        "run_id": run_id,
+                        "task_id": task["id"],
+                        "arm": "D",
+                        "code": "owner_recorded",
+                        "message": (
+                            f"named={scored['named_count']} verified={scored['verified_count']} "
+                            f"hallucination={scored['hallucination_count']} "
+                            f"unverified={len(scored['unverified_names'])}"
+                        ),
                     }
                 )
                 continue
@@ -222,6 +297,20 @@ def run_fixture_batch(batch: str, arms: list[str], out_dir: Path) -> dict:
         "arms": arms,
         "status": "fixture-only-not-an-eval-run",
         "note": "未运行真实 GitHub Search / 模型。不得写入 experiments/.../runs/<日期>-*/ 冒充评估。",
+        "d_control": (
+            {
+                "source": "owner-recorded",
+                "tasks_recorded": d_report["totals"]["tasks_recorded"],
+                "tasks_blocked": d_report["totals"]["tasks_blocked"],
+                "repos_named": d_report["totals"]["repos_named"],
+                "verified_hits": d_report["totals"]["verified_hits"],
+                "hallucinations": d_report["totals"]["hallucinations"],
+                "hallucination_rate": d_report["totals"]["hallucination_rate"],
+                "repos_unverified": d_report["totals"]["repos_unverified"],
+            }
+            if d_report
+            else {"source": "not-recorded", "status": "未运行"}
+        ),
     }
     (out_dir / "manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
@@ -235,6 +324,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--arms", default="A,B,C,M")
     p.add_argument("--mode", default="fixture", choices=["fixture", "live"])
     p.add_argument("--out", required=True)
+    p.add_argument(
+        "--d-input",
+        help="JSONL of owner-recorded group D rows (see prompts/d-control.template.jsonl)",
+    )
     args = p.parse_args(argv)
     arms = [a.strip() for a in args.arms.split(",") if a.strip()]
     if args.mode == "live":
@@ -261,7 +354,7 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 2
-    manifest = run_fixture_batch(args.batch, arms, Path(args.out))
+    manifest = run_fixture_batch(args.batch, arms, Path(args.out), d_input=args.d_input)
     print(json.dumps(manifest, ensure_ascii=False, indent=2))
     return 0
 

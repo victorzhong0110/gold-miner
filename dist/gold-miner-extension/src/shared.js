@@ -24,6 +24,11 @@
       rateLimited: "接口限流，请稍后再试",
       timeout: "超时。已发出的请求可能已计费。",
       modelUnavailable: "模型不可用，已降级为无模型搜索",
+      modelOutputTruncated: "模型输出被 max_tokens 截断，已降级。请在设置页重新探测。",
+      modelEmptyOutput: "模型返回空内容，已降级。请在设置页重新探测。",
+      modelBadResponse: "模型响应格式异常，已降级。请在设置页重新探测。",
+      invalidEndpoint: "端点无效，请在设置页检查。",
+      endpointPermissionRequired: "缺少端点访问授权，请在设置页保存并授权。",
       noModel: "本次未走模型路径，仅使用规则扩展与公开搜索",
       close: "关闭",
       badResponse: "搜索失败，未写入成功缓存",
@@ -48,6 +53,11 @@
       rateLimited: "Rate limited. Try again later.",
       timeout: "Timed out. In-flight requests may already be billed.",
       modelUnavailable: "Model unavailable; fell back to rule-based search",
+      modelOutputTruncated: "Model output was truncated at max_tokens; degraded. Re-probe in options.",
+      modelEmptyOutput: "Model returned no usable content; degraded. Re-probe in options.",
+      modelBadResponse: "Unexpected model response shape; degraded. Re-probe in options.",
+      invalidEndpoint: "Invalid endpoint. Check it in options.",
+      endpointPermissionRequired: "Endpoint access not granted. Save and grant it in options.",
       noModel: "Model path did not run; using rules and public search only",
       close: "Close",
       badResponse: "Search failed; success cache was not written",
@@ -515,10 +525,42 @@
       .slice(0, 4);
   }
 
+  // Reasoning models inline their chain of thought in <think>...</think> inside
+  // the message content. Strip it explicitly instead of relying on indexOf("{"),
+  // which can slice a wrong span when the prose itself contains braces.
+  function stripReasoning(text) {
+    let out = String(text == null ? "" : text);
+    out = out.replace(/<think>[\s\S]*?<\/think>/gi, "");
+    const open = out.search(/<think>/i);
+    if (open >= 0) out = out.slice(0, open);
+    return out.replace(/<\/?think>/gi, "").trim();
+  }
+
+  // A single source of truth for the model's output budget. Reasoning models
+  // spend the whole budget thinking; 256 left no room for the JSON at all.
+  const MODEL_MAX_TOKENS = 2048;
+
+  // Validates one chat-completion payload and returns the usable answer text.
+  // Throws a specific code so callers never report "ok" for a truncated reply.
+  function readModelChoice(data) {
+    const choice =
+      data && data.choices && data.choices[0];
+    if (!choice) throw new Error("model_bad_response");
+    const finish = choice.finish_reason || choice.finishReason || "";
+    const raw =
+      (choice.message && choice.message.content) ||
+      choice.text ||
+      "";
+    const content = stripReasoning(raw);
+    if (String(finish).toLowerCase() === "length") throw new Error("model_output_truncated");
+    if (!content) throw new Error("model_empty_output");
+    return content;
+  }
+
   function parseModelExpansions(payload, original, lang) {
     let data = payload;
     if (typeof payload === "string") {
-      const trimmed = payload.trim();
+      const trimmed = stripReasoning(payload);
       const start = trimmed.indexOf("{");
       const end = trimmed.lastIndexOf("}");
       if (start < 0 || end <= start) return [];
@@ -649,6 +691,9 @@
     descriptionKeywords,
     buildExploreQueries,
     parseModelExpansions,
+    stripReasoning,
+    readModelChoice,
+    MODEL_MAX_TOKENS,
     allowedMessage,
     isOptionsSender,
     endpointUrl,

@@ -9,6 +9,32 @@
 - `m-rewrite.txt`：M 组「同语言扩展」。同一任务下执行一次，得到最多 3 条**同一语言**查询（加上原查询最多 4 次 GitHub 请求）。禁止输出另一语言。每任务最多 4 次 Search API、最多 1 次模型调用。
 - `d-assistant.txt`：D 组「强对照」用。把用户原话粘贴进方括号位置，原样发给一个支持联网的通用 AI 助手。限时 5 分钟。记录它给出的仓库并逐个核实存在，不存在的计为幻觉。
 
+### D 组（`d-assistant.txt`）
+
+D 是**真人操作**，不是可自动化的实验臂：自动跑一个助手会毁掉这个对照的意义（它衡量的正是「换一个更强的、有人类在场的系统」能做到什么）。因此工具只负责**录入与比较**，不负责执行。
+
+1. 按 `d-assistant.txt` 逐题发给一个联网助手，限时 5 分钟。
+2. 把它给出的每个仓库逐个核实是否存在，**幻觉也要记下来**——幻觉率正是 D 的关键指标，丢掉就等于毁掉对照。
+3. 把结果按 `d-control.template.jsonl` 的格式写成一个 JSONL 文件，一行一题：
+   - `repos`：助手给出的仓库，按它给出的顺序；可以贴 URL，工具会归一化。
+   - `verified`：`{"owner/repo": true|false}`。**没核实过的名字不要写进 `verified`**，工具会单列为 `unverified_names`，既不算命中也不算幻觉。
+   - `elapsed_ms`：实际耗时，用于核对是否落在 5 分钟限时内。
+4. 录入与统计：
+
+   ```bash
+   python3 experiments/E1-cross-language-search/scripts/e1_d_control.py \
+     --input <你写的.jsonl> --run-id <run-id>
+   ```
+
+   或让它并入一次批次运行：
+
+   ```bash
+   python3 experiments/E1-cross-language-search/harness/e1_value_harness.py \
+     --batch dev --arms A,D --out <目录> --d-input <你写的.jsonl>
+   ```
+
+三种状态互不混淆，工具不会替你补齐：**已核实命中**、**幻觉**、**未核实**。没记录的任务保持 `owner_blocked` / 未运行，不会被补成假数据。`evidence_kind` 固定为 `owner-recorded`，不是 live API 调用。
+
 A 组（原生）不用提示词文件，直接用用户原始查询做 GitHub 默认搜索，取前 30。
 
 ## 输入输出例子

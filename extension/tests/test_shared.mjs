@@ -196,3 +196,40 @@ test('explore can acquire interest and bilingual candidates beyond topics', () =
   assert.ok(rows.some(x => x.lang === 'zh'));
   assert.ok(rows.some(x => x.source === 'topic_related'));
 });
+
+// --- S6 regressions: reasoning models inline <think> in message.content ---
+
+test('stripReasoning removes inline reasoning and unterminated blocks', () => {
+  assert.equal(S.stripReasoning('<think>plan</think>pong'), 'pong');
+  assert.equal(S.stripReasoning('<think>{not json} still</think>{"zh":["a"]}'), '{"zh":["a"]}');
+  assert.equal(S.stripReasoning('<think>only thinking, never closed'), '');
+  assert.equal(S.stripReasoning(' <think>x</think>  answer  '), 'answer');
+  assert.equal(S.stripReasoning('no tags here'), 'no tags here');
+  assert.equal(S.stripReasoning(''), '');
+  assert.equal(S.stripReasoning(null), '');
+});
+
+test('readModelChoice rejects a truncated reply instead of reporting success', () => {
+  const truncated = {choices: [{finish_reason: 'length', message: {content: '<think>thinking</think>'}}]};
+  assert.throws(() => S.readModelChoice(truncated), /model_output_truncated/);
+  const thinkOnly = {choices: [{finish_reason: 'stop', message: {content: '<think>all thinking</think>'}}]};
+  assert.throws(() => S.readModelChoice(thinkOnly), /model_empty_output/);
+  assert.throws(() => S.readModelChoice({}), /model_bad_response/);
+  assert.throws(() => S.readModelChoice({choices: []}), /model_bad_response/);
+});
+
+test('readModelChoice returns the answer with reasoning removed', () => {
+  const good = {choices: [{finish_reason: 'stop', message: {content: '<think>reason {x}</think>{"zh":["剪贴板"]}'}}]};
+  assert.equal(S.readModelChoice(good), '{"zh":["剪贴板"]}');
+});
+
+test('parseModelExpansions survives prose braces around reasoning and JSON', () => {
+  const payload = '<think>consider {options}</think>Here you go: {"en":["clipboard manager"]} done';
+  const rows = S.parseModelExpansions(payload, 'clipboard', 'en');
+  assert.ok(rows.some(r => r.query === 'clipboard manager'));
+});
+
+test('model output budget is large enough for a reasoning model', () => {
+  // 256 left no room for JSON: the reply was 100% <think> and finish_reason=length.
+  assert.ok(S.MODEL_MAX_TOKENS >= 2048, 'budget was ' + S.MODEL_MAX_TOKENS);
+});

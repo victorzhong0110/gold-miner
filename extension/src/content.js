@@ -49,17 +49,31 @@
     return settings && settings.readingLang === "en" ? "en" : "zh";
   }
 
+  // Mount so the panel is visible without scrolling. Appending to the end of a
+  // long results container put it below the fold, where a first-time user reads
+  // "the feature does not exist". Insert at the top of the host instead, and
+  // float it when there is no content anchor at all.
+  function mountHost() {
+    const anchor =
+      document.querySelector("#js-pjax-container") ||
+      document.querySelector("main") ||
+      document.querySelector("#repository-container-header") ||
+      null;
+    if (anchor) return { host: anchor, mode: "inline" };
+    return { host: document.body, mode: "floating" };
+  }
+
   function ensureRoot() {
     let el = document.getElementById(ROOT_ID);
     if (el) return el;
     el = document.createElement("aside");
     el.id = ROOT_ID;
     el.setAttribute("data-gold-miner", "1");
-    const host =
-      document.querySelector("#js-pjax-container") ||
-      document.querySelector("main") ||
-      document.body;
-    host.appendChild(el);
+    const { host, mode } = mountHost();
+    el.setAttribute("data-gm-mount", mode);
+    if (mode === "floating") el.className = "gm-floating";
+    if (host.firstChild) host.insertBefore(el, host.firstChild);
+    else host.appendChild(el);
     return el;
   }
 
@@ -238,6 +252,11 @@
         if (state.code === "rate_limited") state.code = "rateLimited";
         if (state.code === "timeout") state.code = "timeout";
         if (state.code === "model_unavailable") state.code = "modelUnavailable";
+        if (state.code === "model_output_truncated") state.code = "modelOutputTruncated";
+        if (state.code === "model_empty_output") state.code = "modelEmptyOutput";
+        if (state.code === "model_bad_response") state.code = "modelBadResponse";
+        if (state.code === "invalid_endpoint") state.code = "invalidEndpoint";
+        if (state.code === "endpoint_permission_required") state.code = "endpointPermissionRequired";
         if (state.code === "bad_response") state.code = "badResponse";
         if (state.code === "network_error") state.code = "networkError";
         if (state.code === "storage_isolation_failed") state.code = "storageIsolationFailed";

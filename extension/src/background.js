@@ -239,6 +239,23 @@ if (typeof importScripts === "function") {
       };
     }
 
+    const MODEL_FAILURE_CODES = [
+      "model_unavailable",
+      "model_output_truncated",
+      "model_empty_output",
+      "model_bad_response",
+      "invalid_endpoint",
+      "endpoint_permission_required",
+      "network_error",
+    ];
+
+    // Keep the specific reason so a truncated reply is never reported as a
+    // missing model. Anything unknown collapses to model_unavailable.
+    function modelFailureCode(err) {
+      const code = err && err.message;
+      return MODEL_FAILURE_CODES.indexOf(code) >= 0 ? code : "model_unavailable";
+    }
+
     async function defaultModelHttp(byok, original, lang, job) {
       if (!httpFetch) throw new Error("network_error");
       const base = S.endpointUrl(byok.baseUrl);
@@ -259,7 +276,7 @@ if (typeof importScripts === "function") {
           },
           body: JSON.stringify({
             model: byok.model,
-            max_tokens: 256,
+            max_tokens: S.MODEL_MAX_TOKENS,
             messages: [
               {
                 role: "system",
@@ -273,13 +290,10 @@ if (typeof importScripts === "function") {
         });
         if (!resp.ok) throw new Error("model_unavailable");
         const data = await resp.json();
-        const content =
-          data &&
-          data.choices &&
-          data.choices[0] &&
-          data.choices[0].message &&
-          data.choices[0].message.content;
-        return S.parseModelExpansions(content || "", original, lang);
+        // readModelChoice throws model_output_truncated / model_empty_output so a
+        // reply that never produced JSON can never be reported as a model success.
+        const content = S.readModelChoice(data);
+        return S.parseModelExpansions(content, original, lang);
       } finally {
         clearDelay(timer);
         if (job) job.controller.signal.removeEventListener("abort", abort);
@@ -289,6 +303,7 @@ if (typeof importScripts === "function") {
     async function runModelExpansions(original, lang, interests, byok, job) {
       const fallback = S.expandQueries(original, lang, interests);
       if (typeof modelClient === "function") {
+        let failure = "model_unavailable";
         try {
           const rows = await modelClient({
             original: original,
@@ -300,30 +315,31 @@ if (typeof importScripts === "function") {
           if (rows && rows.length) {
             return { usedModel: true, expansions: rows };
           }
-        } catch {
-          /* fall through */
+        } catch (err) {
+          failure = modelFailureCode(err);
         }
         return {
           usedModel: false,
           expansions: fallback,
-          degrade: "model_unavailable",
+          degrade: failure,
         };
       }
       if (!byok || !byok.apiKey || !byok.baseUrl || !byok.model) {
         return { usedModel: false, expansions: fallback };
       }
+      let failure = "model_unavailable";
       try {
         const rows = await defaultModelHttp(byok, original, lang, job);
         if (rows && rows.length) {
           return { usedModel: true, expansions: rows };
         }
-      } catch {
-        /* fall through */
+      } catch (err) {
+        failure = modelFailureCode(err);
       }
       return {
         usedModel: false,
         expansions: fallback,
-        degrade: "model_unavailable",
+        degrade: failure,
       };
     }
 
@@ -545,7 +561,13 @@ if (typeof importScripts === "function") {
         limit: message.limit || 5,
       }, job);
       const searchFailed = SEARCH_FAIL.has(result.code);
-      if (!searchFailed && ["ok", "model_unavailable"].includes(result.code) && !job.budget.cancelled) {
+      // A degraded model path still produced usable rule-based candidates, so it
+      // stays cacheable exactly as model_unavailable was before the failure
+      // reasons were split. Note this does NOT avoid re-billing: findCached only
+      // probes the model key while a model is configured, and a degraded result
+      // is stored under the rules key, so a later view re-attempts the model.
+      const cacheableCodes = ["ok"].concat(MODEL_FAILURE_CODES);
+      if (!searchFailed && cacheableCodes.indexOf(result.code) >= 0 && !job.budget.cancelled) {
         const mode = result.hasModel ? "model" : "rules";
         const key = S.cacheKey(
           cacheParts(state, message.type, originalQuery, mode, message.contentVersion)

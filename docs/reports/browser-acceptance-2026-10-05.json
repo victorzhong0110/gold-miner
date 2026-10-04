@@ -1,0 +1,75 @@
+{
+  "evidence_kind": "chromium-with-fixture-network",
+  "paid_model_requests": 0,
+  "live_github_requests": 0,
+  "human_installation": "not-run",
+  "production_sha": null,
+  "production_files_sha256": {
+    "src/background.js": "b522e4597d894a5ec7ddc39eac2ac638cfc58fc6f0aff3598b484e0555962f22",
+    "src/shared.js": "423d1993a49d4295eeaef1b0019b0350d115f3aa98f7939189f6b07441f58880",
+    "src/content.js": "32792bf0f50f018af487855f3d029e0073620db5f6c149a4fb87c984cc79ccc5",
+    "src/options.js": "47a894954439808a8064bac4295c2c886447a309484c471da7034c4a42f27bc0"
+  },
+  "results": [
+    {
+      "name": "options-save-and-language",
+      "status": "passed",
+      "evidence_kind": "chromium-with-fixture-network"
+    },
+    {
+      "name": "search-real-content-and-canonical-links",
+      "status": "passed",
+      "evidence_kind": "chromium-with-fixture-network"
+    },
+    {
+      "name": "actual-storage-isolation-and-message-boundary",
+      "status": "passed",
+      "evidence_kind": "chromium-with-fixture-network"
+    },
+    {
+      "name": "feedback-removes-seen-candidate",
+      "status": "passed",
+      "evidence_kind": "chromium-with-fixture-network"
+    },
+    {
+      "name": "export-ui-no-secrets",
+      "status": "passed",
+      "evidence_kind": "chromium-with-fixture-network"
+    },
+    {
+      "name": "second-profile-import-and-cache-reuse",
+      "status": "passed",
+      "evidence_kind": "chromium-with-fixture-network"
+    },
+    {
+      "name": "cancel-and-close-do-not-resurrect",
+      "status": "passed",
+      "evidence_kind": "chromium-with-fixture-network"
+    },
+    {
+      "name": "repository-explore-and-page-world-navigation",
+      "status": "passed",
+      "evidence_kind": "chromium-with-fixture-network"
+    },
+    {
+      "name": "concurrent-feedback-import-and-clear-ordering",
+      "status": "passed",
+      "evidence_kind": "chromium-with-fixture-network"
+    },
+    {
+      "name": "panel-is-visible-without-scrolling-on-a-long-results-page",
+      "status": "passed",
+      "evidence_kind": "chromium-with-fixture-network"
+    },
+    {
+      "name": "probe-reads-the-input-box-not-stale-storage",
+      "status": "passed",
+      "evidence_kind": "chromium-with-fixture-network"
+    },
+    {
+      "name": "editing-byok-clears-a-stale-success-light",
+      "status": "passed",
+      "evidence_kind": "chromium-with-fixture-network"
+    }
+  ]
+}

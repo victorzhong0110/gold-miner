@@ -26,5 +26,10 @@
   "save": { "message": "Save" },
   "testConnection": { "message": "Test connection (sends one small request)" },
   "exportCache": { "message": "Export cache (no secrets)" },
-  "importCache": { "message": "Import cache" }
+  "importCache": { "message": "Import cache" },
+  "modelOutputTruncated": { "message": "Model output was truncated at max_tokens; degraded. Re-probe in options." },
+  "modelEmptyOutput": { "message": "Model returned no usable content; degraded. Re-probe in options." },
+  "modelBadResponse": { "message": "Unexpected model response shape; degraded. Re-probe in options." },
+  "invalidEndpoint": { "message": "Invalid endpoint. Check it in options." },
+  "endpointPermissionRequired": { "message": "Endpoint access not granted. Save and grant it in options." }
 }

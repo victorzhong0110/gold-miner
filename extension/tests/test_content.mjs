@@ -7,21 +7,37 @@ const source = name => fs.readFileSync(new URL('../src/' + name, import.meta.url
 function page(feedbackCode = 'ok') {
   const sent = [], callbacks = [], events = {};
   class Element {
-    constructor(tag) {this.tag = tag; this.children = []; this.listeners = {}; this._text = '';}
+    constructor(tag) {this.tag = tag; this.children = []; this.listeners = {}; this._text = ''; this.attrs = {};}
     set textContent(v) {this._text = v; this.children = [];}
     get textContent() {return this._text + this.children.map(c => c.textContent).join('');}
     appendChild(n) {n.parent = this; this.children.push(n); return n;}
+    insertBefore(n, ref) {
+      n.parent = this;
+      const at = ref ? this.children.indexOf(ref) : -1;
+      if (at < 0) this.children.push(n); else this.children.splice(at, 0, n);
+      return n;
+    }
+    get firstChild() {return this.children[0] || null;}
     remove() {if (this.parent) this.parent.children = this.parent.children.filter(c => c !== this);}
-    setAttribute() {}
+    setAttribute(k, v) {this.attrs[k] = v;}
+    getAttribute(k) {return this.attrs[k];}
     addEventListener(name, fn) {this.listeners[name] = fn;}
   }
   const body = new Element('body');
+  // Optional realistic page: <body><main><article/></main></body>
+  let main = null;
+  if (page.withMain) {
+    main = new Element('main');
+    main.attrs.id = page.withMain;
+    main.appendChild(new Element('article'));
+    body.appendChild(main);
+  }
   const all = (root = body) => [root, ...root.children.flatMap(c => all(c))];
   const document = {
     body, createElement: t => new Element(t),
     createTextNode: t => {const n = new Element('text'); n.textContent = t; return n;},
     getElementById: id => all().find(n => n.id === id),
-    querySelector: () => body,
+    querySelector: sel => (sel === 'main' || (main && sel === '#' + main.attrs.id)) ? main : null,
     querySelectorAll: () => [{textContent: document.readme || 'readme-v1'}],
     addEventListener: (name, cb) => {events[name] = cb;},
   };
@@ -87,4 +103,32 @@ test('failed feedback preserves candidate and a successful retry removes it', ()
   assert.match(p.body.textContent,/Feedback was not saved/);
   p.setFeedbackResponse('ok');button.listeners.click();
   assert.equal(p.all().filter(n => n.tag === 'a').length,0);
+});
+
+// --- S5 regressions: the panel was invisible until the page bottom ---
+
+test('panel mounts at the top of the content host, not appended after the results', () => {
+  page.withMain = 'js-pjax-container';
+  const p = page();
+  const root = p.document.getElementById('gold-miner-root');
+  assert.ok(root, 'panel was not created');
+  assert.equal(root.getAttribute('data-gm-mount'), 'inline');
+  const main = p.all().find(n => n.tag === 'main');
+  assert.equal(main.children[0], root, 'panel must be the first child so it is above the fold');
+});
+
+test('panel falls back to a visible floating mount when no content anchor exists', () => {
+  page.withMain = null;
+  const p = page();
+  const root = p.document.getElementById('gold-miner-root');
+  assert.ok(root);
+  assert.equal(root.getAttribute('data-gm-mount'), 'floating');
+  assert.equal(root.className, 'gm-floating');
+});
+
+test('a truncated model reply is shown as truncated, not as a generic model failure', () => {
+  const p = page();
+  p.callbacks[0]({code: 'model_output_truncated', candidates: [], hasModel: false});
+  assert.match(p.body.textContent, /truncated at max_tokens/);
+  assert.doesNotMatch(p.body.textContent, /Model unavailable/);
 });

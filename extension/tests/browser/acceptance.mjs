@@ -38,8 +38,19 @@ try {
       args:[`--disable-extensions-except=${ext}`, `--load-extension=${ext}`]
     });
     contexts.push(context);
-    await context.route('https://github.com/**', r => r.fulfill({contentType:'text/html',
-      body:'<!doctype html><html><body><main><article class="markdown-body">Fixture README v1</article></main></body></html>'}));
+    await context.route('https://github.com/**', r => {
+      const url = r.request().url();
+      if (url.includes('long-results')) {
+        // S5: a realistic long result page, tall enough that a panel appended
+        // at the very end would sit far below the fold.
+        const rows = Array.from({length: 40}, (_, i) =>
+          `<li class="fixture-row"><a href="/fixture/repo-${i}">fixture/repo-${i}</a></li>`).join('');
+        return r.fulfill({contentType:'text/html', body:
+          `<!doctype html><html><body><header>nav</header><main><h1>results</h1><ul>${rows}</ul></main></body></html>`});
+      }
+      return r.fulfill({contentType:'text/html',
+        body:'<!doctype html><html><body><main><article class="markdown-body">Fixture README v1</article></main></body></html>'});
+    });
     const worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
     const id = new URL(worker.url()).host;
     const options = await context.newPage();
@@ -153,8 +164,45 @@ try {
     assert(reply.queries.includes('fixture-import-one') && reply.queries.includes('fixture-import-two'));
     assert.deepEqual(reply.cleared,{seen:[],feedback:{},cache:{},pageHistory:[]});
   });
-  assert.deepEqual(errors, [], 'no unhandled options/content errors');
-} catch(error) {
+  await check('panel-is-visible-without-scrolling-on-a-long-results-page', async () => {
+    const long = await a.context.newPage();
+    await long.goto('https://github.com/search?q=long-results&type=repositories');
+    await long.locator('#gold-miner-root').waitFor();
+    // S5: the panel used to be appended last, so it only appeared at the very
+    // bottom of a 36-result page and read as "the feature does not exist".
+    const box = await long.locator('#gold-miner-root').boundingBox();
+    assert(box, 'panel has no layout box');
+    const viewport = long.viewportSize() || {width:1280, height:720};
+    assert(box.y < viewport.height, `panel starts at y=${box.y}, below the ${viewport.height}px fold`);
+    const scrollY = await long.evaluate(() => window.scrollY);
+    assert.equal(scrollY, 0, 'the check must hold without scrolling');
+    await long.locator('#gold-miner-root a').first().waitFor();
+    await long.close();
+  });
+  await check('probe-reads-the-input-box-not-stale-storage', async () => {
+    // S1: storage holds a plausible config while the visible input does not.
+    // The old probe read storage, so a wrong host still showed a green light.
+    await a.worker.evaluate(() => chrome.storage.local.set({byok:{
+      baseUrl:'https://api.minimaxi.com/v1', model:'MiniMax-M3', apiKey:'fixture-key-not-real'}}));
+    await a.options.fill('#baseUrl', 'not-a-valid-endpoint');
+    await a.options.fill('#model', 'MiniMax-M3');
+    await a.options.fill('#apiKey', 'fixture-key-not-real');
+    await a.options.click('#probe');
+    await a.options.waitForFunction(() => document.querySelector('#status').textContent.length > 0);
+    const status = await a.options.locator('#status').textContent();
+    assert(status.includes('invalid_endpoint'),
+      'probe ignored the visible input and reported: ' + status);
+  });
+  await check('editing-byok-clears-a-stale-success-light', async () => {
+    // S1: a green light that survives an edit is a false success.
+    await a.options.evaluate(() => {document.querySelector('#status').textContent = 'http 200 ok (api.minimaxi.com)';});
+    await a.options.fill('#model', 'MiniMax-M3-changed');
+    await a.options.waitForFunction(() =>
+      !document.querySelector('#status').textContent.includes('http 200 ok'));
+    const status = await a.options.locator('#status').textContent();
+    assert(status.includes('重新探测') || status.includes('re-probe'), 'stale light survived an edit: ' + status);
+  });
+  assert.deepEqual(errors, [], 'no unhandled options/content errors');} catch(error) {
   results.push({name:'acceptance',status:'failed',message:error.stack});
   process.exitCode = 1;
 } finally {

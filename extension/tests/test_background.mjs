@@ -701,3 +701,81 @@ test('repeated import never grows the cache past its 100-entry budget', async ()
   assert.equal(Object.keys(chrome.storage.local.store.cache).length,100);
   assert.equal((await svc.dispatch({type:'EXPORT_CACHE'},sender)).bundle.entries.length,100);
 });
+
+// --- S6 regressions: the model path silently never ran on a real machine ---
+
+const reasoningModel = (content, finish) => ({
+  choices: [{ finish_reason: finish || "stop", message: { content } }],
+});
+
+test("S6 model request uses a reasoning-sized output budget", async () => {
+  const chrome = createMockChrome({
+    store: { byok: { baseUrl: "https://api.minimaxi.com/v1", model: "MiniMax-M3", apiKey: "mock-key-not-real" } },
+  });
+  const fetchImpl = createFetchRecorder(async (url) => {
+    if (url.includes("/chat/completions")) return jsonResponse(200, reasoningModel('<think>t</think>{"en":["clipboard manager"]}'));
+    const q = new URL(url).searchParams.get("q") || "";
+    return jsonResponse(200, { items: defaultSearchItems(q) });
+  });
+  const { svc } = loadBackground(chrome, fetchImpl);
+  const resp = await svc.dispatch(searchMsg(), sender);
+  const modelCall = fetchImpl.calls.find(c => c.url.includes("/chat/completions"));
+  assert.ok(modelCall, "model request was never sent");
+  const sent = JSON.parse(modelCall.init.body);
+  // 256 spent the whole budget on <think> and returned finish_reason=length.
+  assert.ok(sent.max_tokens >= 2048, "max_tokens was " + sent.max_tokens);
+  assert.equal(resp.hasModel, true);
+  assert.equal(resp.code, "ok");
+});
+
+test("S6 truncated model reply reports a specific code, never a silent model success", async () => {
+  const chrome = createMockChrome({
+    store: { byok: { baseUrl: "https://api.minimaxi.com/v1", model: "MiniMax-M3", apiKey: "mock-key-not-real" } },
+  });
+  const fetchImpl = createFetchRecorder(async (url) => {
+    // The exact shape that fooled the old probe: HTTP 200, all <think>, no JSON.
+    if (url.includes("/chat/completions")) return jsonResponse(200, reasoningModel("<think>still working</think>", "length"));
+    const q = new URL(url).searchParams.get("q") || "";
+    return jsonResponse(200, { items: defaultSearchItems(q) });
+  });
+  const { svc } = loadBackground(chrome, fetchImpl);
+  const resp = await svc.dispatch(searchMsg(), sender);
+  assert.equal(resp.hasModel, false);
+  assert.equal(resp.code, "model_output_truncated");
+  // Rule-based candidates are still returned, so the panel is not empty.
+  assert.ok(resp.expansions.some(e => e.source === "original_query"));
+});
+
+test("S6 reasoning-only reply is empty output, not a model hit", async () => {
+  const chrome = createMockChrome({
+    store: { byok: { baseUrl: "https://api.minimaxi.com/v1", model: "MiniMax-M3", apiKey: "mock-key-not-real" } },
+  });
+  const fetchImpl = createFetchRecorder(async (url) => {
+    if (url.includes("/chat/completions")) return jsonResponse(200, reasoningModel("<think>all of it is reasoning</think>", "stop"));
+    const q = new URL(url).searchParams.get("q") || "";
+    return jsonResponse(200, { items: defaultSearchItems(q) });
+  });
+  const { svc } = loadBackground(chrome, fetchImpl);
+  const resp = await svc.dispatch(searchMsg(), sender);
+  assert.equal(resp.hasModel, false);
+  assert.equal(resp.code, "model_empty_output");
+});
+
+test("S6 a degraded model reply is cached as a rules result, never as a model hit", async () => {
+  const chrome = createMockChrome({
+    store: { byok: { baseUrl: "https://api.minimaxi.com/v1", model: "MiniMax-M3", apiKey: "mock-key-not-real" } },
+  });
+  const fetchImpl = createFetchRecorder(async (url) => {
+    if (url.includes("/chat/completions")) return jsonResponse(200, reasoningModel("<think>t</think>", "length"));
+    const q = new URL(url).searchParams.get("q") || "";
+    return jsonResponse(200, { items: defaultSearchItems(q) });
+  });
+  const { svc } = loadBackground(chrome, fetchImpl);
+  const resp = await svc.dispatch(searchMsg(), sender);
+  assert.equal(resp.hasModel, false);
+  const entries = Object.values(chrome.storage.local.store.cache);
+  assert.equal(entries.length, 1);
+  // A truncated reply must never be recorded as a successful model run.
+  assert.equal(entries[0].processing_mode, "rules");
+  assert.equal(Object.keys(chrome.storage.local.store.cache).some(k => k.includes("|model|")), false);
+});

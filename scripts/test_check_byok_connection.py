@@ -47,6 +47,70 @@ class TestClassify(unittest.TestCase):
         self.assertEqual(code, 2)
 
 
+class TestReasoningModelOutputs(unittest.TestCase):
+    """S6: HTTP 200 used to be reported as success even when nothing usable came back."""
+
+    MAINLAND = "https://api.minimaxi.com/v1"
+
+    def test_truncated_reply_is_not_ok(self):
+        body = json.dumps(
+            {
+                "choices": [
+                    {"finish_reason": "length", "message": {"content": "<think>still going</think>"}}
+                ]
+            }
+        )
+        self.assertEqual(byok.classify_http(200, body, self.MAINLAND), "output_truncated")
+
+    def test_reasoning_only_reply_is_empty_output(self):
+        body = json.dumps(
+            {"choices": [{"finish_reason": "stop", "message": {"content": "<think>only thought</think>"}}]}
+        )
+        self.assertEqual(byok.classify_http(200, body, self.MAINLAND), "empty_output")
+
+    def test_reasoning_plus_answer_is_ok(self):
+        body = json.dumps(
+            {"choices": [{"finish_reason": "stop", "message": {"content": "<think>plan</think>pong"}}]}
+        )
+        self.assertEqual(byok.classify_http(200, body, self.MAINLAND), "ok")
+
+    def test_default_budget_matches_extension(self):
+        self.assertGreaterEqual(byok.DEFAULT_MAX_TOKENS, 2048)
+
+
+class TestRegionMismatch(unittest.TestCase):
+    """S3: a bare 401 hid the most common cause, a key/host region mismatch."""
+
+    def test_mainland_host_401_is_wrong_region(self):
+        body = json.dumps({"error": "unauthorized"})
+        self.assertEqual(
+            byok.classify_http(401, body, "https://api.minimaxi.com/v1"), "wrong_region"
+        )
+
+    def test_international_host_401_is_wrong_region(self):
+        body = json.dumps({"error": "unauthorized"})
+        self.assertEqual(
+            byok.classify_http(401, body, "https://api.minimax.io/v1"), "wrong_region"
+        )
+
+    def test_business_code_1004_is_wrong_region(self):
+        body = json.dumps({"base_resp": {"status_code": 1004}})
+        self.assertEqual(
+            byok.classify_http(200, body, "https://api.minimax.io/v1"), "wrong_region"
+        )
+
+    def test_unknown_host_401_stays_auth_rejected(self):
+        body = json.dumps({"error": "unauthorized"})
+        self.assertEqual(
+            byok.classify_http(401, body, "https://api.example.com/v1"), "auth_rejected"
+        )
+
+    def test_host_region_lookup(self):
+        self.assertEqual(byok.host_region("https://api.minimaxi.com/v1"), "mainland")
+        self.assertEqual(byok.host_region("https://api.minimax.io/v1"), "international")
+        self.assertIsNone(byok.host_region("https://api.example.com/v1"))
+
+
 class TestExampleEnv(unittest.TestCase):
     def test_example_has_no_secret_values(self):
         text = (ROOT / "config" / "byok.example.env").read_text(encoding="utf-8")

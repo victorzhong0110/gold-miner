@@ -26,5 +26,10 @@
   "save": { "message": "保存" },
   "testConnection": { "message": "探测连接（会发一次小请求）" },
   "exportCache": { "message": "导出缓存（不含密钥）" },
-  "importCache": { "message": "导入缓存" }
+  "importCache": { "message": "导入缓存" },
+  "modelOutputTruncated": { "message": "模型输出被 max_tokens 截断，已降级。请在设置页重新探测。" },
+  "modelEmptyOutput": { "message": "模型返回空内容，已降级。请在设置页重新探测。" },
+  "modelBadResponse": { "message": "模型响应格式异常，已降级。请在设置页重新探测。" },
+  "invalidEndpoint": { "message": "端点无效，请在设置页检查。" },
+  "endpointPermissionRequired": { "message": "缺少端点访问授权，请在设置页保存并授权。" }
 }

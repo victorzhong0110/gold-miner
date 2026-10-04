@@ -1,0 +1,2 @@
+{"task_id": "REPLACE-WITH-TASK-ID-FROM-queries.yaml", "assistant": "REPLACE-WITH-ASSISTANT-NAME-AND-VERSION", "recorded_at": "2026-10-05T00:00:00Z", "elapsed_ms": 300000, "repos": ["owner/repo-the-assistant-named", "owner/a-second-one"], "verified": {"owner/repo-the-assistant-named": true, "owner/a-second-one": false}}
+{"task_id": "SECOND-TASK-ID-OR-DELETE-THIS-LINE", "assistant": "REPLACE-WITH-ASSISTANT-NAME-AND-VERSION", "recorded_at": "2026-10-05T00:00:00Z", "elapsed_ms": 420000, "repos": [], "verified": {}}
