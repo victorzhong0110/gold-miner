@@ -143,3 +143,26 @@ class TestQueryGeneration(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReasoningClientTests(unittest.TestCase):
+    def test_thinking_json_and_shared_budget(self):
+        task={"id":"test", "query":"剪贴板", "direction":"zh2en"}
+        outputs={"B":'{"query":"clipboard","other_lang":"en"}',"C":'{"zh":["剪贴板"],"en":["clipboard"]}',"M":'{"queries":["剪贴板历史"],"same_lang":"zh"}'}
+        for arm, output in outputs.items():
+            def post(url,headers,payload,timeout):
+                self.assertEqual(payload["max_tokens"],2048);self.assertEqual(timeout,60)
+                return {"status":200,"body":json.dumps({"choices":[{"finish_reason":"stop","message":{"content":"<think>{irrelevant}</think>"+output}}]})}
+            client=qg.HttpQueryClient(post,base_url="https://fixture.example/v1",model="MiniMax-M3",api_key="fixture-key")
+            row=qg.generate(task,arm,"live",client)
+            self.assertEqual(row["code"],"ok");self.assertEqual(row["request_parameters"]["max_tokens"],2048)
+            self.assertNotIn("fixture-key",json.dumps(row))
+
+    def test_truncated_and_malformed_outputs_fail_without_retry(self):
+        task={"id":"test","query":"q","direction":"zh2en"}
+        for body, code in [({"choices":[{"finish_reason":"length","message":{"content":'{"query":"looks-valid"}'}}]},"model_output_truncated"),({"choices":[None]},"bad_response"),({"choices":{}},"bad_response"),({"base_resp":{"status_code":1004}},"auth_rejected"),({"choices":[{"message":{"content":None}}]},"empty_model_output")]:
+            calls=[]
+            def post(*args):calls.append(1);return {"status":200,"body":json.dumps(body)}
+            client=qg.HttpQueryClient(post,base_url="https://fixture.example/v1",model="MiniMax-M3",api_key="fixture")
+            row=qg.generate(task,"B","live",client);self.assertEqual(row["code"],code);self.assertEqual(len(calls),1)
+            self.assertEqual(row["variants"],[])

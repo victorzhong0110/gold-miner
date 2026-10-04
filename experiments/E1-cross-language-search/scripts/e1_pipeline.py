@@ -2,12 +2,13 @@
 """Auditable generation -> validation -> A/B/C/M search bridge; no network by default."""
 from __future__ import annotations
 import argparse
+import hashlib
 import json
 import os
 import re
 from pathlib import Path
-from e1_batch import build_a_variants, load_queries, run_batch, is_eval_frozen
-from query_generation import E1, generate, query_lang, other_lang
+from e1_batch import build_a_variants, load_queries, run_batch, is_eval_frozen, materials_commit
+from query_generation import E1, generate, query_lang, other_lang, default_client_from_env
 
 
 def search_variants(task: dict, arm: str, generated: list[dict]) -> list[dict]:
@@ -82,8 +83,17 @@ def main():
     parser.add_argument('--live', action='store_true')
     parser.add_argument('--batch', choices=['dev', 'eval.batch_1'], default='dev')
     parser.add_argument('--out', required=True)
+    parser.add_argument('--run-id', help='required for live runs; use a new ID and output directory')
     parser.add_argument('--settings', default=str(E1 / 'run-settings.json'))
     args = parser.parse_args()
+    out = Path(args.out)
+    if (out / 'pipeline.json').exists():
+        parser.error('output already exists; use a new directory (no overwrite or automatic retry)')
+    if args.live and not args.run_id:
+        parser.error('live runs require an explicit --run-id')
+    client = default_client_from_env() if args.live else None
+    if args.live and client is None:
+        parser.error('owner-blocked: live A/B/C/M run requires valid OPENAI_* configuration before any requests')
     # Formal evaluation must name a configured frozen model before any billable call.
     settings = json.loads(Path(args.settings).read_text())
     if args.batch == 'eval.batch_1':
@@ -95,8 +105,11 @@ def main():
         from github_search import _urllib_get
         http_get = _urllib_get
     tasks = load_queries(E1 / 'queries.yaml')[args.batch]
-    result = run_pipeline(tasks, run_id='pipeline-dev', mode='live' if args.live else 'fixture',
-                          http_get=http_get, allow_network=args.live)
+    result = run_pipeline(tasks, run_id=args.run_id or 'fixture-dev', mode='live' if args.live else 'fixture',
+                          client=client, http_get=http_get, allow_network=args.live)
+    result['source_sha'] = materials_commit()
+    result['settings_sha256'] = hashlib.sha256(Path(args.settings).read_bytes()).hexdigest()
+    result['batch'] = args.batch
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / 'pipeline.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')

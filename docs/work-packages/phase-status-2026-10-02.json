@@ -109,8 +109,8 @@
     {
       "id": "WP2-03",
       "title": "运行强对照 D",
-      "status": "pending-live",
-      "evidence": "D 对照尚未运行，不能由 fixture 补齐",
+      "status": "partial",
+      "evidence": "2026-10-04 MiniMax-M3 D组20/20题实跑；169存在、3个404；人工用途判断与同批B/C/M未运行",
       "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
@@ -538,7 +538,7 @@
       "S6"
     ],
     "S2": "current official mainland docs list .cn; added source/region guidance",
-    "S4": "owner-blocked: choose/freeze independent assistant/model/budget",
+    "S4": "owner-decided; D live run complete; human suitability and B/C/M pending",
     "offline": "passed",
     "browser": "passed",
     "report": "docs/reports/2026-10-04-runtime-fixes.md",
@@ -546,5 +546,24 @@
     "run_id": 37194278583,
     "delivery": "https://github.com/victorzhong0110/gold-miner/pull/14 (canonical merge state)",
     "human_followup": "not-run"
+  },
+  "d_run": {
+    "status": "complete",
+    "tasks": 20,
+    "model_requests": 23,
+    "github_requests": 177,
+    "exists": 169,
+    "http404": 3,
+    "report": "docs/reports/2026-10-04-e1-d-run.json",
+    "review": "docs/reports/2026-10-04-d-review.json",
+    "merged_pr": 15,
+    "merge_sha": "065ff0605cac5f641c5fd6511bda34bf8f11397a",
+    "human_judgment": "not-run"
+  },
+  "bcm_engineering": {
+    "status": "reasoning-compatible-offline-tested",
+    "max_tokens": 2048,
+    "default_timeout_seconds": 60,
+    "live": "not-run"
   }
 }

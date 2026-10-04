@@ -34,3 +34,19 @@ class PipelineTests(unittest.TestCase):
         output = run_pipeline([TASK], run_id='cancel', should_cancel=lambda: True,
                               http_get=lambda *args: self.fail('network must not run'))
         self.assertTrue(all(r['code'] == 'cancelled' for r in output['generation_records']))
+
+    def test_cli_rejects_existing_output_and_missing_id_before_network(self):
+        import tempfile, sys
+        from pathlib import Path
+        from unittest.mock import patch
+        from e1_pipeline import main
+        with tempfile.TemporaryDirectory() as tmp:
+            out=Path(tmp);(out/'pipeline.json').write_text('preserve')
+            with patch('e1_pipeline.run_pipeline') as run, patch.object(sys,'argv',['e1_pipeline.py','--live','--run-id','new','--out',tmp]):
+                with self.assertRaises(SystemExit):main()
+                run.assert_not_called()
+            self.assertEqual((out/'pipeline.json').read_text(),'preserve')
+            (out/'pipeline.json').unlink()
+            with patch('e1_pipeline.run_pipeline') as run, patch.object(sys,'argv',['e1_pipeline.py','--live','--out',tmp]):
+                with self.assertRaises(SystemExit):main()
+                run.assert_not_called()
