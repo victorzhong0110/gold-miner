@@ -389,3 +389,31 @@ E3 的 observation.schema.json 有 9 个 required 未描述但 addl=true，不�
 离线套件 exit 0，362 Python + 58 Node，付费请求 0，未改任何已记录产物。
 E6 探测本身仍是「未运行」，本轮只修好它的记录契约。详见
 [2026-10-05-e6-schema-unsatisfiable.md](../reports/2026-10-05-e6-schema-unsatisfiable.md)。
+
+## 2026-10-05 schema 一致性扫描收口
+
+把「按 schema 校验已记录产物」扩到 E2/E3/E5/E6/E8 后逐目录结案：
+
+| 目录 | 结论 |
+|---|---|
+| E1 | 本会话已修 4 处（failures / latency_cost / judgments-blind / B→C） |
+| **E6** | **真实缺陷：schema 不可满足，已修** |
+| E3 | **一个假发现，已排除** |
+| E2 | 无产物，会话未发生，符合预期 |
+| E5 / E8 | 无 schema，但各有消费者自带检查，不存在被破坏的契约 |
+
+**E3 的假发现**：`observations-2026-09-21.jsonl` 机械比对下不满足
+`observation.schema.json`（有 `frag` 无 `frag_id`，缺 11 个必填字段）。
+但 `test_observations.py` 文档字符串写明它是**「骨架完整且诚实为空」**的模板，
+判定列全为 `未运行`——没有 `judge`/`judged_at` 正是诚实而非缺漏；真正的对照运行
+是 `runs/2026-09-22-w6/observations.jsonl`，它**通过** schema。
+若照机械结果动手「修」，会给一份刻意留空的模板补上伪造的 `judge`/`judged_at`，
+正好违反「不得伪造实验结果、未运行就写未运行」。
+
+**判别方法**（已写入记录）：机械比对易出假阳性，先分清
+「已完成记录」还是「文档化的空模板」——看有无消费者、消费者是否声明按设计为空、
+时间戳是否早于首次真实运行。三条都指向模板则不改，只记录。
+
+**全仓库 13 个 schema 现已全部可满足。** 本轮未改任何已记录产物、
+提示词或冻结材料。详见
+[2026-10-05-schema-sweep-closeout.md](../reports/2026-10-05-schema-sweep-closeout.md)。
