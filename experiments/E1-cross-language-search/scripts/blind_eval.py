@@ -86,9 +86,53 @@ def analyze(key, judgments, judge_kind):
             'product_effect': 'not-concluded', 'missing_judgments': len(key['links']) - len(indexed)}
 
 
+def audit_masking(public, pipeline):
+    """Measure how much of the blind set is mechanically de-anonymizable.
+
+    blind_id is sha256(run_id + ':' + task_id + ':' + repo)[:16] and the arm is
+    NOT part of that input, so anyone holding the public run records can rebuild
+    the arm mapping without ever opening blind-key.json. The blind_id also
+    doubles as a dedup key, which is why one judgment covers a repo appearing in
+    several arms.
+
+    This reports the real strength of the masking instead of leaving it to prose.
+    A secret salt would fix it, but the salt must not live in this repository, so
+    that is the judge's call and not something to fake here.
+    """
+    run_id = pipeline['run_id']
+    recoverable = {}
+    for arm, result in pipeline['arms'].items():
+        for task in result['task_results']:
+            for row in task['merged_candidates'][:5]:
+                bid = hashlib.sha256(
+                    (run_id + ':' + task['task_id'] + ':' + row['repo'].lower()).encode()
+                ).hexdigest()[:16]
+                recoverable.setdefault(bid, set()).add(arm)
+    exposed = [row for row in public if row['blind_id'] in recoverable]
+    single = [row for row in exposed if len(recoverable[row['blind_id']]) == 1]
+    per_arm = {}
+    for row in single:
+        (arm,) = tuple(recoverable[row['blind_id']])
+        per_arm[arm] = per_arm.get(arm, 0) + 1
+    return {
+        'run_id': run_id,
+        'blind_ids': len(public),
+        'arm_group_recoverable': len(exposed),
+        'single_arm_attributable': len(single),
+        'single_arm_by_group': dict(sorted(per_arm.items())),
+        'masking_strength': 'none-mechanical-reversal-possible' if single else 'no-single-arm-exposure',
+        'note': (
+            'arm is not part of the blind_id hash input, so the public run records '
+            'are enough to recover the grouping. Real masking needs a secret salt '
+            'that is not stored in this repository; this script does not invent one. '
+            'Until then the material is source-masked, not blind.'
+        ),
+    }
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--pipeline'); p.add_argument('--d-run', help='optional completed same-batch D run directory'); p.add_argument('--key'); p.add_argument('--judgments'); p.add_argument('--judge-kind', choices=['human', 'technical']); p.add_argument('--out', required=True)
+    p.add_argument('--pipeline'); p.add_argument('--d-run', help='optional completed same-batch D run directory'); p.add_argument('--key'); p.add_argument('--judgments'); p.add_argument('--judge-kind', choices=['human', 'technical']); p.add_argument('--out', required=True); p.add_argument('--audit-masking', action='store_true', help='report de-anonymizability only, without writing judge material')
     args = p.parse_args(); out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
     if args.pipeline:
         pipeline = json.loads(Path(args.pipeline).read_text())
@@ -99,6 +143,11 @@ def main():
         public, key = prepare(pipeline)
         if args.d_run:
             key['source_runs'] = {'ABCM_pipeline': args.pipeline, 'D_run': args.d_run}
+        if args.audit_masking:
+            report = audit_masking(public, pipeline)
+            (out / 'masking-audit.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+            return
         (out / 'blind-candidates.jsonl').write_text(''.join(json.dumps(r, ensure_ascii=False) + '\n' for r in public))
         (out / 'blind-key.json').write_text(json.dumps(key, ensure_ascii=False, indent=2) + '\n')
     elif args.key and args.judgments and args.judge_kind:
