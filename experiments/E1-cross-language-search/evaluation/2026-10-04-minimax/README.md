@@ -33,23 +33,9 @@ python3 experiments/E1-cross-language-search/scripts/blind_eval.py \
   --out /tmp/masking-audit --audit-masking
 ```
 
-**要真正遮蔽需要一处不存放在本仓库的私密 salt，机制已就绪。**
+私盐只能改变 blind_id。判定表公开 task_id 和 repo，而原始运行也公开这两个字段，所以不读取 key、不知道盐也能直接按身份匹配：仍可还原 233/233 的来源集合，单组归属仍为 196/233。
 
-```sh
-umask 077 && head -c 32 /dev/urandom | base64 > ~/.e1-blind-salt
-export E1_BLIND_SALT="$(cat ~/.e1-blind-salt)"
-python3 experiments/E1-cross-language-search/scripts/blind_eval.py \
-  --pipeline experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/pipeline.json \
-  --d-run experiments/E1-cross-language-search/runs/2026-10-04-d-minimax \
-  --out <本地材料目录> --key-out ~/.e1-blind-key.json
-```
-
-加了 salt 后，仅凭公开数据可确定归属从 196/233 降到 0/233
-（`--audit-masking` 可自查）。salt 不走命令行参数，避免进 `ps` 和 shell 历史；
-`--key-out` 让映射表落在仓库外。
-
-salt 由判定人持有，仓库里不能生成也不该生成假 salt 充数。
-**salt 挡不住主动翻 key 的人**，它只保证「仅凭公开数据无法反推」——判定前仍须披露已见信息。
+`--salt-file`、`E1_BLIND_SALT` 和 `--key-out` 可用于另行生成 ID 和分开保存映射；它们不保证盲测。真正的来源遮蔽需要在判定期间隔离原始分组记录与 key，选择未见这些信息的判定人，并披露信息接触。现有材料可按来源遮蔽判定继续使用，无需为盐重复操作。
 
 **判定前请披露已见信息。** 若按现状判定，结论必须写成「带已知可还原分组属性的来源遮蔽判定」，
 不能写成盲判；本记录不替判定结果背书。
@@ -64,3 +50,5 @@ python3 experiments/E1-cross-language-search/scripts/blind_eval.py \
 ```
 
 真人完成后，用既有 blind_eval.py 的 --key、--judgments、--judge-kind human 做结构校验和分析。生成脚本不替人填写判断；分析结果仍需按协议复核，特别是缺失、零候选和部分失败组，不能直接把脚本集合差当成 H1 结论。
+
+完成判定后，CLI 的分析路径会校验记录并同时写出 `analysis.json` 和 `judgments.jsonl`（带 key 的运行/任务/仓库身份，移除 blind_id）。输入格式见 schemas/judgments-blind.schema.json；原始批次的空判断文件不会被自动覆盖。

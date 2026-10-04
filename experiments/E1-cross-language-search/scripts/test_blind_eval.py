@@ -54,8 +54,8 @@ class MaskingAuditTests(unittest.TestCase):
     materials: 196 of 233 blind_ids are attributable to exactly one arm.
 
     These tests pin that measurement so the tool cannot quietly be trusted as
-    "blind". Fixing it needs a salt that is NOT stored in this repository, which
-    is the judge's decision; the audit exists to make the gap visible first.
+    "blind". A private salt changes IDs but cannot hide the public task/repo identity;
+    the audit reports this second recovery route too.
     """
 
     def _pipeline(self):
@@ -118,8 +118,7 @@ class MaskingAuditTests(unittest.TestCase):
 
 
 class SaltTests(unittest.TestCase):
-    """The judge-held salt is the only thing standing between public data and
-    the arm mapping. The script must support it without ever inventing one."""
+    """Salt changes hash IDs, but public identities still expose source groups."""
 
     def _pipeline(self):
         return {'run_id': 'r1', 'mode': 'live', 'arms': {
@@ -133,14 +132,15 @@ class SaltTests(unittest.TestCase):
         self.assertNotEqual([r['blind_id'] for r in plain], [r['blind_id'] for r in salted])
         self.assertTrue(key['salted'])
 
-    def test_salted_material_is_not_recoverable_from_public_records(self):
+    def test_salt_does_not_hide_public_task_repo_identity(self):
         p = self._pipeline()
         salted, _ = prepare(p, 'judge-private-salt')
         report = audit_masking(salted, p, 'judge-private-salt')
-        # The attacker only has the public run records, so nothing is derivable.
-        self.assertEqual(report['arm_group_recoverable'], 0)
-        self.assertEqual(report['single_arm_attributable'], 0)
-        self.assertEqual(report['masking_strength'], 'not-derivable-from-public-records')
+        self.assertEqual(report['hash_ids_recoverable'], 0)
+        self.assertEqual(report['arm_group_recoverable'], 3)
+        self.assertEqual(report['single_arm_attributable'], 3)
+        self.assertEqual(report['identity_match_recoverable'], 3)
+        self.assertEqual(report['masking_strength'], 'none-mechanical-reversal-possible')
 
     def test_audit_never_uses_the_salt_to_measure_exposure(self):
         # Regression: measuring with the salt in hand would always report full
@@ -180,6 +180,26 @@ class SaltTests(unittest.TestCase):
 
 
 class ProtocolComparisonTests(unittest.TestCase):
+    def test_successful_zero_candidates_are_complete_but_blocked_are_not(self):
+        p = {'run_id': 'fixture', 'mode': 'fixture', 'arms': {arm: {'task_results': [
+            {'task_id': 't', 'status': 'ok', 'merged_candidates': [{'repo': 'c/only'}] if arm == 'C' else []}
+        ]} for arm in ('A', 'B', 'C', 'M')}}
+        public, key = prepare(p)
+        judgment = {'blind_id': public[0]['blind_id'], 'purpose_fit': 'yes', 'hard_conditions': 'satisfied',
+                    'novel_to_judge': 'unknown', 'worth_following': 'unknown', 'reason': 'fixture',
+                    'judge': 'fixture', 'judged_at': '2026-10-05T00:00:00Z'}
+        result = analyze(key, [judgment], 'human')
+        self.assertEqual(result['differences']['t']['c_minus_a'], ['c/only'])
+        self.assertEqual(result['differences']['t']['c_minus_m'], ['c/only'])
+        self.assertEqual(result['differences']['t']['c_minus_b'], ['c/only'])
+        key['arm_task_status']['B']['t'] = 'blocked'
+        self.assertEqual(analyze(key, [judgment], 'human')['differences']['t']['c_minus_b']['status'], 'incomplete-no-comparison')
+        for arm in p['arms']: p['arms'][arm]['task_results'][0]['merged_candidates'] = []
+        _, empty_key = prepare(p)
+        empty = analyze(empty_key, [], 'human')
+        self.assertEqual(empty['differences']['t']['c_minus_a'], [])
+        self.assertEqual(empty['missing_judgments'], 0)
+
     """Protocol section 6 names three comparisons; analyze must emit all three.
 
     "A->C measures overall assistance; M->C is the closer read on language
@@ -344,3 +364,30 @@ class JudgmentRecordShapeTests(unittest.TestCase):
         from blind_eval import export_judgments
         with self.assertRaises(ValueError):
             export_judgments(self._key(), [self._judgment(blind_id='nope')], 'technical')
+
+    def test_export_rejects_duplicates_invalid_categories_time_and_technical_novelty(self):
+        from blind_eval import export_judgments
+        bad = [dict(kind='not-a-kind'), dict(notes=None), dict(reason=' '),
+               dict(judged_at='yesterday'), dict(judged_at='2026-10-05T00:00:00'),
+               dict(judged_at='2026-02-30T00:00:00Z'), dict(novel_to_judge='yes')]
+        for fields in bad:
+            with self.assertRaises(ValueError):
+                export_judgments(self._key(), [self._judgment(**fields)], 'technical')
+        with self.assertRaises(ValueError):
+            export_judgments(self._key(), [self._judgment(), self._judgment()], 'technical')
+
+    def test_cli_exports_only_validated_judgments(self):
+        import tempfile, sys
+        from pathlib import Path
+        from unittest.mock import patch
+        import blind_eval
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp); k = p/'key.json'; j = p/'input.jsonl'; out = p/'output'
+            k.write_text(json.dumps(self._key())); j.write_text(json.dumps(self._judgment())+'\n')
+            with patch.object(sys, 'argv', ['blind_eval.py', '--key', str(k), '--judgments', str(j),
+                                           '--judge-kind', 'technical', '--out', str(out)]):
+                blind_eval.main()
+            row = json.loads((out/'judgments.jsonl').read_text())
+            self.assertEqual(row['repo'], 'x/y')
+            self.assertNotIn('blind_id', row)
+            self.assertEqual(json.loads((out/'analysis.json').read_text())['judge_kind'], 'technical')

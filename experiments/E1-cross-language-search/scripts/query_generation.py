@@ -153,7 +153,7 @@ def _strip_think(text: str) -> str:
     return re.sub(r"<think\b[^>]*>[\s\S]*$", "", out, flags=re.I).strip()
 
 
-def _failure_diagnostics(exc: QueryClientError) -> dict:
+def _failure_diagnostics(exc: QueryClientError, secret: str = "") -> dict:
     """Model text to store with a failed row, scrubbed and bounded.
 
     Mirrors what e1_d_assistant.py already records for the D arm, so a B/C/M
@@ -170,9 +170,9 @@ def _failure_diagnostics(exc: QueryClientError) -> dict:
         "think_present": "<think" in raw.lower(),
     }
     if answer:
-        fields["answer_text"] = redact(answer)[:EXCERPT_LIMIT]
+        fields["answer_text"] = redact(answer, secret)[:EXCERPT_LIMIT]
     if raw and len(raw) <= RAW_CAPTURE_LIMIT:
-        fields["raw_output"] = redact(raw)
+        fields["raw_output"] = redact(raw, secret)
     return fields
 
 
@@ -226,6 +226,12 @@ def _extract_json_object(text: str) -> dict:
             "ambiguous_model_output",
             f"model output contained {len(groups)} JSON objects; refusing to guess which was the answer",
         )
+    # A single example object inside prose is just as ambiguous as two objects.
+    # Accept the requested JSON, optionally fenced, but never select an object
+    # out of an explanation or a JSON array.
+    envelope = re.sub(r"^```(?:json)?\s*\n?([\s\S]*?)\n?```$", r"\1", raw, flags=re.I).strip()
+    if envelope != groups[0]:
+        raise QueryClientError("ambiguous_model_output", "model output must contain only one JSON object (optional code fence)")
     try:
         data = json.loads(groups[0])
     except json.JSONDecodeError as exc:
@@ -373,6 +379,12 @@ class HttpQueryClient:
         finish_reason = choice.get("finish_reason")
         message = choice.get("message")
         content = message.get("content") if isinstance(message, dict) else None
+        if finish_reason == "length":
+            raise QueryClientError(
+                "model_output_truncated", f"completion exceeded the {MAX_OUTPUT_TOKENS}-token cap",
+                raw_output=content if isinstance(content, str) else "",
+                answer_text=_strip_think(content) if isinstance(content, str) else "",
+            )
         if not isinstance(content, str) or not content.strip():
             raise QueryClientError(
                 "empty_model_output",
@@ -380,15 +392,6 @@ class HttpQueryClient:
                 raw_output=json.dumps(content)[:RAW_CAPTURE_LIMIT]
                 if content is not None
                 else "",
-            )
-        if finish_reason == "length":
-            # Truncated before the JSON closed: keep the partial text so the
-            # record shows how far the model got instead of just a code.
-            raise QueryClientError(
-                "model_output_truncated",
-                f"completion exceeded the {MAX_OUTPUT_TOKENS}-token cap",
-                raw_output=content,
-                answer_text=_strip_think(content),
             )
         try:
             variants = parse_model_variants(arm, task["direction"], str(content))
@@ -500,16 +503,17 @@ def generate(
     try:
         variants = client.generate_variants(task, arm, prompt)
     except QueryClientError as exc:
+        secret = client.api_key if isinstance(client, HttpQueryClient) else ""
         row = recorded(
             task=task,
             arm=arm,
             mode="live",
             variants=None,
             code=exc.code,
-            notes=exc.notes or exc.code,
+            notes=redact(exc.notes or exc.code, secret),
         )
         # Keep the evidence: without it this failure cannot be diagnosed later.
-        row.update(_failure_diagnostics(exc))
+        row.update(_failure_diagnostics(exc, secret))
         return row
     return recorded(
         task=task,
