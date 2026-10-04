@@ -46,6 +46,7 @@ import datetime
 import json
 import re
 import subprocess
+import time
 from pathlib import Path
 from collections.abc import Callable
 from typing import Any
@@ -332,6 +333,7 @@ def run_batch(
         coverage = check_variant_coverage(tasks, variants_by_task)
 
     for task in tasks:
+        task_started = time.monotonic()
         task_id = task.get("id", "")
         direction = task.get("direction", "")
         if should_cancel is not None and should_cancel():
@@ -357,6 +359,7 @@ def run_batch(
                     "successful_requests": 0,
                     "failed_requests": 0,
                     "cancelled_variants": 1,
+                    "elapsed_ms": 0,
                 }
             )
             totals["tasks"] += 1
@@ -468,6 +471,7 @@ def run_batch(
                     "successful_requests": 0,
                     "failed_requests": 0,
                     "cancelled_variants": 0,
+                    "elapsed_ms": int((time.monotonic() - task_started) * 1000),
                 }
             )
             totals["tasks"] += 1
@@ -516,6 +520,7 @@ def run_batch(
         totals["cancelled_variants"] += out["cancelled_variants"]
         totals["per_query_records"] += len(out["per_query_records"])
         totals["merged_candidates"] += len(out["merged_candidates"])
+        entry["elapsed_ms"] = int((time.monotonic() - task_started) * 1000)
         task_results.append(entry)
 
     return {

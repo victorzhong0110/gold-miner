@@ -275,3 +275,40 @@ B 组存在系统性长度劣势。
 先撞见「试过，被否了」。可复用教训：**当探针本身改变了被测对象，
 测出的差异不能归因于你正在操纵的那个变量。**
 完整记录见 [2026-10-05-b-arm-query-length-confound.md](../reports/2026-10-05-b-arm-query-length-confound.md)（该文件已改写为自我推翻记录）。
+
+## 2026-10-05 A/B/C/M 无法产出 latency_cost.jsonl（耗时从未被测量）
+
+把 4 个已记录运行逐个按 schema 校验：**1862 行、0 违规**，记录形状本身健康。
+但 `latency-cost.schema.json` 存在而只有 D 组写了对应文件，A/B/C/M 三个都没有。
+
+根因不是忘了写文件，而是**需要的那个数从来没被采集**：
+`e1_pipeline` 写文件前只有 `started_at`/`finished_at` 两个整轮时间戳，
+全文件没有 `time.monotonic()`；每个 (task, arm) 格子的两半——
+模型生成 `generate(...)` 与 `run_batch` 内的逐题检索——都没计时。
+所以 `elapsed_ms` 没有数据来源，直接造文件只能填 0，那比不写更糟
+（会让人以为「耗时为零」）。
+
+影响：协议第 6 节六项观察项之一的「**成本与等待**」中的「耗时」这一半
+在任何记录里都不存在；WP4-07 停在 `partial` 的理由「真实模型成本/等待未知」
+与此一致。本次的 `model_usage` 有 token 计数（B 输入 8330 / 输出 1989 等），
+但无逐题耗时。
+
+已修（先测量再写文件）：
+- `e1_batch.run_batch` 在正常路径、`except` 异常路径、取消路径三处都写回
+  `elapsed_ms`（取消路径为 0，因为没干活）
+- `e1_pipeline.run_pipeline` 对每次 `generate(...)` 计时并按 (task, arm) 累积
+- 新增 `latency_cost_rows()`，每 (task, arm) 一行，
+  `elapsed_ms` = 检索 + 生成；`github_requests` 取已有 `attempted_requests`；
+  `model_requests` 复用 `summarize_usage` 的 `request_parameters` 判据；
+  `main()` 写出 `latency_cost.jsonl`（空也写）
+- **`visible_cost` 一律不编造**：live 写 `unknown`、fixture 写
+  `fixture-no-model-calls`，与已有 `model_cost: "unknown"` 一致
+
+**未回填历史运行**：三次旧运行的耗时从未被测量，补一个全 0 的文件等于宣称
+当时耗时为零。已确认 `runs/` 零改动。从旧 `pipeline.json` 只读导出形状为
+80 行（20 题 × 4 臂）且 schema 全合法，但 `elapsed_ms` 全 0——正说明不能回填。
+
+验证：`test_e1_pipeline.py` 17 → 24 项，其中一项用会真的 sleep 的 stub 断言
+`elapsed_ms > 0`（证明测的是真实经过时间而非占位 0）；实跑 fixture 得 40 行、
+schema 全合法、四臂齐全；离线套件 exit 0，**354 Python + 58 Node**，付费请求 0。
+详见 [2026-10-05-latency-cost-gap.md](../reports/2026-10-05-latency-cost-gap.md)。

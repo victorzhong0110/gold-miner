@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased — 2026-10-05 A/B/C/M 记录耗时并写出 latency_cost.jsonl
+
+- 按 schema 校验 4 个已记录运行：1862 行 0 违规，记录形状本身健康。
+  但 `latency-cost.schema.json` 存在而只有 D 组写了对应文件。
+- 根因不是忘了写文件，而是**需要的数从来没被采集**：`e1_pipeline` 写文件前
+  只有整轮 `started_at`/`finished_at`，全文件无 `time.monotonic()`；
+  模型生成与逐题检索两半都未计时。造文件只能填 0，比不写更糟。
+- 影响：协议第 6 节「成本与等待」的「耗时」这一半在任何记录里都不存在，
+  与 WP4-07 长期 `partial` 的理由一致。
+- 已修：`e1_batch.run_batch` 在正常/`except`/取消三路径写回 `elapsed_ms`；
+  `e1_pipeline` 对 `generate()` 计时并按 (task, arm) 累积；
+  新增 `latency_cost_rows()` 并写出 `latency_cost.jsonl`（空也写）。
+  **`visible_cost` 一律不编造**：live 写 `unknown`、fixture 写
+  `fixture-no-model-calls`。
+- **未回填历史运行**：旧运行耗时从未被测量，补全 0 文件等于宣称当时耗时为零。
+- `test_e1_pipeline.py` 17 → 24 项，含用真 sleep 的 stub 断言 `elapsed_ms > 0`。
+- 离线套件 354 Python + 58 Node 通过，付费请求 0。
+
 ## Unreleased — 2026-10-05 判定分析补上协议要求的 B→C
 
 - 协议第 6 节要求三个比较（A→C / M→C / **B→C 判断复杂程度是否值得**），
