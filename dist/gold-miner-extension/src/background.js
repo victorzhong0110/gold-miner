@@ -259,7 +259,7 @@ if (typeof importScripts === "function") {
           },
           body: JSON.stringify({
             model: byok.model,
-            max_tokens: 256,
+            max_tokens: 2048,
             messages: [
               {
                 role: "system",
@@ -273,6 +273,7 @@ if (typeof importScripts === "function") {
         });
         if (!resp.ok) throw new Error("model_unavailable");
         const data = await resp.json();
+        if (S.modelResponseCode(resp.status, data) !== "ok") throw new Error("model_unavailable");
         const content =
           data &&
           data.choices &&

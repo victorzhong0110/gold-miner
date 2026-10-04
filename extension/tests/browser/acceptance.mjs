@@ -71,6 +71,49 @@ try {
     assert(hrefs.every(x => /^https:\/\/github.com\/[^/]+\/[^/]+$/.test(x)));
     assert((await calls(a.worker)) > 0);
   });
+  await check('current-input-probe-and-stale-result-invalidation', async () => {
+    await a.options.evaluate(() => {
+      chrome.permissions.request = async () => true; // fixture grant; no endpoint contacted
+      window.__probeMode = 'ok'; window.__probeRequests = [];
+      window.fetch = async (url, args) => {
+        window.__probeRequests.push({url, body:JSON.parse(args.body)});
+        const mode = window.__probeMode;
+        if (mode === 'delay') await new Promise(resolve => {window.__resolveProbe = resolve;});
+        return {status:200, json:async()=>({choices:[{finish_reason: mode === 'length' ? 'length' : 'stop',
+          message:{content: mode === 'empty' ? '<think>unfinished' : '<think>{not-json}</think>pong'}}]})};
+      };
+    });
+    await a.options.fill('#baseUrl','https://probe.fixture/v1');
+    await a.options.fill('#model','fixture-reasoning');
+    await a.options.fill('#apiKey','fixture-probe-only');
+    await a.options.click('#probe');
+    await a.options.waitForFunction(() => document.querySelector('#status').textContent.includes('http 200 ok'));
+    const req = await a.options.evaluate(() => window.__probeRequests[0]);
+    assert.equal(req.url,'https://probe.fixture/v1/chat/completions'); assert.equal(req.body.max_tokens,2048);
+    await a.options.evaluate(() => {window.__probeMode='empty';});
+    await a.options.click('#probe');
+    await a.options.waitForFunction(() => document.querySelector('#status').textContent.includes('empty_model_output'));
+    await a.options.evaluate(() => {window.__probeMode='delay';});
+    await a.options.click('#probe');
+    await a.options.waitForFunction(() => Boolean(window.__resolveProbe));
+    await a.options.fill('#model','changed-model');
+    await a.options.evaluate(() => window.__resolveProbe());
+    await a.options.waitForFunction(() => document.querySelector('#status').textContent.includes('not been tested'));
+    const stored = await a.worker.evaluate(() => chrome.storage.local.get('byok'));
+    assert.notEqual(stored.byok?.apiKey,'fixture-probe-only','probe must not save input credentials');
+  });
+  await check('panel-visible-at-top-with-body-fallback-on-long-page', async () => {
+    const long = await a.context.newPage();
+    await long.route('https://github.com/**',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><html><body><div style="height:6000px">Long fixture results without main</div></body></html>'}));
+    await long.goto('https://github.com/search?q=long-fixture&type=repositories');
+    await long.locator('#gold-miner-root a').first().waitFor();
+    const rect = await long.locator('#gold-miner-root').evaluate(el=>{
+      const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:innerHeight,scroll:scrollY,position:getComputedStyle(el).position};
+    });
+    assert.equal(rect.scroll,0);assert.equal(rect.position,'fixed');assert(rect.top>=0 && rect.bottom<=rect.height);
+    await long.getByRole('button',{name:'Close',exact:true}).click();
+    await long.locator('#gold-miner-root').waitFor({state:'detached'});await long.close();
+  });
   await check('actual-storage-isolation-and-message-boundary', async () => {
     await page.waitForFunction(() => document.documentElement.dataset.gmStorageProbe);
     assert.equal(await page.getAttribute('html','data-gm-storage-probe'),'denied');

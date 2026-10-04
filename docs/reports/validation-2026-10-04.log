@@ -1,0 +1,129 @@
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest discover -s /workspace/scratch/391b610db106/gold-miner/experiments/E1-cross-language-search/scripts -p test_*.py
+...........................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 171 tests in 0.141s
+
+OK
+no --live: refusing network by design
+{"recorded_at": "2026-10-04T10:04:07Z", "task_id": "zh2en-dev-01", "direction": "zh2en", "arm": "B", "mode": "fixture", "prompt_file": "experiments/E1-cross-language-search/prompts/b-translate.txt", "prompt_sha256_16": "e694f59abbf8cd2f", "input_sha256_16": "ff48a87554feac56", "original_query": "剪贴板历史 工具", "variants": [{"variant_query": "clipboard history tool", "variant_lang": "en", "api_query": "clipboard history tool"}], "code": "ok", "notes": "fixture; not a model run"}
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest discover -s /workspace/scratch/391b610db106/gold-miner/experiments/E1-cross-language-search/harness -p test_*.py
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.006s
+
+OK
+{"code": "owner_blocked", "status": "未运行", "message": "eval.batch_1 尚未冻结（SHA 为 null）。fixture 请用 --batch dev。"}
+{"code": "owner_blocked", "status": "未运行", "message": "live 路径需要发起人凭据与冻结批次；本命令拒绝编造命中。"}
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest discover -s /workspace/scratch/391b610db106/gold-miner/experiments/E3-faithful-reading -p test_*.py
+.......................................
+----------------------------------------------------------------------
+Ran 39 tests in 0.028s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest discover -s /workspace/scratch/391b610db106/gold-miner/experiments/E2-open-ended-discovery -p test_*.py
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.000s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest discover -s /workspace/scratch/391b610db106/gold-miner/scripts -p test_*.py
+..............................
+----------------------------------------------------------------------
+Ran 30 tests in 0.142s
+
+OK
+{
+  "mode": "config-only",
+  "base_url_host": "",
+  "model": null,
+  "has_key": false,
+  "code": "missing_credentials",
+  "status": "owner-blocked",
+  "message": "未运行 / owner-blocked：本地没有 OPENAI_API_KEY。"
+}
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest discover -s /workspace/scratch/391b610db106/gold-miner/experiments/E5-local-reuse -p test_*.py
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest discover -s /workspace/scratch/391b610db106/gold-miner/experiments/E6-api-probe -p test_*.py
+..............
+----------------------------------------------------------------------
+Ran 14 tests in 0.001s
+
+OK
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest discover -s /workspace/scratch/391b610db106/gold-miner/experiments/E8-discoverability/scripts -p test_*.py
+......
+----------------------------------------------------------------------
+Ran 6 tests in 0.053s
+
+OK
++ node --test /workspace/scratch/391b610db106/gold-miner/extension/tests/test_background.mjs /workspace/scratch/391b610db106/gold-miner/extension/tests/test_content.mjs /workspace/scratch/391b610db106/gold-miner/extension/tests/test_options.mjs /workspace/scratch/391b610db106/gold-miner/extension/tests/test_shared.mjs
+✔ P1-1 isolation API is invoked before API key persist (4.300383ms)
+✔ P1-1 fail-closed: isolation error does not save API key (1.010575ms)
+✔ P1-1 missing setAccessLevel on local denies key persist (1.549037ms)
+✔ P1-2 injected model client expansions are used; hasModel only then (3.358327ms)
+✔ P1-2 without client stays rules-only and never claims hasModel (1.690135ms)
+✔ P1-2 key present without a real model run does not set hasModel (1.419306ms)
+✔ P2-3 mocked HTTP 403 is not cached as success (1.613062ms)
+✔ P2-3 network_error is preserved and not written as success cache (0.913934ms)
+✔ P2-4 mark irrelevant reranks cached raw candidates without refetch (1.78903ms)
+✔ P2-4 personalization toggle changes ranking without refetch (2.859213ms)
+✔ P2-5 explore uses repo topics fixture and returns related candidates (2.415351ms)
+✔ P2-6 export import reuse hits cache and skips refetch (1.63188ms)
+✔ message handlers reject unknown types (0.585671ms)
+✔ R1 rules cache does not suppress newly configured model or recovery (2.940874ms)
+✔ R2 cancellation during search aborts and ignores a late successful response (1.378647ms)
+✔ R2 cancellation during model prevents all subsequent GitHub requests (0.889608ms)
+✔ R3 imported candidate URLs are rebuilt and malformed repository names dropped (1.322604ms)
+✔ page messages cannot write settings, export cache or clear local data (0.778434ms)
+✔ two concurrent jobs preserve both cache entries and third request is bounded (1.288074ms)
+✔ clear data prevents pending requests from recreating cache (1.020571ms)
+✔ expired cache is refreshed and content changes use a new cache (1.696534ms)
+✔ invalid endpoint and malformed import do not change stored data (0.878932ms)
+✔ rate-limit header applies backoff without additional HTTP calls (1.025147ms)
+✔ actual request counters separate cache hits and GitHub calls (1.255786ms)
+✔ actual options tab can save/export/reset while other contexts cannot (0.966671ms)
+✔ concurrent feedback preserves both seen projects (0.886564ms)
+✔ clear waits for an already accepted feedback write (0.758285ms)
+✔ two concurrent cache imports preserve both bundles (1.082932ms)
+✔ failed feedback write does not poison the next mutation (1.082051ms)
+✔ concurrent exploration keeps both opted-in history records (1.627924ms)
+✔ repeated import never grows the cache past its 100-entry budget (3.915667ms)
+✔ reasoning model HTTP budget permits actual final JSON and rejects truncated responses (6.215398ms)
+✔ cancelled UI ignores late callback (4.003026ms)
+✔ close cancels and late callbacks do not recreate the panel (1.016895ms)
+✔ navigation away invalidates pending task and duplicate events do not refetch (1.057004ms)
+✔ display derives safe links and feedback immediately hides the item (1.451654ms)
+✔ README changes alter contentVersion and refresh the task (1.973962ms)
+✔ failed feedback preserves candidate and a successful retry removes it (1.170381ms)
+✔ probe uses unsaved inputs, validates final answer and does not save credentials (5.594225ms)
+✔ editing inputs prevents an old in-flight probe from restoring success (2.874627ms)
+✔ 200 thinking-only and truncated responses never report ok; auth shows region hint (3.603297ms)
+✔ canonical and dedupe (1.084654ms)
+✔ untrusted remote text (0.325629ms)
+✔ expand keeps original and caps at 4 (0.431354ms)
+✔ rerank hides seen, caps owners, mega-star penalty (0.620873ms)
+✔ cache key includes version language mode (0.261935ms)
+✔ export strips secrets and private notes (0.44924ms)
+✔ export keeps SEARCH entries and raw candidates for reuse (0.555387ms)
+✔ explore queries come from topics and description (0.84981ms)
+✔ parseModelExpansions keeps original and model rows (1.549959ms)
+✔ budget cancel (0.262316ms)
+✔ i18n both languages (0.126916ms)
+✔ repo validation rejects executable, path and whitespace payloads (0.145123ms)
+✔ exploration residual admits a distinct source outside the top five (0.457552ms)
+✔ cache keys cannot collide on separators or query prefixes (0.138383ms)
+✔ malformed candidate arrays and invalid endpoints fail safely (1.055922ms)
+✔ explore can acquire interest and bilingual candidates beyond topics (0.294744ms)
+✔ thinking braces are ignored and incomplete thinking cannot become expansions (0.355963ms)
+ℹ tests 58
+ℹ suites 0
+ℹ pass 58
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 139.359581
+offline suite ok

@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-04",
+  "timezone": "Asia/Taipei",
+  "source_sha": "3c186e0135a13329645ee9afadc57e2056e7ec3c",
+  "python_tests": 268,
+  "extension_tests": 58,
+  "result": "passed",
+  "log_sha256": "6472910058ceee3685a61e9ac86aca5827d86bf05c97f882727f712f8b415a9e",
+  "build": {
+    "version": "0.1.4",
+    "source_sha": "3c186e0135a13329645ee9afadc57e2056e7ec3c",
+    "source_files_sha256": {
+      "_locales/en/messages.json": "e0bbe1d8ba04d3dc2bbed1a9f6cbd71067b4126913059e78cfb497a236d88f56",
+      "_locales/zh_CN/messages.json": "979a3b9146f1c5d1fe3ed68803ac84d92c91d1e4f9bee98abe5feff0fe7c7699",
+      "manifest.json": "bfe53fe46bed53e9e69aa99e2d1aec835bce47a497977d55e6de2bb69be3c338",
+      "src/background.js": "81489155cf1f72bfa7a3eb793e24f4962dd5ec04ed2196de79738372c28481dd",
+      "src/content.css": "e0883aa712738b450e5eea342037387fd4740643471287db392926985781e14b",
+      "src/content.js": "20e292c1281ca6a3883119c7300bcdb7c952bd8a499ba9bb8af183e9dfe258ef",
+      "src/options.css": "a384e5b0daec84329cd6d60d7f6880cc050e26ac0a84e771045fd8ca86a234c4",
+      "src/options.html": "c667986d64faa2a74dbf783307e812b2675a2fea5c15dfa208eda50b60402f46",
+      "src/options.js": "d9d98b47ed561f699d71d2c4928073920d1f13a2e1ec1fd431142b1d4521822c",
+      "src/shared.js": "002e3747f33ae28dc1227bd0800989a58c0b3f80210804fe26cb5e354b05afaa"
+    },
+    "license": "MIT",
+    "license_files_sha256": {
+      "LICENSE": "5019b107413e4eedfb45662f69575f6f03b723b7b97be48bf8eff3363fbef033",
+      "THIRD_PARTY_NOTICES.md": "bf036dfb9a685d9d265f36dd388dd56c1c55f8c1595901fb44be8abd435fc2ec"
+    },
+    "archive": "gold-miner-extension-0.1.4.zip",
+    "archive_sha256": "38f483219f1902d613e02cabbf9d2e668015647cc4215a93cc2af66fda1b5a74",
+    "browser_installation": "not-run",
+    "release_status": "experimental-not-beta"
+  },
+  "browser": {
+    "status": "passed",
+    "checks": 11,
+    "run_id": 37194278583,
+    "report": "browser-acceptance-2026-10-04.json",
+    "production_scripts_match_package": true,
+    "scope": "actual Chromium with fixture network/DOM and probe fetch; no real model calls"
+  },
+  "paid_model_requests": 0,
+  "human_followup": "not-run"
+}

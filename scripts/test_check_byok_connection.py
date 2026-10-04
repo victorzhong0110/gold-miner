@@ -36,6 +36,17 @@ class TestClassify(unittest.TestCase):
         )
         self.assertEqual(byok.classify_http(200, "not-json"), "bad_response")
 
+    def test_final_answer_required(self):
+        def body(content, finish="stop"):
+            return json.dumps({"choices": [{"message": {"content": content}, "finish_reason": finish}]})
+        self.assertEqual(byok.classify_http(200, body("<think>{reason}</think>pong")), "ok")
+        self.assertEqual(byok.classify_http(200, body("<think>unfinished")), "empty_model_output")
+        self.assertEqual(byok.classify_http(200, body("pong", "length")), "model_output_truncated")
+        self.assertEqual(byok.classify_http(200, body("something else")), "unexpected_model_output")
+        self.assertEqual(byok.classify_http(200, '{"base_resp":{"status_code":1004}}'), "auth_rejected")
+        self.assertIn("区域", byok.auth_hint("https://api.minimaxi.com/v1"))
+        self.assertEqual(byok.auth_hint("https://other.example/v1"), "")
+
     def test_redact_key(self):
         with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-abcdefghijk"}):
             self.assertNotIn("sk-abcdefghijk", byok.redact("token=sk-abcdefghijk"))

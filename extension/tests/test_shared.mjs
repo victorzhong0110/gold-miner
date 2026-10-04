@@ -196,3 +196,11 @@ test('explore can acquire interest and bilingual candidates beyond topics', () =
   assert.ok(rows.some(x => x.lang === 'zh'));
   assert.ok(rows.some(x => x.source === 'topic_related'));
 });
+
+test('thinking braces are ignored and incomplete thinking cannot become expansions', () => {
+  const rows=S.parseModelExpansions('<think>{invented} reasoning</think>{"en":["clipboard manager"]}','剪贴板','zh');
+  assert(rows.some(r=>r.query==='clipboard manager'));
+  assert.equal(S.parseModelExpansions('<think>{"en":["thinking only"]}','剪贴板','zh').length,0);
+  assert.equal(S.modelResponseCode(200,{choices:[{message:{content:'<think>reason</think>'}}]}),'empty_model_output');
+  assert.equal(S.modelResponseCode(200,{choices:[{finish_reason:'length',message:{content:'pong'}}]}),'model_output_truncated');
+});

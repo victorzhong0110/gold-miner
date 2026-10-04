@@ -701,3 +701,20 @@ test('repeated import never grows the cache past its 100-entry budget', async ()
   assert.equal(Object.keys(chrome.storage.local.store.cache).length,100);
   assert.equal((await svc.dispatch({type:'EXPORT_CACHE'},sender)).bundle.entries.length,100);
 });
+
+test('reasoning model HTTP budget permits actual final JSON and rejects truncated responses', async()=>{
+  for(const finish_reason of ['stop','length']) {
+    const chrome=createMockChrome({store:{byok:{baseUrl:'https://example.test/v1',model:'fixture-reasoning',apiKey:'fixture-key'}}});
+    let modelCalls=0;
+    const fetch=createFetchRecorder(async(url,init)=>{
+      if(url.includes('/chat/completions')) {
+        modelCalls++;assert.equal(JSON.parse(init.body).max_tokens,2048);
+        return jsonResponse(200,{choices:[{finish_reason,message:{content:'<think>{not JSON}</think>{"en":["injected-model-term"]}'}}]});
+      }
+      return jsonResponse(200,{items:defaultSearchItems(new URL(url).searchParams.get('q'))});
+    });
+    const {svc}=loadBackground(chrome,fetch);const result=await svc.dispatch(searchMsg(),sender);
+    assert.equal(modelCalls,1);assert.equal(result.hasModel,finish_reason==='stop');
+    if(finish_reason==='stop')assert(result.expansions.some(r=>r.query==='injected-model-term'));
+  }
+});

@@ -33,7 +33,7 @@ python3 experiments/E1-cross-language-search/harness/e1_value_harness.py \
 
 `--mode live` 需要 `GITHUB_TOKEN`（可选）与（B/C/M）模型环境变量；没有配置时脚本必须拒绝并写 `owner-blocked`，不得编造命中。
 
-D 组只产生 stub：`blocked` / `未运行`。
+D 组只产生 stub：`blocked` / `未运行`。这是已知工具缺口，不是可执行强对照；发起人需先选择联网助手/模型与预算并冻结比较条件，不能从fixture补齐D结果。
 
 ## 3 BYOK 连接探测
 
