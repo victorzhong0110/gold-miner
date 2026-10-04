@@ -7,12 +7,28 @@ import hashlib
 import json
 import os
 import re
+import time
 from pathlib import Path
 from e1_batch import build_a_variants, load_queries, run_batch, is_eval_frozen, materials_commit
 from query_generation import E1, MAX_OUTPUT_TOKENS, generate, query_lang, other_lang, default_client_from_env
 
 # GitHub search allows 30 authenticated requests/minute; space serial calls (not a guarantee).
 DEFAULT_GITHUB_SLEEP_SECONDS = 3.0
+
+
+# Qualifiers the main comparison forbids in a variant query.
+#
+# The comparison is A (plain default search) against B/C/M. If any arm may use
+# field, star or repo qualifiers, it searches a different space than A and the
+# difference stops measuring cross-language rewriting. So the prompts and this
+# rule must agree; e1_materials_check.py exists to catch them disagreeing.
+FORBIDDEN_QUERY_SYNTAX = re.compile(r'\b(?:language|in|stars|repo|user|org):', re.I)
+FORBIDDEN_REPO_TOKEN = re.compile(r'\b[\w.-]+/[\w.-]+\b')
+
+
+def forbidden_query_syntax(q: str) -> bool:
+    """True when a variant query would break the main comparison."""
+    return bool(FORBIDDEN_QUERY_SYNTAX.search(q) or FORBIDDEN_REPO_TOKEN.search(q))
 
 
 def search_variants(task: dict, arm: str, generated: list[dict]) -> list[dict]:
@@ -28,7 +44,7 @@ def search_variants(task: dict, arm: str, generated: list[dict]) -> list[dict]:
         q = q.strip()
         if row.get('api_query', q) != q:
             raise ValueError('hidden API query changes are forbidden')
-        if re.search(r'\b(?:language|in|stars|repo|user|org):', q, re.I) or re.search(r'\b[\w.-]+/[\w.-]+\b', q):
+        if forbidden_query_syntax(q):
             raise ValueError('main comparison cannot inject field, star or repo filters')
         if q in seen:
             continue
@@ -96,15 +112,21 @@ def run_pipeline(tasks, *, run_id, mode='fixture', client=None, http_get=None, t
     if mode not in ('fixture', 'live'):
         raise ValueError('mode must be fixture or live')
     records, mappings = [], {arm: {} for arm in ('B', 'C', 'M')}
+    # Generation is the model half of a (task, arm) cell; run_batch measures the
+    # search half. Protocol section 6 wants 耗时 per observation, and neither
+    # half was timed before, so latency_cost.jsonl could not be produced at all.
+    generation_ms = {}
     for task in tasks:
         for arm in mappings:
             if should_cancel and should_cancel():
                 records.append({'task_id': task['id'], 'arm': arm, 'mode': mode, 'code': 'cancelled', 'variants': []})
                 continue
+            gen_started = time.monotonic()
             try:
                 row = generate(task, arm, mode, client, allow_network=allow_network)
             except KeyError:
                 row = {'task_id': task['id'], 'arm': arm, 'mode': mode, 'code': 'fixture_missing', 'variants': []}
+            generation_ms[(task['id'], arm)] = int((time.monotonic() - gen_started) * 1000)
             if row['code'] == 'ok':
                 try:
                     mappings[arm][task['id']] = search_variants(task, arm, row['variants'])
@@ -118,6 +140,7 @@ def run_pipeline(tasks, *, run_id, mode='fixture', client=None, http_get=None, t
                                 should_cancel=should_cancel, sleep_seconds=sleep_seconds)
     return {'run_id': run_id, 'mode': mode, 'field': 'default',
             'generation_records': records, 'arms': results,
+            'latency_cost': latency_cost_rows(run_id, records, results, generation_ms, mode),
             'model_usage': summarize_usage(records) if mode == 'live' else 'fixture-no-model-calls',
             'model_cost': 'unknown' if mode == 'live' else 'fixture-no-model-calls',
             'github_sleep_seconds': sleep_seconds,
@@ -126,6 +149,79 @@ def run_pipeline(tasks, *, run_id, mode='fixture', client=None, http_get=None, t
 
 def _utcnow():
     return datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z')
+
+
+def latency_cost_rows(run_id, records, arms, generation_ms, mode):
+    """One row per (task, arm), matching schemas/latency-cost.schema.json.
+
+    The D runner already wrote this file. The A/B/C/M runner could not, because
+    neither half of a cell was ever timed, so 耗时 could not be reported as
+    protocol section 6 requires. Every field now comes from measured work plus
+    counters that already existed: model_requests reuses summarize_usage's
+    `request_parameters` signal, github_requests is the task's
+    attempted_requests, and visible_cost stays "unknown" because a real cost is
+    not something this tool can know.
+    """
+    visible = 'unknown' if mode == 'live' else 'fixture-no-model-calls'
+    model_calls = {}
+    for record in records or []:
+        if 'request_parameters' in record:
+            key = (record.get('task_id'), record.get('arm'))
+            model_calls[key] = model_calls.get(key, 0) + 1
+    rows = []
+    for arm, arm_result in (arms or {}).items():
+        for task in arm_result.get('task_results') or []:
+            key = (task.get('task_id'), arm)
+            rows.append({
+                'run_id': run_id,
+                'task_id': task.get('task_id') or '',
+                'arm': arm,
+                'elapsed_ms': int(task.get('elapsed_ms') or 0) + int(generation_ms.get(key, 0)),
+                'github_requests': int(task.get('attempted_requests') or 0),
+                'model_requests': int(model_calls.get(key, 0)),
+                'visible_cost': visible,
+            })
+    return rows
+
+
+def failure_rows(result: dict) -> list[dict]:
+    """Machine-readable failure ledger, derived only from what is already here.
+
+    The A/B/C/M runner detected failures and signalled them through the exit
+    code, but never wrote the ledger that schemas/failures.schema.json defines
+    and that the D runner does write. Consumers therefore had to special-case
+    these runs, and the two recorded runs in this repository have no
+    failures.jsonl at all.
+
+    Nothing is invented: every field comes from generation_records or from the
+    per-task status/errors already present in the result. The schema sets
+    additionalProperties false, so a row carries exactly run_id, task_id, arm,
+    code and message -- the offending api_query stays in pipeline.json.
+
+    Rows are per (task, layer), not per failed task, and are not deduplicated:
+    a task whose query generation failed also ends up blocked, so it appears
+    twice with different codes. Count distinct task_ids, not rows.
+    """
+    run_id = result.get('run_id') or ''
+    rows: list[dict] = []
+    for record in result.get('generation_records') or []:
+        code = record.get('code')
+        if code and code != 'ok':
+            rows.append({'run_id': run_id, 'task_id': record.get('task_id') or '',
+                         'arm': record.get('arm') or '', 'code': code,
+                         'message': str(record.get('notes') or '')})
+    for arm, arm_result in (result.get('arms') or {}).items():
+        for task in arm_result.get('task_results') or []:
+            status = task.get('status')
+            if not status or status == 'ok':
+                continue
+            parts = [str(e.get('error') or e) for e in (task.get('errors') or [])]
+            if task.get('reason'):
+                parts.append(str(task['reason']))
+            rows.append({'run_id': run_id, 'task_id': task.get('task_id') or '',
+                         'arm': arm, 'code': str(status),
+                         'message': '; '.join(p for p in parts if p)})
+    return rows
 
 
 def main():
@@ -174,7 +270,11 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     (out / 'pipeline.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
     for kind, rows in [('generation', result['generation_records']),
-                       ('candidates', [r for arm in result['arms'].values() for task in arm['task_results'] for r in task['merged_candidates']])]:
+                       ('candidates', [r for arm in result['arms'].values() for task in arm['task_results'] for r in task['merged_candidates']]),
+                       ('failures', failure_rows(result)),
+                       ('latency_cost', result.get('latency_cost') or [])]:
+        # Written even when empty: a missing file is indistinguishable from a
+        # run that never checked, an empty one says "checked, nothing failed".
         (out / (kind + '.jsonl')).write_text(''.join(json.dumps(r, ensure_ascii=False) + '\n' for r in rows))
     failed = any(r['code'] != 'ok' for r in result['generation_records']) or any(
         arm['totals'].get('failed_requests', 0) or arm['totals'].get('tasks_blocked', 0) for arm in result['arms'].values())

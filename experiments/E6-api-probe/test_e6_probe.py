@@ -35,6 +35,31 @@ def chat_body(content="pong", usage=None, echo_key=False):
     return 200, json.dumps(payload).encode()
 
 
+def assert_schema_is_satisfiable(case, schema):
+        """A schema must not require fields it forbids as additional properties."""
+        required, props = set(schema["required"]), set(schema["properties"])
+        undescribed = required - props
+        case.assertFalse(
+            undescribed,
+            f"required but not described in properties: {sorted(undescribed)}",
+        )
+
+def assert_record_validates(case, record, schema):
+        try:
+            import jsonschema
+
+            jsonschema.validate(record, schema)
+            return
+        except ImportError:  # pragma: no cover - offline fallback
+            pass
+        required, allowed = set(schema["required"]), set(schema["properties"])
+        case.assertTrue(required <= set(record), f"missing {sorted(required - set(record))}")
+        case.assertFalse(
+            set(record) - allowed,
+            f"schema forbids these emitted fields: {sorted(set(record) - allowed)}",
+        )
+
+
 class NotSentTest(unittest.TestCase):
     def test_missing_config_does_not_call(self):
         calls = []
@@ -207,7 +232,12 @@ class CommittedProbeTest(unittest.TestCase):
             )
         )
         self.assertEqual(set(record), set(schema["required"]))
-
+        # Names matching is not the same as the record validating. This schema
+        # required 30 fields while describing 16, and additionalProperties:false
+        # then rejected the other 14, so NO object could ever satisfy it. Only a
+        # real validation catches that; the name comparison above passed happily.
+        assert_schema_is_satisfiable(self, schema)
+        assert_record_validates(self, record, schema)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

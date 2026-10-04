@@ -1,0 +1,154 @@
+{
+  "pipeline_rule": "\\b(?:language|in|stars|repo|user|org):",
+  "arms": {
+    "B": {
+      "prompt_file": "experiments/E1-cross-language-search/prompts/b-translate.txt",
+      "mentioned_qualifiers": {
+        "in:description": [
+          14
+        ],
+        "in:readme": [
+          14
+        ],
+        "language": [
+          14
+        ],
+        "stars": [
+          14
+        ]
+      },
+      "prohibition_lines": [
+        {
+          "line": 14,
+          "text": "4. 不准加任何 GitHub 搜索语法（如 in:readme、in:description、stars、language: 等）。"
+        }
+      ],
+      "blanket_prohibition": true,
+      "never_mentioned": []
+    },
+    "C": {
+      "prompt_file": "experiments/E1-cross-language-search/prompts/c-rewrite.txt",
+      "mentioned_qualifiers": {
+        "in:description": [
+          13
+        ],
+        "in:readme": [
+          13,
+          24
+        ],
+        "language": [
+          14
+        ],
+        "stars": [
+          13
+        ]
+      },
+      "prohibition_lines": [
+        {
+          "line": 13,
+          "text": "4. 本步不要写 in:readme；in:readme 只由运行脚本在结果少于 10 条时最多追加 1 条。需要限定字段时只用 in:description；stars 可用但不是必须。"
+        },
+        {
+          "line": 14,
+          "text": "5. 禁止用 language: 表示文档语言（不准用它限定 README 是中文还是英文）。"
+        }
+      ],
+      "blanket_prohibition": false,
+      "never_mentioned": [
+        "in:name",
+        "repo",
+        "user",
+        "org"
+      ]
+    },
+    "M": {
+      "prompt_file": "experiments/E1-cross-language-search/prompts/m-rewrite.txt",
+      "mentioned_qualifiers": {
+        "in:readme": [
+          14
+        ],
+        "language": [
+          14
+        ],
+        "stars": [
+          14
+        ]
+      },
+      "prohibition_lines": [
+        {
+          "line": 14,
+          "text": "4. 不准加 in:readme、language:、stars: 等搜索语法。字段扩展由运行脚本按配对诊断决定。"
+        }
+      ],
+      "blanket_prohibition": false,
+      "never_mentioned": [
+        "in:description",
+        "in:name",
+        "repo",
+        "user",
+        "org"
+      ]
+    }
+  },
+  "arms_with_uncovered_qualifiers": {
+    "C": [
+      "in:name",
+      "repo",
+      "user",
+      "org"
+    ],
+    "M": [
+      "in:description",
+      "in:name",
+      "repo",
+      "user",
+      "org"
+    ]
+  },
+  "all_qualifiers_covered": false,
+  "note": "本检查只报告「提示词是否提到某个被 pipeline 拒绝的限定符」，不判断允许还是禁止——中文散文的意图判断会产生假发现（曾把「本步不要写 in:readme」误读为允许）。 允许/禁止的判定由 materials-status.json 人工记录并附 file:line 引用， 由 test_e1_materials_check.py 断言引用处文本未变。",
+  "recorded_divergences": [
+    {
+      "arm": "C",
+      "qualifier": "in:description",
+      "prompt_says": "allowed",
+      "citation": "experiments/E1-cross-language-search/prompts/c-rewrite.txt:13",
+      "quote": "需要限定字段时只用 in:description",
+      "pipeline_says": "rejected",
+      "why_it_matters": "提示词让模型用 in:description，pipeline 随后抛 ValueError。模型是照提示词做的，失败却会被记成模型错误。",
+      "observed_in_batch_1": "not-triggered"
+    },
+    {
+      "arm": "C",
+      "qualifier": "stars",
+      "prompt_says": "allowed",
+      "citation": "experiments/E1-cross-language-search/prompts/c-rewrite.txt:13",
+      "quote": "stars 可用但不是必须",
+      "pipeline_says": "rejected",
+      "why_it_matters": "同上；stars 还与 AGENTS.md 第 23 条「不设 stars 下限」方向混淆，易被误读成允许热度筛选。",
+      "observed_in_batch_1": "not-triggered"
+    }
+  ],
+  "recorded_silent_gaps": [
+    {
+      "arm": "M",
+      "qualifiers": [
+        "in:description",
+        "in:name",
+        "repo",
+        "user",
+        "org"
+      ],
+      "citation": "experiments/E1-cross-language-search/prompts/m-rewrite.txt:14",
+      "quote": "不准加 in:readme、language:、stars: 等搜索语法",
+      "note": "只列了三个限定符；pipeline 拒绝的另外几个完全未提，模型可能无意使用而被记为失败。"
+    }
+  ],
+  "resolution": {
+    "decided_by": "发起人（材料属主）",
+    "status": "not-fixed-in-this-batch",
+    "protocol_basis": "protocol 运行后条款「不改本批材料。修复另开 eval.batch_2」",
+    "why_pipeline_rule_wins": "主比较的基线 A 是无限定符的默认搜索；若 B/C/M 能用字段或 stars 限定，各组搜索空间不同，差异就不再衡量跨语言改写。",
+    "next_step": "在 eval.batch_2 的 prompts 中把 C 的 in:description/stars 许可改为禁止，并让 M/B 覆盖全部被拒限定符；随后本检查应翻转为 all_qualifiers_covered=true。"
+  }
+}

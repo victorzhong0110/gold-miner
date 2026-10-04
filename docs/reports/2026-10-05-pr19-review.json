@@ -1,0 +1,55 @@
+{
+  "pr": 19,
+  "reviewed_head": "0c887dd5049292b6f5f628e2267fc059aa758814",
+  "base_main": "6cf2aa07adbb71fe9e5ed5f742d960d1d521070b",
+  "validation": {
+    "python": 370,
+    "node": 58,
+    "offline": "passed",
+    "updated_head_ci": "required before merge"
+  },
+  "raw_hashes": {
+    "experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/pipeline.json": "8dd99c86ad2ea13fb8ea1c1038a2323bcd684ce6938f916e813d1ed680db773c",
+    "experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/generation.jsonl": "1804ca2f111fac6a4108d447821b809bc00e1246d59dc169e9e0b84de4709ad9",
+    "experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/candidates.jsonl": "541f7a7af98b5763520cfada814b53ad8ce6b316b185aa07313aa501af6c9dc4",
+    "experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/judgments.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/E1-cross-language-search/run-settings-2026-10-04-bcm-minimax.json": "e27d571d47a257050ecb62f0ff723d06640e5cfb49b985cc15a03c0fa3446350"
+  },
+  "fixes": [
+    "direct client credential redaction before excerpt",
+    "length classification precedes empty reply",
+    "single prose example and array wrapper rejected",
+    "salt audit also matches public task/repo identities",
+    "successful zero candidates included; blocked remains unavailable",
+    "CLI writes schema-shaped judgment export after validation",
+    "duplicate/invalid kind/notes/time/technical novelty rejected before export"
+  ],
+  "masking": {
+    "unsalted_source_recoverable": 233,
+    "salted_source_recoverable": 233,
+    "single_arm": 196,
+    "strict_blinding": "not-established"
+  },
+  "structural_comparison_availability": {
+    "A_to_C": 19,
+    "M_to_C": 19,
+    "B_to_C": 18,
+    "all_three": 18
+  },
+  "human_judgments": 0,
+  "new_paid_model_requests": 0,
+  "new_github_search_requests": 0,
+  "historical_records": "unchanged",
+  "future_parser_behavior": "strict full object or code fence; freeze new source before another batch",
+  "closed_pr18": "not merged; its alternate runtime implementation and stale freeze report not reapplied; branch remains available",
+  "earlier_reviewed_head": "74301a71af04802a87e245a577cd32412aea5e5d",
+  "preserved_new_commits": [
+    "c61a715: withdrawn causal length claims",
+    "b2d72f6: measured latency ledger",
+    "50aea15: blind judgment input schema and export",
+    "1c3c608: satisfiable E6 probe schema",
+    "ab69b94: schema sweep closeout",
+    "0c887dd: source self-review and 3 example regression tests; expectations aligned with reviewed parser"
+  ],
+  "delivery": "PR20, fixed review head with all PR19 source history included"
+}

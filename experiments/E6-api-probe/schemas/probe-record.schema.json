@@ -36,6 +36,20 @@
     "env_github_token_set"
   ],
   "properties": {
+    "run_id": {"type": "string", "minLength": 1, "description": "本次探测标识，对应 runs/<日期>-<标签>/。"},
+    "started_at": {"type": "string", "format": "date-time"},
+    "finished_at": {"type": "string", "format": "date-time"},
+    "base_url": {"type": "string", "description": "端点；未配置时为「未知」，不写猜测值。"},
+    "model": {"type": "string", "description": "模型名；未配置时为「未知」。"},
+    "protocol": {"type": "string", "minLength": 1},
+    "max_output_tokens": {"type": "integer", "minimum": 0},
+    "cancelled_before_send": {"type": "boolean"},
+    "cache_hits": {"type": "integer", "minimum": 0},
+    "visible_response_id": {"type": "string", "description": "可见响应 id；不可见时为「未知」。"},
+    "response_format": {"type": "string", "description": "请求的 response_format；未指定时为「未知」。"},
+    "error_detail": {"type": "string", "description": "错误细节，可为空字符串。"},
+    "billing_note": {"type": "string", "minLength": 1, "description": "费用说明；未知时如实标注，不估算金额。"},
+    "prompt": {"type": "string", "minLength": 1},
     "status": {"enum": ["未运行", "已运行", "取消", "失败"]},
     "error_class": {
       "enum": ["无", "未配置", "预算", "取消", "地址", "协议", "权限或凭据", "额度", "限流", "网络", "响应格式"]

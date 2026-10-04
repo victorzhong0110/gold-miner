@@ -95,3 +95,318 @@ PR15已合并（065ff0605cac5f641c5fd6511bda34bf8f11397a），原始记录未修
 运行前修复并提交（ae5eeea）：GitHub 搜索间隔原为 0（会超过每分钟 30 次限额）、输出目录非空即拒绝（保护 D 目录）、冻结设置与客户端参数核对、记录可见 token/耗时。冻结设置提交 48b074d（BYOK_TIMEOUT_SECONDS=300，2048 输出 token，不自动重试，无密钥）。失败未重跑：B zh2en-eval-10 长句直译 GitHub 422；C en2zh-eval-03 模型输出 JSON 解析失败（原文未保存）。可见 token：B 输入8330/输出1989，C 10894/4714，M 10170/4834；费用未知。[报告](../../experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/report.md)，[机器记录](../reports/2026-10-04-e1-bcm-run.json)。WP2-04 盲判仍待发起人。
 
 2026-10-04 PR17 审查：原始记录与冻结设置一致；A/B/C/M 题级并集465，跨题独立仓库391，与D独立仓库169交集9。已准备五组前5判定材料（evaluation/2026-10-04-minimax），人工判断尚未发生。没有重跑失败项或新增付费请求。
+
+## 2026-10-05 B/C/M 失败证据补齐
+
+复核 `runs/2026-10-04-bcm-minimax` 时发现 C 组 `en2zh-eval-03` 的失败记录
+**没有保存模型原文**（232 completion token，其中 171 思考），因此无法判断
+失败是散文包裹、schema 不匹配、拒绝还是截断；而协议禁止把失败项重跑进同一批次，
+证据只有第一次机会。
+
+已修两点，记录见 [2026-10-05-bcm-failure-evidence.md](../reports/2026-10-05-bcm-failure-evidence.md)：
+
+1. 失败时按 D 组已有做法保存脱敏、限长的模型原文（`raw_output_sha256`、
+   `raw_output_chars`、`think_present`、`answer_text`、`raw_output`），
+   **不改变解析行为**，故不影响已完成运行的有效性；成功路径不写这些字段。
+2. 顺带修掉 `_extract_json_object` 用 `find("{")`/`rfind("}")` 的取法：
+   只有一个花括号组时正常，但模型同时给示例和答案时会把示例内容当真实查询记进
+   候选集且不留痕迹。改为数顶层平衡括号组，多于一个即报 `ambiguous_model_output` 拒绝猜。
+   源分支0c887dd自审确认旧改动只改善诊断。PR20审查版进一步要求完整JSON对象/围栏，拒绝散文单示例；新增三项源分支测试已保留并修正预期，不以提示词代替校验。
+   C 组提示词禁止输出散文，合规回复行为不变。
+
+**已回头审计两个已完成运行**（`2026-10-04-bcm-minimax` 60 条生成记录、
+`2026-10-04-d-minimax`）：未发现散文污染，初筛 6 条命中全为误报
+（`zh2en-eval-09` 的 "todo" 是正常应用名，两条「超长」是 B 组忠实翻译）。
+**既有结论不因此改变。** `en2zh-eval-03` C 组那一题的具体失败原因仍不可知，不作猜测。
+
+验证：离线套件 exit 0，**316 Python + 58 Node**（原 305 + 58），全程付费请求 0。
+
+## 2026-10-05 盲判材料遮蔽强度实测
+
+判定尚未发生（`runs/2026-10-04-bcm-minimax/judgments.jsonl` 仍为空）时，
+审计了 `evaluation/2026-10-04-minimax/` 这批材料的遮蔽强度。
+
+`blind_eval.py:40` 的 `blind_id = sha256(run_id + ':' + task_id + ':' + repo)[:16]`
+**不含 arm**（blind_id 同时充当去重键），而这三个输入值都公开可读，
+因此**不打开 `blind-key.json` 也能重算分组**。实测 233 个 blind_id 中
+**196 个（84%）可确定归属单一组**，A 组 4/4 全部暴露、D 组 95 条可确定。
+
+材料 README 原先把风险写成「映射在同一仓库，判定人可能去翻」，
+把问题说轻了：真实情况是跑一条命令即可还原，与自觉无关。
+已新增 `blind_eval.py --audit-masking` 让工具自报强度（不读 key、不写判定材料），
+并把披露改成实际量级。详见
+[2026-10-05-blind-masking-audit.md](../reports/2026-10-05-blind-masking-audit.md)。
+
+审查修正：私盐只改变ID，公开 task_id/repo 仍可直接匹配来源，233/233 可还原、196 单组归属。当前材料为来源遮蔽，未保证严格盲测。不需要发起人为盐重复操作；判定时隔离分组原始记录与 key，并披露已见信息。
+
+成功零候选组已修复，运行结构上 A→C/M→C 有19题可用、B→C有18题可用；仍需真实判断后才可分析用途差集。最终验证见 docs/reports/2026-10-05-pr19-review.json。
+
+## 2026-10-05 提示词与 pipeline 查询规则矛盾（潜在失败）
+
+`runs/2026-10-04-bcm-minimax/report.md` 的「不能下的结论」里记了一条一直没处理的
+矛盾，本轮把它查实并加了防再犯的检查。
+
+`prompts/c-rewrite.txt:13` 明确许可 `in:description` 与 `stars`
+（「需要限定字段时只用 in:description；stars 可用」），
+而 `e1_pipeline.py:31-32` 对 `in:`/`stars:`/`language:`/`repo:`/`user:`/`org:`
+一律 `raise ValueError`。**模型照提示词做才是错的，失败却会记成模型错误。**
+三组里只有 C 许可（B 是「不准加任何…等」全面禁止）；
+M 只列了三个限定符，`in:description`/`repo:`/`user:`/`org:` 完全未提。
+
+pipeline 的规则是对的：基线 A 是无限定符默认搜索，若任一组能用字段或 stars
+限定，各组搜索空间不同，集合差就不再衡量跨语言改写，与 AGENTS.md 第 23 条
+「不设 stars 下限」方向也相反。
+
+prompts 是冻结材料（protocol：修复另开 `eval.batch_2`），**本轮不修**，
+归属发起人。本轮做的是让矛盾无法被忽略：新增 `e1_materials_check.py`
+与 `test_e1_materials_check.py`（10 项），并在 `materials-status.json`
+以 `file:line` + 原文引用记录意图级判断，由测试断言该行至今未变——
+提示词一旦被修正，测试立即失败并逼迫更新记录。棘轮双向验证通过。
+
+**过程中推翻重写了自己第一版检查器**：它从中文散文猜「允许/禁止」，
+把 C 的「本步不要写 in:readme」和 M 的「不准加…stars:」都判成允许——
+若照单全收就会去修两个不存在的问题。新版只报告机械可验证的
+「是否提到」，不再输出意图判断。
+
+验证：离线套件 exit 0，**336 Python + 58 Node**，付费请求 0。
+已完成两个运行均未触发该矛盾，结论不变。详见
+[2026-10-05-prompt-pipeline-contradiction.md](../reports/2026-10-05-prompt-pipeline-contradiction.md)。
+
+## 2026-10-05 A/B/C/M 运行缺 failures.jsonl
+
+记录形状不一致：D 组运行写 `failures.jsonl`，A/B/C/M 不写，
+而 `schemas/failures.schema.json` 定义了该文件。后果是同一个实验的两类记录
+形状不同，消费方要为 A/B/C/M 特判。
+
+**先澄清：失败信息没有丢**，逐任务失败本来就在 `pipeline.json` 里机器可读
+（B `zh2en-eval-10` 的 422 带 `api_query`、C `en2zh-eval-03` 的 blocked 带 `reason`）。
+问题是「schema 规定的独立账本没生成」，不是「无法诊断」。
+
+`e1_pipeline.py:194` 早已检测失败并据此返回 exit 2，却只交给退出码、不落盘。
+已新增 `failure_rows(result)` 并在 `main()` 写出 `failures.jsonl`：字段全部取自
+已有的 `generation_records` 与 per-task `status`/`errors`/`reason`，不编造；
+遵守 `additionalProperties: false`，一行仅 `run_id`/`task_id`/`arm`/`code`/`message`
+（出问题的 `api_query` 留在 `pipeline.json`）；**空也写文件**，因为缺文件与
+「跑过但没失败」无法区分。
+
+从已记录的 `2026-10-04-bcm-minimax` 派生的 3 行显示：一次查询生成失败会让同一
+`task_id` 出现两行（`bad_response` 与 `blocked`，两个层次），**行数不等于失败任务数**，
+统计须去重 `task_id`。
+
+**没有回填历史运行**：那次运行没产生该文件，事后补等于伪造记录。
+本条只对后续运行生效，历史运行的失败仍从 `pipeline.json` 读。
+
+**顺带发现、本轮不改**：`:194` 判定失败不含 `tasks_partial`，
+即只有 partial 而 `failed_requests` 为 0 时会 exit 0 却有账本行，口径不一致。
+是否让 partial 也算失败属发起人决定。详见
+[2026-10-05-failures-ledger-gap.md](../reports/2026-10-05-failures-ledger-gap.md)。
+
+验证：离线套件 exit 0，**343 Python + 58 Node**（原 336 + 58），付费请求 0。
+
+## 2026-10-05 判定分析漏了协议要求的 B→C
+
+盲判材料即将由发起人判定，`blind_eval.py analyze` 是判定后立刻要跑的一步。
+核对其产出与协议第 6 节要求，发现对不上。
+
+协议第 6 节要求三个比较：`**A→C** 衡量整体辅助效果；**M→C** 更接近相同预算下的
+语言扩展贡献；**B→C** 判断复杂程度是否值得」。修前只产出 `c_minus_a` 与
+`c_minus_m`，**`c_minus_b` 不存在**——而 B→C 正是「这套复杂度值不值得」那个
+产品决策的直接答案。B 的 `suitable` 其实早已算出（`groups['<task>:B']`），
+只是没参与差集。
+
+更严重的是**「完整」标签过宽**：修前只有一个总开关，只看 A/C/M，**完全不看 B**。
+一个任务 B 组判定全部缺失时，A→C 与 M→C 照样标成 `complete`，
+给出了它没有兑现的保证。
+
+已改为**每个比较项各自带完整性**：`c_minus_a`/`c_minus_m`/`c_minus_b` 各自
+判断所需两臂是否完整，不完整写 `{'status':'incomplete-no-comparison','needs':[...]}`
+而**绝不写空列表**（空列表会被读成「这组没有独有合适候选」，那是结论）。
+B 缺失只影响 B→C，不连累 A→C 与 M→C。**D 刻意不做差集**——它走联网助手、
+请求预算不同（模型请求 23 vs 60），协议明确 D 是子集试用不与全量平均混用；
+D 的逐任务集合仍在 `groups` 里可见，并新增 `d_not_differenced` 说明。
+每项带 `protocol_basis: 'E1 protocol section 6'` 使映射可核对。
+
+**用已记录运行的真实任务状态核对（判定内容为模拟，只看结构可得性，非结果）**：
+`zh2en-eval-10`（B partial，GitHub 422）失去 B→C；`en2zh-eval-03`（C blocked，
+模型 JSON 解析失败）三项全失。**20 题里 13 题至少有一项比较不可得**，
+即这批材料最多在约 7 题上给出完整三项比较。是否值得按此规模判定属发起人决定。
+
+验证：离线套件 exit 0，**347 Python + 58 Node**（原 343 + 58），付费请求 0。
+`product_effect` 仍为 `not-concluded`，判定材料与既有运行记录均未改动。详见
+[2026-10-05-analysis-missing-b-comparison.md](../reports/2026-10-05-analysis-missing-b-comparison.md)。
+
+## 2026-10-05 更正：B 组查询长度的三条推断已撤回
+
+上一节（B→C 比较含已测量的查询长度混淆）写入的三条推断
+**已被实跑数据否证，现撤回**：
+
+1. 「B 组查询与 GitHub 关键词检索结构性不匹配」——撤回
+2. 「C−B 被查询长度污染」——撤回
+3. 「B 这一臂被实现成了稻草人」——**与数据相反**
+
+否证数据（`2026-10-04-bcm-minimax`）：
+
+| 组 | 跨题去重仓库 | 合并候选 | per-query（其中生成查询） |
+|---|---|---|---|
+| A | 51 | 70 | 70（0） |
+| **B** | **156** | 212 | 242（**172**） |
+
+`B − A = 106`（`A − B = 1`）。**B 贡献的仓库是 A 的三倍，其中 106 个 A 没有**，
+不可能是稻草人。逐题看，**11/20 题**的 B 译句查询返回 ≥1 条；
+返回 0 的 9 题里有 4 题长度仅 13–21 字符——短查询同样返回 0。
+
+根因是我的探针同时操纵了两个变量：把 193 字符的**完整句子**按词边界截断，
+截断后语义破碎，141/86/65 字符那几行的 0–1 条结果测的是
+「半句话检索不到」，不是「长查询检索不到」。
+
+**唯一仍然成立的一条**：`zh2en-eval-10` 那条 193 字符查询可复现返回
+HTTP 422，为 20 题中的 1 题，该题 `status=partial`。除此之外没有证据表明
+B 组存在系统性长度劣势。
+
+保留这份记录而非悄悄改掉，是为了让下次有人想用「B 查询太长」解释 C−B 数字时，
+先撞见「试过，被否了」。可复用教训：**当探针本身改变了被测对象，
+测出的差异不能归因于你正在操纵的那个变量。**
+完整记录见 [2026-10-05-b-arm-query-length-confound.md](../reports/2026-10-05-b-arm-query-length-confound.md)（该文件已改写为自我推翻记录）。
+
+## 2026-10-05 A/B/C/M 无法产出 latency_cost.jsonl（耗时从未被测量）
+
+把 4 个已记录运行逐个按 schema 校验：**1862 行、0 违规**，记录形状本身健康。
+但 `latency-cost.schema.json` 存在而只有 D 组写了对应文件，A/B/C/M 三个都没有。
+
+根因不是忘了写文件，而是**需要的那个数从来没被采集**：
+`e1_pipeline` 写文件前只有 `started_at`/`finished_at` 两个整轮时间戳，
+全文件没有 `time.monotonic()`；每个 (task, arm) 格子的两半——
+模型生成 `generate(...)` 与 `run_batch` 内的逐题检索——都没计时。
+所以 `elapsed_ms` 没有数据来源，直接造文件只能填 0，那比不写更糟
+（会让人以为「耗时为零」）。
+
+影响：协议第 6 节六项观察项之一的「**成本与等待**」中的「耗时」这一半
+在任何记录里都不存在；WP4-07 停在 `partial` 的理由「真实模型成本/等待未知」
+与此一致。本次的 `model_usage` 有 token 计数（B 输入 8330 / 输出 1989 等），
+但无逐题耗时。
+
+已修（先测量再写文件）：
+- `e1_batch.run_batch` 在正常路径、`except` 异常路径、取消路径三处都写回
+  `elapsed_ms`（取消路径为 0，因为没干活）
+- `e1_pipeline.run_pipeline` 对每次 `generate(...)` 计时并按 (task, arm) 累积
+- 新增 `latency_cost_rows()`，每 (task, arm) 一行，
+  `elapsed_ms` = 检索 + 生成；`github_requests` 取已有 `attempted_requests`；
+  `model_requests` 复用 `summarize_usage` 的 `request_parameters` 判据；
+  `main()` 写出 `latency_cost.jsonl`（空也写）
+- **`visible_cost` 一律不编造**：live 写 `unknown`、fixture 写
+  `fixture-no-model-calls`，与已有 `model_cost: "unknown"` 一致
+
+**未回填历史运行**：三次旧运行的耗时从未被测量，补一个全 0 的文件等于宣称
+当时耗时为零。已确认 `runs/` 零改动。从旧 `pipeline.json` 只读导出形状为
+80 行（20 题 × 4 臂）且 schema 全合法，但 `elapsed_ms` 全 0——正说明不能回填。
+
+验证：`test_e1_pipeline.py` 17 → 24 项，其中一项用会真的 sleep 的 stub 断言
+`elapsed_ms > 0`（证明测的是真实经过时间而非占位 0）；实跑 fixture 得 40 行、
+schema 全合法、四臂齐全；离线套件 exit 0，**354 Python + 58 Node**，付费请求 0。
+详见 [2026-10-05-latency-cost-gap.md](../reports/2026-10-05-latency-cost-gap.md)。
+
+## 2026-10-05 盲判记录无法通过仓库自己的 judgments schema
+
+判定材料即将由发起人判定。核对「判定人产出什么形状的记录」时发现三方字段集不一致：
+
+| 来源 | 字段 |
+|---|---|
+| `judgments.schema.json`（required, addProps:false） | 含 `run_id`/`task_id`/`repo`，**无** `blind_id` |
+| `blind-sheet.md`（每项记录…） | 含 `blind_id`，**无** 那三个身份字段 |
+| `blind_eval.analyze` 实际读取 | `blind_id` + 判定字段 |
+
+差异两边对称：盲判行带 `blind_id` 会被 schema 的 `additionalProperties:false` 拒绝，
+又缺三个必填身份字段。**即：发起人按判定表认真填完，得到的记录无法通过仓库唯一
+声明权威的 schema**（`judgment-guide.md:41`「判定记录字段以本文件加 schemas 为准」）。
+下游要么校验失败，要么绕过校验。
+
+两边形状各自都合理——非盲判定天然知道 task/repo，盲判刻意只知道 `blind_id`。
+缺的是把它们接起来的桥。
+
+已修：
+
+1. 新增 `schemas/judgments-blind.schema.json` 描述盲判输入的真实形状（10 字段，
+   同为 addProps:false），并写明与 `judgments.schema.json` 的分工
+2. 新增 `blind_eval.export_judgments(key, judgments, judge_kind)`：`run_id`/`task_id`/`repo`
+   **从 `blind-key.json` 取**而非编造；导出形状与 `judgments.schema.json` 一致；
+   **不写 arm**（留在 `groups` 供分析，不进记录）；`kind`/`notes` 缺失则**拒绝导出**，
+   不填默认值——`analyze` 不读这两项但 schema 必填，替判定人填值等于伪造他的判断。
+   实测导出全部通过 schema 校验且 arm 未泄漏
+3. 三方漂移棘轮（7 项测试）：判定表字段集必须等于盲判 schema 的 required；
+   `analyze` 读取的每个字段盲判 schema 都必须有描述；并显式断言「盲判行确实无法
+   满足非盲 schema」。双向验证：临时从判定表删 `kind` → 测试失败；还原 → 27/27。
+
+**未改判定材料**：`blind-sheet.md` 与 `evaluation/2026-10-04-minimax/` 一字未改
+（棘轮验证的临时改动已还原）。它的字段集现在被测试**约束**而非被修改。
+
+验证：离线套件 exit 0，**362 Python + 58 Node**（原 354 + 58），付费请求 0。
+详见 [2026-10-05-blind-record-schema-mismatch.md](../reports/2026-10-05-blind-record-schema-mismatch.md)。
+
+2026-10-05 PR19 审查：失败诊断脱敏客户端直接传入密钥；length空回复仍记截断；拒绝散文单示例/数组包装；修正盐审计与零候选组比较。新增提交的耗时台账和盲判记录schema保留。原始运行和冻结材料未改，人工判定未发生。
+## 2026-10-05 E6 的 probe-record schema 不可满足
+
+把「按 schema 校验已记录产物」从 E1 扩到 E2/E3/E6 时，在 E6 找到一个**比前两次
+更严重**的问题：不是工具少产字段，而是 **schema 本身自相矛盾**。
+
+`experiments/E6-api-probe/schemas/probe-record.schema.json` 的 `required` 有 **30** 个
+字段名，`properties` 只描述 **16** 个，`additionalProperties` 却是 `false`。
+那 14 个既 required 又不在 properties 里的字段
+（`run_id`/`started_at`/`finished_at`/`base_url`/`model`/`protocol`/`prompt`/
+`billing_note`/`response_format`/`visible_response_id`/`error_detail`/
+`cache_hits`/`cancelled_before_send`/`max_output_tokens`）
+**被同时要求与禁止——任何对象都无法满足该 schema。**
+
+**为什么一直没发现**：`test_e6_probe.py` 里有一处
+`self.assertEqual(set(record), set(schema["required"]))`，意图正确且一直通过
+（工具确实产出 30 个、required 确实是 30 个），但它**只比对了字段名，
+没有拿 schema 去过一遍记录**。差一步就能抓到。
+
+**方向判断**：先确认哪边有问题——工具产出 30、schema required 30、
+**schema 缺描述的必填字段为 0**（工具无任何 required 缺项），
+即工具产出的是严格超集。那 14 个都是有价值的探测事实。
+所以改 schema，不削工具。
+
+已修：补齐 14 个字段声明（类型取自实测——今日新记录与 2026-09-22 已记录记录
+形状一致），并给 `run_id` 补上 `minLength` 与说明（它本就在 required 里却连
+描述都没有，而仓库另外 12 个 schema 都要求 run_id）。
+`test_e6_probe.py` 新增两个模块级断言：`required - properties` 必须为空
+（无需 jsonschema 即可跑），以及用 jsonschema 真验一遍记录（缺库时回退）。
+
+验证：补声明前今日新记录 INVALID，补声明后 VALID，**2026-09-22 已记录记录也
+VALID**（最强佐证：那份产物从头到尾都对，错的是 schema）；只带 30 个必填键的
+最小对象 additionalProperties 错误 0；重新引入原缺陷测试失败、还原 14/14 通过；
+**全仓库 13 个 schema 现已全部可满足**（E6 是唯一破损的）。
+E3 的 observation.schema.json 有 9 个 required 未描述但 addl=true，不构成破损，
+本轮不动。`e6_probe.py` 行为未改，只改 schema 与测试。
+
+离线套件 exit 0，362 Python + 58 Node，付费请求 0，未改任何已记录产物。
+E6 探测本身仍是「未运行」，本轮只修好它的记录契约。详见
+[2026-10-05-e6-schema-unsatisfiable.md](../reports/2026-10-05-e6-schema-unsatisfiable.md)。
+
+## 2026-10-05 schema 一致性扫描收口
+
+把「按 schema 校验已记录产物」扩到 E2/E3/E5/E6/E8 后逐目录结案：
+
+| 目录 | 结论 |
+|---|---|
+| E1 | 本会话已修 4 处（failures / latency_cost / judgments-blind / B→C） |
+| **E6** | **真实缺陷：schema 不可满足，已修** |
+| E3 | **一个假发现，已排除** |
+| E2 | 无产物，会话未发生，符合预期 |
+| E5 / E8 | 无 schema，但各有消费者自带检查，不存在被破坏的契约 |
+
+**E3 的假发现**：`observations-2026-09-21.jsonl` 机械比对下不满足
+`observation.schema.json`（有 `frag` 无 `frag_id`，缺 11 个必填字段）。
+但 `test_observations.py` 文档字符串写明它是**「骨架完整且诚实为空」**的模板，
+判定列全为 `未运行`——没有 `judge`/`judged_at` 正是诚实而非缺漏；真正的对照运行
+是 `runs/2026-09-22-w6/observations.jsonl`，它**通过** schema。
+若照机械结果动手「修」，会给一份刻意留空的模板补上伪造的 `judge`/`judged_at`，
+正好违反「不得伪造实验结果、未运行就写未运行」。
+
+**判别方法**（已写入记录）：机械比对易出假阳性，先分清
+「已完成记录」还是「文档化的空模板」——看有无消费者、消费者是否声明按设计为空、
+时间戳是否早于首次真实运行。三条都指向模板则不改，只记录。
+
+**全仓库 13 个 schema 现已全部可满足。** 本轮未改任何已记录产物、
+提示词或冻结材料。详见
+[2026-10-05-schema-sweep-closeout.md](../reports/2026-10-05-schema-sweep-closeout.md)。

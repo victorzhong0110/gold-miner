@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "type": "object",
+  "description": "盲判输入记录。judgments.schema.json 描述的是回填后的记录（带 run_id/task_id/repo），而判定人在盲判阶段不知道来源组，只能按 blind_id 记录。两套形状此前互不兼容：盲判记录含 blind_id，会被 judgments.schema.json 的 additionalProperties:false 拒绝；同时缺 run_id/task_id/repo 三个必填字段。本文件描述盲判输入的真实形状，回填用 blind_eval.export_judgments。",
+  "required": ["blind_id", "purpose_fit", "hard_conditions", "kind", "novel_to_judge", "worth_following", "reason", "judge", "judged_at", "notes"],
+  "properties": {
+    "blind_id": {"type": "string", "minLength": 1, "description": "遮挡标识，对应 blind-candidates.jsonl；同一仓库跨组出现只判一次。"},
+    "purpose_fit": {"enum": ["yes", "partial", "no"], "type": "string"},
+    "hard_conditions": {"enum": ["satisfied", "conflict", "unknown"], "type": "string"},
+    "kind": {"enum": ["tool", "library", "tutorial", "list", "mirror", "other"], "type": "string", "description": "judge 按 judgment-guide.md 第 2 节填写；analyze 不读它，但回填 judgments.jsonl 时 schema 必填。"},
+    "novel_to_judge": {"enum": ["yes", "no", "unknown"], "type": "string"},
+    "worth_following": {"enum": ["yes", "no", "unknown"], "type": "string"},
+    "reason": {"type": "string", "minLength": 1, "description": "必填。真实使用者价值判断与技术判断分列。"},
+    "judge": {"type": "string", "minLength": 1},
+    "judged_at": {"type": "string", "format": "date-time"},
+    "notes": {"type": "string", "description": "可为空字符串；先前见过本批结果或分组的判定人须在此披露。"}
+  }
+}
