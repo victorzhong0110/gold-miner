@@ -100,7 +100,7 @@
       "id": "WP2-02",
       "title": "运行 E1 A/B/C/M",
       "status": "partial",
-      "evidence": "A 组和 README 配对有历史 live 记录；B/C/M 尚未实测",
+      "evidence": "2026-10-04 MiniMax-M3 实跑 eval.batch_1（runs/2026-10-04-bcm-minimax）：A 20/20、B 19+1部分、C 19+1阻断、M 20/20；模型请求60、GitHub请求208；人工用途判断未运行；见 docs/reports/2026-10-04-e1-bcm-run.json",
       "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
@@ -110,7 +110,7 @@
       "id": "WP2-03",
       "title": "运行强对照 D",
       "status": "partial",
-      "evidence": "2026-10-04 MiniMax-M3 D组20/20题实跑；169存在、3个404；人工用途判断与同批B/C/M未运行",
+      "evidence": "2026-10-04 MiniMax-M3 D组20/20题实跑；169存在、3个404；同日B/C/M已实跑（runs/2026-10-04-bcm-minimax）；人工用途判断未运行",
       "owner": "Owner: personal operations/decisions; Codex: prepared engineering/materials",
       "merged": true,
       "actual_acceptance": "not-complete",
@@ -538,7 +538,7 @@
       "S6"
     ],
     "S2": "current official mainland docs list .cn; added source/region guidance",
-    "S4": "owner-decided; D live run complete; human suitability and B/C/M pending",
+    "S4": "owner-decided; D and A/B/C/M live runs complete (2026-10-04); human suitability pending",
     "offline": "passed",
     "browser": "passed",
     "report": "docs/reports/2026-10-04-runtime-fixes.md",
@@ -564,6 +564,22 @@
     "status": "reasoning-compatible-offline-tested",
     "max_tokens": 2048,
     "default_timeout_seconds": 60,
-    "live": "not-run"
+    "live": "run 2026-10-04 (see bcm_run); timeout 300 via BYOK_TIMEOUT_SECONDS for that run"
+  },
+  "bcm_run": {
+    "status": "complete-with-recorded-failures",
+    "run_id": "2026-10-04-bcm-minimax",
+    "batch": "eval.batch_1",
+    "model": "MiniMax-M3",
+    "source_sha": "48b074dec34dfa093b072d1693402fb09804d851",
+    "settings": "experiments/E1-cross-language-search/run-settings-2026-10-04-bcm-minimax.json",
+    "model_requests": 60,
+    "github_requests": 208,
+    "github_failed": 1,
+    "generation_failed": 1,
+    "report": "docs/reports/2026-10-04-e1-bcm-run.json",
+    "human_judgment": "not-run",
+    "cost": "unknown",
+    "effectiveness": "not-concluded"
   }
 }

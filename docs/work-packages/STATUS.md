@@ -20,7 +20,7 @@ R1（模型缓存恢复）、R2（取消终态）、R3（导入链接）已修�
 | WP1-06 | 准备 E2/E3 正式材料 | partial | E2 会话包、E3 真实片段已保留；正式多轮材料和实际会话待补 |
 | WP1-07 | 离线基线与操作说明 | verified | 统一离线套件含 E6/E8/内容脚本/源码与包一致性 |
 | WP2-01 | 预先登记判断标准 | partial | protocol、judgment-guide 已有标准；正式新批次须预登记具体模型 |
-| WP2-02 | 运行 E1 A/B/C/M | partial | A 组和 README 配对有历史 live 记录；B/C/M 尚未实测 |
+| WP2-02 | 运行 E1 A/B/C/M | partial | 2026-10-04 MiniMax-M3 实跑 eval.batch_1（runs/2026-10-04-bcm-minimax）：A 20/20、B 19+1部分、C 19+1阻断、M 20/20；人工用途判断未运行。见 docs/reports/2026-10-04-e1-bcm-run.json |
 | WP2-03 | 运行强对照 D | partial | 2026-10-04 MiniMax-M3 实跑 eval.batch_1 20/20 题（runs/2026-10-04-d-minimax）：169 个仓库存在，3 个 404 幻觉。人工用途判断未运行。见 docs/reports/2026-10-04-e1-d-run.json |
 | WP2-04 | 盲判和增量分析 | partial | blind_eval.py 已实现去重、遮蔽与回填；真人盲判尚未执行 |
 | WP2-05 | 运行 E2a | pending-human | 两对自检及 4–6 人会话未发生 |
@@ -87,3 +87,9 @@ Chromium 首跑发现真实设置页消息带有 sender.tab，旧权限判断使
 PR15已合并（065ff0605cac5f641c5fd6511bda34bf8f11397a），原始记录未修改。逐题prompt/input哈希及统计离线核对一致；修复续跑混入参数/题集、截断答案被当成功、取消输出上限重发的路径。B/C/M已补2048token/思考剥离/截断拒绝，默认60秒（环境可覆盖）；未调用实际模型。机器账本已同步D实跑状态，人工用途判断仍未运行。
 
 本次续作完整离线296 Python + 58 Node通过（docs/reports/bcm-validation-2026-10-04.json）；付费请求0。B/C/M入口要求独立run-id和新输出目录，保留源码SHA/配置哈希；实际运行与人工判断留在发起人环境。
+
+## 2026-10-04 A/B/C/M 实跑
+
+2026-10-04 A/B/C/M 已用 MiniMax-M3 实跑 eval.batch_1（`runs/2026-10-04-bcm-minimax`，冻结设置 `run-settings-2026-10-04-bcm-minimax.json`，源码 SHA 48b074d）：A 20/20、B 19 完成+1 部分（GitHub 422）、C 19 完成+1 阻断（模型输出 JSON 解析失败）、M 20/20；模型请求 60，GitHub 请求 208（失败 1）；题级合并候选 A70/B212/C323/M127，与同日 D 组仓库题级交集 A0/B2/C9/M0。人工用途判断未运行，费用未知，不下跨语言增益结论。
+
+运行前修复并提交（ae5eeea）：GitHub 搜索间隔原为 0（会超过每分钟 30 次限额）、输出目录非空即拒绝（保护 D 目录）、冻结设置与客户端参数核对、记录可见 token/耗时。冻结设置提交 48b074d（BYOK_TIMEOUT_SECONDS=300，2048 输出 token，不自动重试，无密钥）。失败未重跑：B zh2en-eval-10 长句直译 GitHub 422；C en2zh-eval-03 模型输出 JSON 解析失败（原文未保存）。可见 token：B 输入8330/输出1989，C 10894/4714，M 10170/4834；费用未知。[报告](../../experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/report.md)，[机器记录](../reports/2026-10-04-e1-bcm-run.json)。WP2-04 盲判仍待发起人。
