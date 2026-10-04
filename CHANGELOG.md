@@ -19,6 +19,11 @@
   harness 接 `--d-input`。D 衡量「换更强、有人类在场的系统能做到什么」，自动化会毁掉对照意义，
   故工具不执行助手。命中／幻觉／未核实三者分开计数，未记录任务保持 owner-blocked。
 - 离线套件 293 Python + 65 Node 通过；Chromium fixture 验收 12 项全绿（新增 3 项）。
+- **S6 已用真实模型验证**：`api.minimaxi.com` / `MiniMax-M3`，`finish_reason: stop`，
+  生产解析代码得到 4 条中英扩展。同时修正描述——256 是**临界值**而非一直坏：
+  三条查询挂两条，表现为「模型时好时坏」。见
+  [验证记录](docs/reports/2026-10-05-live-model-verification.md)。
+  这是连通性证据，**不是 H1 增益证据**。
 
 ## 0.1.0-trial — review follow-up (Draft PR #2)
 
