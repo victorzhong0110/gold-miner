@@ -15,6 +15,21 @@ from query_generation import E1, MAX_OUTPUT_TOKENS, generate, query_lang, other_
 DEFAULT_GITHUB_SLEEP_SECONDS = 3.0
 
 
+# Qualifiers the main comparison forbids in a variant query.
+#
+# The comparison is A (plain default search) against B/C/M. If any arm may use
+# field, star or repo qualifiers, it searches a different space than A and the
+# difference stops measuring cross-language rewriting. So the prompts and this
+# rule must agree; e1_materials_check.py exists to catch them disagreeing.
+FORBIDDEN_QUERY_SYNTAX = re.compile(r'\b(?:language|in|stars|repo|user|org):', re.I)
+FORBIDDEN_REPO_TOKEN = re.compile(r'\b[\w.-]+/[\w.-]+\b')
+
+
+def forbidden_query_syntax(q: str) -> bool:
+    """True when a variant query would break the main comparison."""
+    return bool(FORBIDDEN_QUERY_SYNTAX.search(q) or FORBIDDEN_REPO_TOKEN.search(q))
+
+
 def search_variants(task: dict, arm: str, generated: list[dict]) -> list[dict]:
     original = build_a_variants(task)
     source, target = query_lang(task['direction']), other_lang(task['direction'])
@@ -28,7 +43,7 @@ def search_variants(task: dict, arm: str, generated: list[dict]) -> list[dict]:
         q = q.strip()
         if row.get('api_query', q) != q:
             raise ValueError('hidden API query changes are forbidden')
-        if re.search(r'\b(?:language|in|stars|repo|user|org):', q, re.I) or re.search(r'\b[\w.-]+/[\w.-]+\b', q):
+        if forbidden_query_syntax(q):
             raise ValueError('main comparison cannot inject field, star or repo filters')
         if q in seen:
             continue

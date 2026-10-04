@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased — 2026-10-05 提示词与 pipeline 查询规则矛盾
+
+- 查实一条已记录但未处理的矛盾：`prompts/c-rewrite.txt:13` 许可
+  `in:description` 与 `stars`，而 `e1_pipeline.py:31-32` 对 `in:`/`stars:` 等
+  一律 `ValueError`。模型照提示词做才是错的，失败却会记成模型错误。
+  三组中仅 C 许可；M 未提 `in:description`/`repo:`/`user:`/`org:`；B 已全面禁止。
+- prompts 属冻结材料，修复应落 `eval.batch_2`，本轮不改，只加防再犯检查：
+  `e1_materials_check.py` + `test_e1_materials_check.py`（10 项），
+  `materials-status.json` 以 `file:line` + 原文引用记录，测试断言引用未变。
+- 规则从 `e1_pipeline.forbidden_query_syntax` 读取，不在检查器里复刻。
+- **推翻重写了自己第一版检查器**：它从中文散文猜意图，把 C 的「本步不要写
+  in:readme」和 M 的「不准加…stars:」都判成允许。新版只报告「是否提到」，
+  意图判断改由人工记录 + 引用 + 棘轮测试承担。
+- 离线套件 336 Python + 58 Node 通过，付费请求 0。
+
 ## Unreleased — 2026-10-05 盲判材料遮蔽强度实测与私密 salt 机制
 
 - 实测 `evaluation/2026-10-04-minimax/` 的遮蔽强度：233 个 blind_id 中

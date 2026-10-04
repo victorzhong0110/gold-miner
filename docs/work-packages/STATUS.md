@@ -148,3 +148,34 @@ PR15已合并（065ff0605cac5f641c5fd6511bda34bf8f11397a），原始记录未修
 验证：离线套件 exit 0，**326 Python + 58 Node**（原 316 + 58），付费请求 0。
 过程中自查出并修正一处自身缺陷：审计最初把 salt 传给了「攻击者」的重算，
 导致加 salt 后仍报 196 可还原——威胁模型应为「持有公开数据但没有 salt 的人」。
+
+## 2026-10-05 提示词与 pipeline 查询规则矛盾（潜在失败）
+
+`runs/2026-10-04-bcm-minimax/report.md` 的「不能下的结论」里记了一条一直没处理的
+矛盾，本轮把它查实并加了防再犯的检查。
+
+`prompts/c-rewrite.txt:13` 明确许可 `in:description` 与 `stars`
+（「需要限定字段时只用 in:description；stars 可用」），
+而 `e1_pipeline.py:31-32` 对 `in:`/`stars:`/`language:`/`repo:`/`user:`/`org:`
+一律 `raise ValueError`。**模型照提示词做才是错的，失败却会记成模型错误。**
+三组里只有 C 许可（B 是「不准加任何…等」全面禁止）；
+M 只列了三个限定符，`in:description`/`repo:`/`user:`/`org:` 完全未提。
+
+pipeline 的规则是对的：基线 A 是无限定符默认搜索，若任一组能用字段或 stars
+限定，各组搜索空间不同，集合差就不再衡量跨语言改写，与 AGENTS.md 第 23 条
+「不设 stars 下限」方向也相反。
+
+prompts 是冻结材料（protocol：修复另开 `eval.batch_2`），**本轮不修**，
+归属发起人。本轮做的是让矛盾无法被忽略：新增 `e1_materials_check.py`
+与 `test_e1_materials_check.py`（10 项），并在 `materials-status.json`
+以 `file:line` + 原文引用记录意图级判断，由测试断言该行至今未变——
+提示词一旦被修正，测试立即失败并逼迫更新记录。棘轮双向验证通过。
+
+**过程中推翻重写了自己第一版检查器**：它从中文散文猜「允许/禁止」，
+把 C 的「本步不要写 in:readme」和 M 的「不准加…stars:」都判成允许——
+若照单全收就会去修两个不存在的问题。新版只报告机械可验证的
+「是否提到」，不再输出意图判断。
+
+验证：离线套件 exit 0，**336 Python + 58 Node**，付费请求 0。
+已完成两个运行均未触发该矛盾，结论不变。详见
+[2026-10-05-prompt-pipeline-contradiction.md](../reports/2026-10-05-prompt-pipeline-contradiction.md)。
