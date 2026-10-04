@@ -1,0 +1,146 @@
+{
+  "run_id": "2026-10-04-bcm-minimax",
+  "batch": "eval.batch_1",
+  "materials_commit": "48b074dec34dfa093b072d1693402fb09804d851",
+  "frozen_settings": "experiments/E1-cross-language-search/run-settings-2026-10-04-bcm-minimax.json",
+  "settings_sha256": "e27d571d47a257050ecb62f0ff723d06640e5cfb49b985cc15a03c0fa3446350",
+  "freeze": {
+    "eval_frozen_commit": "ae5eeea11aff381b1f91bf941cb1368c18803f25",
+    "prompts_frozen_commit": "ae5eeea11aff381b1f91bf941cb1368c18803f25",
+    "seed_set_frozen_commit": "ae5eeea11aff381b1f91bf941cb1368c18803f25",
+    "run_settings_commit": "ae5eeea11aff381b1f91bf941cb1368c18803f25",
+    "source_sha_for_code": "ae5eeea11aff381b1f91bf941cb1368c18803f25",
+    "prompt_version": "prompts/{b-translate,c-rewrite,m-rewrite}.txt @ ae5eeea11aff381b1f91bf941cb1368c18803f25",
+    "material_sha256": {
+      "queries.yaml": "ef56c36ba2e418b8275045080fac31a541f21d57ff63ac90099025b0e84927f6",
+      "prompts/b-translate.txt": "e694f59abbf8cd2fbdfdd54593c2d29f30b31e92f610689d1d532dd016fea489",
+      "prompts/c-rewrite.txt": "9c6d37741f4e21fbd07c78125e16567a5e3871bf01d709e688d6d1c062b0daa4",
+      "prompts/m-rewrite.txt": "0971d993b3d3322016d5daf51c8a58c11d39e7c4f5eefc5a74bc8019af6e0ca7",
+      "seed-set.jsonl": "4742d1976699cbfd2a355044de580d66c00bb6d6b3cd662ab6ed2ffb684af2b5"
+    },
+    "status": "frozen-before-run"
+  },
+  "prompt_version": {
+    "B": "experiments/E1-cross-language-search/prompts/b-translate.txt sha256_16:e694f59abbf8cd2f",
+    "C": "experiments/E1-cross-language-search/prompts/c-rewrite.txt sha256_16:9c6d37741f4e21fb",
+    "M": "experiments/E1-cross-language-search/prompts/m-rewrite.txt sha256_16:0971d993b3d33220"
+  },
+  "model": "MiniMax-M3",
+  "base_url_host": "api.minimax.cn",
+  "request_parameters": {
+    "model": "MiniMax-M3",
+    "base_url_host": "api.minimax.cn",
+    "max_tokens": 2048,
+    "timeout_seconds": 300.0,
+    "max_model_requests": 1,
+    "automatic_retries": 0
+  },
+  "reading_setup": "reading-baseline.md v1",
+  "reading_applied": false,
+  "method": [
+    "A",
+    "B",
+    "C",
+    "M"
+  ],
+  "field_config": "default",
+  "requested_budget": {
+    "B": {
+      "description": "原文 1 条加另一语言忠实翻译 1 条",
+      "max_github_requests": 2,
+      "max_model_requests": 1
+    },
+    "A": {
+      "description": "原查询默认仓库搜索",
+      "max_github_requests": 1,
+      "max_model_requests": 0
+    },
+    "C": {
+      "description": "原查询加最多 3 条扩展，其中 2 条用另一语言",
+      "max_github_requests": 4,
+      "max_model_requests": 1
+    },
+    "D": {
+      "description": "联网 AI 强对照。2026-10-04 发起人决定不设任务子集上限，跑满 eval.batch_1，结果不与未同时运行的组做全量平均。",
+      "max_github_requests": 0,
+      "max_model_requests": "unknown-by-tool",
+      "task_cap": null,
+      "note": "可见模型请求与服务端 web_search 按响应计数；看不见的内部调用和费用记未知。见 docs/decisions/0004-minimax-d-group.md。"
+    },
+    "M": {
+      "description": "原查询加最多 3 条同语言改写",
+      "max_github_requests": 4,
+      "max_model_requests": 1
+    }
+  },
+  "github_sleep_seconds": 3.0,
+  "actual_requests": {
+    "A": {
+      "github": 20,
+      "model": 0
+    },
+    "B": {
+      "github": 40,
+      "model": 20
+    },
+    "C": {
+      "github": 76,
+      "model": 20
+    },
+    "M": {
+      "github": 72,
+      "model": 20
+    }
+  },
+  "visible_tokens": {
+    "B": {
+      "prompt_tokens": 8330,
+      "completion_tokens": 1989,
+      "reasoning_tokens": 841,
+      "cached_prompt_tokens": 5006,
+      "requests_without_usage": 0
+    },
+    "C": {
+      "prompt_tokens": 10894,
+      "completion_tokens": 4714,
+      "reasoning_tokens": 1579,
+      "cached_prompt_tokens": 4114,
+      "requests_without_usage": 0
+    },
+    "M": {
+      "prompt_tokens": 10170,
+      "completion_tokens": 4834,
+      "reasoning_tokens": 1037,
+      "cached_prompt_tokens": 4864,
+      "requests_without_usage": 0
+    }
+  },
+  "cost": "unknown",
+  "started_at": "2026-10-04T13:47:41Z",
+  "finished_at": "2026-10-04T14:05:26Z",
+  "errors": [
+    {
+      "task_id": "zh2en-eval-10",
+      "stage": "github_search",
+      "code": "HTTPError: HTTP Error 422: Unprocessable Entity",
+      "api_query": "I need a tool that can automatically back up photos from my phone to my home computer, preferably runs on its own when the computer starts up so I don't have to manually transfer them each time",
+      "arm": "B"
+    },
+    {
+      "task_id": "en2zh-eval-03",
+      "stage": "query_generation",
+      "code": "bad_response",
+      "notes": "model output JSON parse failed",
+      "arm": "C"
+    }
+  ],
+  "human_judgment": "未运行",
+  "product_effect": "not-evaluated",
+  "artifacts": [
+    "pipeline.json",
+    "generation.jsonl",
+    "candidates.jsonl",
+    "judgments.jsonl",
+    "report.md"
+  ]
+}

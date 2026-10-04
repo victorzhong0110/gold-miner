@@ -1,0 +1,2454 @@
+{
+  "run_id": "2026-10-04-bcm-minimax",
+  "mode": "live",
+  "links": {
+    "43710689071cc407": [
+      {
+        "arm": "A",
+        "rank": 1,
+        "task_id": "zh2en-eval-01",
+        "repo": "13429837441/localshare"
+      },
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "zh2en-eval-01",
+        "repo": "13429837441/localshare"
+      },
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "zh2en-eval-01",
+        "repo": "13429837441/localshare"
+      },
+      {
+        "arm": "M",
+        "rank": 1,
+        "task_id": "zh2en-eval-01",
+        "repo": "13429837441/localshare"
+      }
+    ],
+    "dde7ea7bb5686fa1": [
+      {
+        "arm": "A",
+        "rank": 2,
+        "task_id": "zh2en-eval-01",
+        "repo": "lumiagg/transportfile"
+      },
+      {
+        "arm": "B",
+        "rank": 3,
+        "task_id": "zh2en-eval-01",
+        "repo": "lumiagg/transportfile"
+      },
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "zh2en-eval-01",
+        "repo": "lumiagg/transportfile"
+      },
+      {
+        "arm": "M",
+        "rank": 5,
+        "task_id": "zh2en-eval-01",
+        "repo": "lumiagg/transportfile"
+      }
+    ],
+    "ff6dfcbc05e8c0b5": [
+      {
+        "arm": "A",
+        "rank": 3,
+        "task_id": "zh2en-eval-01",
+        "repo": "thomajesty/lantransfer"
+      },
+      {
+        "arm": "B",
+        "rank": 5,
+        "task_id": "zh2en-eval-01",
+        "repo": "thomajesty/lantransfer"
+      }
+    ],
+    "1084e69ea66bccb4": [
+      {
+        "arm": "A",
+        "rank": 4,
+        "task_id": "zh2en-eval-01",
+        "repo": "nekomorph-woo/relay3"
+      }
+    ],
+    "899cf0f40e32d5ba": [
+      {
+        "arm": "A",
+        "rank": 5,
+        "task_id": "zh2en-eval-01",
+        "repo": "chengcheng84/rustysend"
+      }
+    ],
+    "206313bf9c72c775": [
+      {
+        "arm": "A",
+        "rank": 1,
+        "task_id": "zh2en-eval-03",
+        "repo": "cirosantilli/china-dictatorship"
+      },
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "zh2en-eval-03",
+        "repo": "cirosantilli/china-dictatorship"
+      },
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "zh2en-eval-03",
+        "repo": "cirosantilli/china-dictatorship"
+      },
+      {
+        "arm": "M",
+        "rank": 1,
+        "task_id": "zh2en-eval-03",
+        "repo": "cirosantilli/china-dictatorship"
+      }
+    ],
+    "786039e786137c6c": [
+      {
+        "arm": "A",
+        "rank": 2,
+        "task_id": "zh2en-eval-03",
+        "repo": "gege-circle/.github"
+      },
+      {
+        "arm": "B",
+        "rank": 2,
+        "task_id": "zh2en-eval-03",
+        "repo": "gege-circle/.github"
+      },
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "zh2en-eval-03",
+        "repo": "gege-circle/.github"
+      },
+      {
+        "arm": "M",
+        "rank": 2,
+        "task_id": "zh2en-eval-03",
+        "repo": "gege-circle/.github"
+      }
+    ],
+    "59dc5f751eaeb9f4": [
+      {
+        "arm": "A",
+        "rank": 3,
+        "task_id": "zh2en-eval-03",
+        "repo": "cirosantilli/china-dictatroship-7"
+      },
+      {
+        "arm": "B",
+        "rank": 3,
+        "task_id": "zh2en-eval-03",
+        "repo": "cirosantilli/china-dictatroship-7"
+      },
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "zh2en-eval-03",
+        "repo": "cirosantilli/china-dictatroship-7"
+      },
+      {
+        "arm": "M",
+        "rank": 3,
+        "task_id": "zh2en-eval-03",
+        "repo": "cirosantilli/china-dictatroship-7"
+      }
+    ],
+    "d8f4f4a18927cbba": [
+      {
+        "arm": "A",
+        "rank": 4,
+        "task_id": "zh2en-eval-03",
+        "repo": "mrfwq7lwnpzjavv5v6eo/cihna-dictattorshrip-8"
+      },
+      {
+        "arm": "B",
+        "rank": 4,
+        "task_id": "zh2en-eval-03",
+        "repo": "mrfwq7lwnpzjavv5v6eo/cihna-dictattorshrip-8"
+      },
+      {
+        "arm": "M",
+        "rank": 4,
+        "task_id": "zh2en-eval-03",
+        "repo": "mrfwq7lwnpzjavv5v6eo/cihna-dictattorshrip-8"
+      }
+    ],
+    "21fb5cc2fdc0d2a8": [
+      {
+        "arm": "A",
+        "rank": 5,
+        "task_id": "zh2en-eval-03",
+        "repo": "panbinibn/openpacketfix_"
+      },
+      {
+        "arm": "B",
+        "rank": 5,
+        "task_id": "zh2en-eval-03",
+        "repo": "panbinibn/openpacketfix_"
+      },
+      {
+        "arm": "M",
+        "rank": 5,
+        "task_id": "zh2en-eval-03",
+        "repo": "panbinibn/openpacketfix_"
+      }
+    ],
+    "da0417c7c257f853": [
+      {
+        "arm": "A",
+        "rank": 1,
+        "task_id": "zh2en-eval-04",
+        "repo": "zhongmiao0706/numberone-mm"
+      },
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "zh2en-eval-04",
+        "repo": "zhongmiao0706/numberone-mm"
+      },
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "zh2en-eval-04",
+        "repo": "zhongmiao0706/numberone-mm"
+      },
+      {
+        "arm": "M",
+        "rank": 1,
+        "task_id": "zh2en-eval-04",
+        "repo": "zhongmiao0706/numberone-mm"
+      }
+    ],
+    "3ebb48040debe1cb": [
+      {
+        "arm": "A",
+        "rank": 2,
+        "task_id": "zh2en-eval-04",
+        "repo": "cirosantilli/china-dictatorship"
+      },
+      {
+        "arm": "B",
+        "rank": 2,
+        "task_id": "zh2en-eval-04",
+        "repo": "cirosantilli/china-dictatorship"
+      },
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "zh2en-eval-04",
+        "repo": "cirosantilli/china-dictatorship"
+      },
+      {
+        "arm": "M",
+        "rank": 3,
+        "task_id": "zh2en-eval-04",
+        "repo": "cirosantilli/china-dictatorship"
+      }
+    ],
+    "8142d4fb76c5119d": [
+      {
+        "arm": "A",
+        "rank": 3,
+        "task_id": "zh2en-eval-04",
+        "repo": "gege-circle/.github"
+      },
+      {
+        "arm": "B",
+        "rank": 3,
+        "task_id": "zh2en-eval-04",
+        "repo": "gege-circle/.github"
+      },
+      {
+        "arm": "M",
+        "rank": 5,
+        "task_id": "zh2en-eval-04",
+        "repo": "gege-circle/.github"
+      }
+    ],
+    "e4068f275274822a": [
+      {
+        "arm": "A",
+        "rank": 4,
+        "task_id": "zh2en-eval-04",
+        "repo": "cirosantilli/china-dictatroship-7"
+      },
+      {
+        "arm": "B",
+        "rank": 4,
+        "task_id": "zh2en-eval-04",
+        "repo": "cirosantilli/china-dictatroship-7"
+      }
+    ],
+    "70ecc14f91e1527e": [
+      {
+        "arm": "A",
+        "rank": 5,
+        "task_id": "zh2en-eval-04",
+        "repo": "mrfwq7lwnpzjavv5v6eo/cihna-dictattorshrip-8"
+      },
+      {
+        "arm": "B",
+        "rank": 5,
+        "task_id": "zh2en-eval-04",
+        "repo": "mrfwq7lwnpzjavv5v6eo/cihna-dictattorshrip-8"
+      }
+    ],
+    "4d8a3e2b26b7cf81": [
+      {
+        "arm": "A",
+        "rank": 1,
+        "task_id": "zh2en-eval-05",
+        "repo": "ron159/igestures"
+      },
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "zh2en-eval-05",
+        "repo": "ron159/igestures"
+      },
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "zh2en-eval-05",
+        "repo": "ron159/igestures"
+      },
+      {
+        "arm": "M",
+        "rank": 1,
+        "task_id": "zh2en-eval-05",
+        "repo": "ron159/igestures"
+      }
+    ],
+    "926c5c70c1acd624": [
+      {
+        "arm": "A",
+        "rank": 2,
+        "task_id": "zh2en-eval-05",
+        "repo": "inonvation/cad-gesture"
+      },
+      {
+        "arm": "B",
+        "rank": 3,
+        "task_id": "zh2en-eval-05",
+        "repo": "inonvation/cad-gesture"
+      },
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "zh2en-eval-05",
+        "repo": "inonvation/cad-gesture"
+      },
+      {
+        "arm": "M",
+        "rank": 4,
+        "task_id": "zh2en-eval-05",
+        "repo": "inonvation/cad-gesture"
+      }
+    ],
+    "66afe3fb0ea69321": [
+      {
+        "arm": "A",
+        "rank": 3,
+        "task_id": "zh2en-eval-05",
+        "repo": "decajoin/mouse-gestures"
+      },
+      {
+        "arm": "B",
+        "rank": 5,
+        "task_id": "zh2en-eval-05",
+        "repo": "decajoin/mouse-gestures"
+      }
+    ],
+    "f00afd728cefa0af": [
+      {
+        "arm": "A",
+        "rank": 4,
+        "task_id": "zh2en-eval-05",
+        "repo": "szboboxing/mouse-gesture-actions"
+      }
+    ],
+    "b710c8742f7e33c4": [
+      {
+        "arm": "A",
+        "rank": 5,
+        "task_id": "zh2en-eval-05",
+        "repo": "ubuchow/mousegesture"
+      }
+    ],
+    "318f9637cc566a66": [
+      {
+        "arm": "A",
+        "rank": 1,
+        "task_id": "zh2en-eval-06",
+        "repo": "guoyu07/thinksns-installer-plugin"
+      },
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "zh2en-eval-06",
+        "repo": "guoyu07/thinksns-installer-plugin"
+      },
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "zh2en-eval-06",
+        "repo": "guoyu07/thinksns-installer-plugin"
+      },
+      {
+        "arm": "M",
+        "rank": 1,
+        "task_id": "zh2en-eval-06",
+        "repo": "guoyu07/thinksns-installer-plugin"
+      }
+    ],
+    "574402c889baedad": [
+      {
+        "arm": "A",
+        "rank": 1,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/x86-bare-metal-examples"
+      },
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/x86-bare-metal-examples"
+      },
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/x86-bare-metal-examples"
+      },
+      {
+        "arm": "M",
+        "rank": 1,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/x86-bare-metal-examples"
+      }
+    ],
+    "a71f499875ecfa0b": [
+      {
+        "arm": "A",
+        "rank": 2,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/china-dictatorship"
+      },
+      {
+        "arm": "B",
+        "rank": 2,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/china-dictatorship"
+      },
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/china-dictatorship"
+      },
+      {
+        "arm": "M",
+        "rank": 2,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/china-dictatorship"
+      }
+    ],
+    "64f642fa260ab5e9": [
+      {
+        "arm": "A",
+        "rank": 3,
+        "task_id": "zh2en-eval-10",
+        "repo": "gege-circle/.github"
+      },
+      {
+        "arm": "B",
+        "rank": 3,
+        "task_id": "zh2en-eval-10",
+        "repo": "gege-circle/.github"
+      },
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "zh2en-eval-10",
+        "repo": "gege-circle/.github"
+      },
+      {
+        "arm": "M",
+        "rank": 3,
+        "task_id": "zh2en-eval-10",
+        "repo": "gege-circle/.github"
+      }
+    ],
+    "73c4979e2d01808b": [
+      {
+        "arm": "A",
+        "rank": 4,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/china-dictatroship-7"
+      },
+      {
+        "arm": "B",
+        "rank": 4,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/china-dictatroship-7"
+      },
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/china-dictatroship-7"
+      },
+      {
+        "arm": "M",
+        "rank": 4,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/china-dictatroship-7"
+      }
+    ],
+    "cc53fddad50475ae": [
+      {
+        "arm": "A",
+        "rank": 5,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/cirosantilli"
+      },
+      {
+        "arm": "B",
+        "rank": 5,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/cirosantilli"
+      },
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/cirosantilli"
+      },
+      {
+        "arm": "M",
+        "rank": 5,
+        "task_id": "zh2en-eval-10",
+        "repo": "cirosantilli/cirosantilli"
+      }
+    ],
+    "2830abe1e0012964": [
+      {
+        "arm": "A",
+        "rank": 1,
+        "task_id": "en2zh-eval-01",
+        "repo": "finchipaiorg/housing-fund-loan-calculator"
+      },
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "en2zh-eval-01",
+        "repo": "finchipaiorg/housing-fund-loan-calculator"
+      },
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "en2zh-eval-01",
+        "repo": "finchipaiorg/housing-fund-loan-calculator"
+      },
+      {
+        "arm": "M",
+        "rank": 2,
+        "task_id": "en2zh-eval-01",
+        "repo": "finchipaiorg/housing-fund-loan-calculator"
+      }
+    ],
+    "5d70b9118992f6e6": [
+      {
+        "arm": "A",
+        "rank": 2,
+        "task_id": "en2zh-eval-01",
+        "repo": "v0v0/income-tax-calculator"
+      },
+      {
+        "arm": "B",
+        "rank": 3,
+        "task_id": "en2zh-eval-01",
+        "repo": "v0v0/income-tax-calculator"
+      },
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "en2zh-eval-01",
+        "repo": "v0v0/income-tax-calculator"
+      },
+      {
+        "arm": "M",
+        "rank": 1,
+        "task_id": "en2zh-eval-01",
+        "repo": "v0v0/income-tax-calculator"
+      }
+    ],
+    "4525eca879bd33fc": [
+      {
+        "arm": "A",
+        "rank": 1,
+        "task_id": "en2zh-eval-05",
+        "repo": "magician000/dingtalkrobot-python"
+      },
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "en2zh-eval-05",
+        "repo": "magician000/dingtalkrobot-python"
+      },
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "en2zh-eval-05",
+        "repo": "magician000/dingtalkrobot-python"
+      },
+      {
+        "arm": "M",
+        "rank": 1,
+        "task_id": "en2zh-eval-05",
+        "repo": "magician000/dingtalkrobot-python"
+      }
+    ],
+    "af03665cf1f15670": [
+      {
+        "arm": "A",
+        "rank": 2,
+        "task_id": "en2zh-eval-05",
+        "repo": "zangjiahe/dingtalkrobot"
+      },
+      {
+        "arm": "B",
+        "rank": 3,
+        "task_id": "en2zh-eval-05",
+        "repo": "zangjiahe/dingtalkrobot"
+      },
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "en2zh-eval-05",
+        "repo": "zangjiahe/dingtalkrobot"
+      },
+      {
+        "arm": "M",
+        "rank": 3,
+        "task_id": "en2zh-eval-05",
+        "repo": "zangjiahe/dingtalkrobot"
+      }
+    ],
+    "a7c087743b302a71": [
+      {
+        "arm": "B",
+        "rank": 2,
+        "task_id": "zh2en-eval-01",
+        "repo": "guilhem/dukto"
+      },
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "zh2en-eval-01",
+        "repo": "guilhem/dukto"
+      }
+    ],
+    "ec5203792f71867c": [
+      {
+        "arm": "B",
+        "rank": 4,
+        "task_id": "zh2en-eval-01",
+        "repo": "coolshou/dukto"
+      }
+    ],
+    "900cdc873cbcfc7b": [
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "zh2en-eval-02",
+        "repo": "hellohudi/screenrecordtool"
+      }
+    ],
+    "6f42c7df1069e6b6": [
+      {
+        "arm": "B",
+        "rank": 2,
+        "task_id": "zh2en-eval-02",
+        "repo": "tapehq/tape-cli"
+      }
+    ],
+    "9eb3d927089e715d": [
+      {
+        "arm": "B",
+        "rank": 3,
+        "task_id": "zh2en-eval-02",
+        "repo": "mujasoft/gif4docs"
+      }
+    ],
+    "0a1b9b26e32155f6": [
+      {
+        "arm": "B",
+        "rank": 4,
+        "task_id": "zh2en-eval-02",
+        "repo": "sei0/rec2gif"
+      }
+    ],
+    "b6079cea0bee2dfb": [
+      {
+        "arm": "B",
+        "rank": 5,
+        "task_id": "zh2en-eval-02",
+        "repo": "chenpipi0807/lol-screen-recording-tool"
+      }
+    ],
+    "cb12ee79e8ec4a54": [
+      {
+        "arm": "B",
+        "rank": 2,
+        "task_id": "zh2en-eval-05",
+        "repo": "majorworld/mouseplus"
+      },
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "zh2en-eval-05",
+        "repo": "majorworld/mouseplus"
+      }
+    ],
+    "23d9d8ce2deb6881": [
+      {
+        "arm": "B",
+        "rank": 4,
+        "task_id": "zh2en-eval-05",
+        "repo": "licoy/strokemouse"
+      }
+    ],
+    "26946d5f9c2bcf9f": [
+      {
+        "arm": "B",
+        "rank": 2,
+        "task_id": "zh2en-eval-06",
+        "repo": "ramsey/composer-install"
+      },
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "zh2en-eval-06",
+        "repo": "ramsey/composer-install"
+      }
+    ],
+    "bcada3c3b64a81ff": [
+      {
+        "arm": "B",
+        "rank": 3,
+        "task_id": "zh2en-eval-06",
+        "repo": "4xmen/lipolid"
+      }
+    ],
+    "3a18659ac553a2c2": [
+      {
+        "arm": "B",
+        "rank": 4,
+        "task_id": "zh2en-eval-06",
+        "repo": "prograp/composer-dependency-ignore"
+      }
+    ],
+    "95c47a9492c36fcb": [
+      {
+        "arm": "B",
+        "rank": 5,
+        "task_id": "zh2en-eval-06",
+        "repo": "micaherne/moodle-tool_composer"
+      }
+    ],
+    "966cbcd3abfb6a80": [
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "zh2en-eval-07",
+        "repo": "arashstar1/bot-lua"
+      }
+    ],
+    "3c1f4219e64e65fc": [
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "zh2en-eval-08",
+        "repo": "jekyllshop/jekyllshop"
+      }
+    ],
+    "35dac4eaaa3371d5": [
+      {
+        "arm": "B",
+        "rank": 2,
+        "task_id": "zh2en-eval-08",
+        "repo": "lehnerpat/react-typescript-jsless-static-site-generator-starter"
+      }
+    ],
+    "1d2d319b33495ace": [
+      {
+        "arm": "B",
+        "rank": 3,
+        "task_id": "zh2en-eval-08",
+        "repo": "edergtz/static-site-generator-in-python"
+      }
+    ],
+    "da73417c303c5754": [
+      {
+        "arm": "B",
+        "rank": 2,
+        "task_id": "en2zh-eval-01",
+        "repo": "cirosantilli/x86-bare-metal-examples"
+      }
+    ],
+    "c5f2053f58f0ea7f": [
+      {
+        "arm": "B",
+        "rank": 4,
+        "task_id": "en2zh-eval-01",
+        "repo": "dujltqzv/some-many-books"
+      }
+    ],
+    "d6ea9969e85ec2c8": [
+      {
+        "arm": "B",
+        "rank": 5,
+        "task_id": "en2zh-eval-01",
+        "repo": "cirosantilli/cirosantilli"
+      }
+    ],
+    "bbf25cb201c0ecfb": [
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "en2zh-eval-03",
+        "repo": "cirosantilli/x86-bare-metal-examples"
+      }
+    ],
+    "d7d2aa55b42e23d4": [
+      {
+        "arm": "B",
+        "rank": 2,
+        "task_id": "en2zh-eval-03",
+        "repo": "cirosantilli/cirosantilli"
+      }
+    ],
+    "f1df57c50c5ff30a": [
+      {
+        "arm": "B",
+        "rank": 3,
+        "task_id": "en2zh-eval-03",
+        "repo": "cirosantilli/china-dictatorship"
+      }
+    ],
+    "31ed2d6ce6b943a8": [
+      {
+        "arm": "B",
+        "rank": 4,
+        "task_id": "en2zh-eval-03",
+        "repo": "gege-circle/.github"
+      }
+    ],
+    "8f2a2936d0139449": [
+      {
+        "arm": "B",
+        "rank": 5,
+        "task_id": "en2zh-eval-03",
+        "repo": "cirosantilli/china-dictatroship-7"
+      }
+    ],
+    "4721d154336f8156": [
+      {
+        "arm": "B",
+        "rank": 2,
+        "task_id": "en2zh-eval-05",
+        "repo": "smarterallen/prometheus-webhook-dingtalk"
+      },
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "en2zh-eval-05",
+        "repo": "smarterallen/prometheus-webhook-dingtalk"
+      }
+    ],
+    "ecd3557a67d9b6b1": [
+      {
+        "arm": "B",
+        "rank": 4,
+        "task_id": "en2zh-eval-05",
+        "repo": "wxiangqian/laravel-dingtalk"
+      },
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "en2zh-eval-05",
+        "repo": "wxiangqian/laravel-dingtalk"
+      }
+    ],
+    "7157d9b416f160d4": [
+      {
+        "arm": "B",
+        "rank": 5,
+        "task_id": "en2zh-eval-05",
+        "repo": "chauyuen/dingbot"
+      }
+    ],
+    "66dab081a93f8c5c": [
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "en2zh-eval-06",
+        "repo": "xin-easy/yuhai-ui"
+      },
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "en2zh-eval-06",
+        "repo": "xin-easy/yuhai-ui"
+      }
+    ],
+    "f20b5e03beefb4ab": [
+      {
+        "arm": "B",
+        "rank": 2,
+        "task_id": "en2zh-eval-06",
+        "repo": "yangsijie666/xiaohongshu-crawler"
+      }
+    ],
+    "f71b347344a22184": [
+      {
+        "arm": "B",
+        "rank": 3,
+        "task_id": "en2zh-eval-06",
+        "repo": "gloridust/xhs_screenshot_spyder"
+      }
+    ],
+    "2a35b0f290b3bb30": [
+      {
+        "arm": "B",
+        "rank": 4,
+        "task_id": "en2zh-eval-06",
+        "repo": "jing024/xhs_notes_export"
+      }
+    ],
+    "f390dbef6a33426a": [
+      {
+        "arm": "B",
+        "rank": 5,
+        "task_id": "en2zh-eval-06",
+        "repo": "18739626704/xiaohongshu-note-tool"
+      }
+    ],
+    "c6fd48e7282db551": [
+      {
+        "arm": "B",
+        "rank": 1,
+        "task_id": "en2zh-eval-09",
+        "repo": "cirosantilli/china-dictatorship"
+      }
+    ],
+    "f40476c315a214d1": [
+      {
+        "arm": "B",
+        "rank": 2,
+        "task_id": "en2zh-eval-09",
+        "repo": "gege-circle/.github"
+      }
+    ],
+    "4b39ae1bedf014f7": [
+      {
+        "arm": "B",
+        "rank": 3,
+        "task_id": "en2zh-eval-09",
+        "repo": "cirosantilli/china-dictatroship-7"
+      }
+    ],
+    "0a2c49290fe31b11": [
+      {
+        "arm": "B",
+        "rank": 4,
+        "task_id": "en2zh-eval-09",
+        "repo": "mrfwq7lwnpzjavv5v6eo/cihna-dictattorshrip-8"
+      }
+    ],
+    "ab6749a58888d4d9": [
+      {
+        "arm": "B",
+        "rank": 5,
+        "task_id": "en2zh-eval-09",
+        "repo": "panbinibn/openpacketfix_"
+      }
+    ],
+    "ba76a2221dafc732": [
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "zh2en-eval-01",
+        "repo": "tambapps/p2p-file-sharing"
+      }
+    ],
+    "d458b269323ff4c7": [
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "zh2en-eval-01",
+        "repo": "sunzsh/internal-chat"
+      }
+    ],
+    "027349e787e7542a": [
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "zh2en-eval-02",
+        "repo": "ambrevar/emacs-gif-screencast"
+      }
+    ],
+    "9549be2ea3d1266d": [
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "zh2en-eval-02",
+        "repo": "zxdunny/scr2animgif"
+      }
+    ],
+    "031ce5b6274f3ca5": [
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "zh2en-eval-02",
+        "repo": "xiaopin/gifcapture"
+      }
+    ],
+    "d0c7e8abebdacfe0": [
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "zh2en-eval-02",
+        "repo": "lexcast/screen-recorder"
+      }
+    ],
+    "ea4d4d1d3061ab14": [
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "zh2en-eval-02",
+        "repo": "davidfekke/gif-tsv-converter"
+      }
+    ],
+    "ce2bc97c96097204": [
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "zh2en-eval-03",
+        "repo": "rhr-jz/netease-music-insight"
+      }
+    ],
+    "5f3d3ff1c2d9ba1f": [
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "zh2en-eval-03",
+        "repo": "tianer2820/netease-playlist-export"
+      }
+    ],
+    "cee16a951bfc4c17": [
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "zh2en-eval-04",
+        "repo": "ichizi/wechat-sticker-maker"
+      }
+    ],
+    "edccbf47be88c5d8": [
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "zh2en-eval-04",
+        "repo": "lazyzane/ai-sticker-tool"
+      },
+      {
+        "arm": "M",
+        "rank": 2,
+        "task_id": "zh2en-eval-04",
+        "repo": "lazyzane/ai-sticker-tool"
+      }
+    ],
+    "5bc0fe3769b83a3c": [
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "zh2en-eval-04",
+        "repo": "shihaoxuanya/wechat-sticker-maker"
+      },
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "zh2en-eval-04",
+        "repo": "shihaoxuanya/wechat-sticker-maker"
+      }
+    ],
+    "7fe3c7c5ac9af74b": [
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "zh2en-eval-05",
+        "repo": "zimocode/smartup"
+      },
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "zh2en-eval-05",
+        "repo": "zimocode/smartup"
+      }
+    ],
+    "e5f225b933354942": [
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "zh2en-eval-05",
+        "repo": "pixeldy/mouse_gesture"
+      },
+      {
+        "arm": "M",
+        "rank": 2,
+        "task_id": "zh2en-eval-05",
+        "repo": "pixeldy/mouse_gesture"
+      }
+    ],
+    "46485751ee63c261": [
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "zh2en-eval-06",
+        "repo": "hirak/prestissimo"
+      },
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "zh2en-eval-06",
+        "repo": "hirak/prestissimo"
+      }
+    ],
+    "1b24e2c6f56fcfd9": [
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "zh2en-eval-06",
+        "repo": "ledccn/webman-printer"
+      }
+    ],
+    "cd7fae27a6db5af9": [
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "zh2en-eval-06",
+        "repo": "composer/windows-setup"
+      }
+    ],
+    "c6c880f41e231386": [
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "zh2en-eval-07",
+        "repo": "getpoka/poka-ce"
+      }
+    ],
+    "4eb44e0c1c947bbe": [
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "zh2en-eval-07",
+        "repo": "tenghb/ledgerlocal"
+      }
+    ],
+    "74b88df24b6731f1": [
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "zh2en-eval-07",
+        "repo": "evelorion/chaoxi-jizhang"
+      }
+    ],
+    "6c628c45f9c8b8ce": [
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "zh2en-eval-07",
+        "repo": "enrique-lozano/monekin"
+      }
+    ],
+    "4e9e89cd610bf08e": [
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "zh2en-eval-07",
+        "repo": "sldowd/bakery-manager"
+      }
+    ],
+    "1a0b86e86d44e256": [
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "zh2en-eval-08",
+        "repo": "timroussilhe/plato"
+      }
+    ],
+    "e623a6ee10c1a42b": [
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "zh2en-eval-08",
+        "repo": "dreaifekks/notion2page"
+      }
+    ],
+    "eeeaf3c5e954b619": [
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "zh2en-eval-08",
+        "repo": "okubax/ssg.py"
+      }
+    ],
+    "86c33abf9d2e1193": [
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "zh2en-eval-08",
+        "repo": "sergei-swh/seo-generator"
+      }
+    ],
+    "4a5ff676f569fe7b": [
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "zh2en-eval-08",
+        "repo": "marstxa/static-website-gen"
+      }
+    ],
+    "0c03af8a20079049": [
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "zh2en-eval-09",
+        "repo": "ant-farm-technology/note-tracking"
+      }
+    ],
+    "eeaa916fa51158de": [
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "en2zh-eval-01",
+        "repo": "ctkqiang/chinesetaxsystem"
+      }
+    ],
+    "a54d98373f36f460": [
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "en2zh-eval-01",
+        "repo": "zhuqingshen/accumulationfundcalculation"
+      }
+    ],
+    "a2c8aa150008894d": [
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "en2zh-eval-01",
+        "repo": "vrpolice/shanghai-mortgage-calculator"
+      }
+    ],
+    "91d7b985f136c7ad": [
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "en2zh-eval-02",
+        "repo": "bakome-hub/alipay_analyzer"
+      }
+    ],
+    "62b1bc2bd7363744": [
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "en2zh-eval-02",
+        "repo": "yeran788-rgb/personal-finance-consolidator"
+      }
+    ],
+    "f86769bf286de817": [
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "en2zh-eval-05",
+        "repo": "pppscn/smsforwarder"
+      }
+    ],
+    "173c57e645bee848": [
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "en2zh-eval-06",
+        "repo": "yeban8090/note-to-red"
+      }
+    ],
+    "2af4048d9976bd6d": [
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "en2zh-eval-06",
+        "repo": "chuyuan-li/note-share-image-exporter"
+      }
+    ],
+    "f20c419a25c3caf4": [
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "en2zh-eval-06",
+        "repo": "gjxwxt/xhs-note-exporter-extension"
+      }
+    ],
+    "e6f5cfd84c4d4dee": [
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "en2zh-eval-06",
+        "repo": "adongwanai/yanqi-obsidian"
+      }
+    ],
+    "d3fdb0245c276767": [
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "en2zh-eval-07",
+        "repo": "88250/baidu-netdisk-downloaderx"
+      }
+    ],
+    "2972a47e08212ddf": [
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "en2zh-eval-07",
+        "repo": "accelerider/baidupandownloadwinform"
+      }
+    ],
+    "d9bc436724aa4d01": [
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "en2zh-eval-07",
+        "repo": "lpg-it/baiduyunvip"
+      }
+    ],
+    "8c544db25906332b": [
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "en2zh-eval-07",
+        "repo": "mengfz123/arkdownloader-android"
+      }
+    ],
+    "e8186a5ff37b3733": [
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "en2zh-eval-07",
+        "repo": "suconghou/netdisk"
+      }
+    ],
+    "6e168fc27835bead": [
+      {
+        "arm": "C",
+        "rank": 1,
+        "task_id": "en2zh-eval-08",
+        "repo": "suink/diana"
+      }
+    ],
+    "3c9709bd37354981": [
+      {
+        "arm": "C",
+        "rank": 2,
+        "task_id": "en2zh-eval-08",
+        "repo": "cirosantilli/china-dictatorship"
+      }
+    ],
+    "1238fc5f1192c79d": [
+      {
+        "arm": "C",
+        "rank": 3,
+        "task_id": "en2zh-eval-08",
+        "repo": "greebbie/zhaoyaojing-orgmirror"
+      }
+    ],
+    "5f72636cd4dcc92d": [
+      {
+        "arm": "C",
+        "rank": 4,
+        "task_id": "en2zh-eval-08",
+        "repo": "hchw/bots-nest"
+      }
+    ],
+    "6899d14e01326966": [
+      {
+        "arm": "C",
+        "rank": 5,
+        "task_id": "en2zh-eval-08",
+        "repo": "gege-circle/.github"
+      }
+    ],
+    "2f1e16b2d5e3748d": [
+      {
+        "arm": "M",
+        "rank": 2,
+        "task_id": "zh2en-eval-01",
+        "repo": "cky-thinker/file-share"
+      }
+    ],
+    "32d75ba627a6a060": [
+      {
+        "arm": "M",
+        "rank": 3,
+        "task_id": "zh2en-eval-01",
+        "repo": "pandaoxi/panda-cloud"
+      }
+    ],
+    "8fe25557765b8b07": [
+      {
+        "arm": "M",
+        "rank": 4,
+        "task_id": "zh2en-eval-01",
+        "repo": "myfeeling778/lan-file-share"
+      }
+    ],
+    "02315d97a55e4598": [
+      {
+        "arm": "M",
+        "rank": 1,
+        "task_id": "zh2en-eval-02",
+        "repo": "ixyxj/androidscreenrecordtool"
+      }
+    ],
+    "819125c35314b5c8": [
+      {
+        "arm": "M",
+        "rank": 2,
+        "task_id": "zh2en-eval-02",
+        "repo": "aerdelan/housand-domaintoolmatrix"
+      }
+    ],
+    "f6abf9d0d86f7b57": [
+      {
+        "arm": "M",
+        "rank": 3,
+        "task_id": "zh2en-eval-02",
+        "repo": "duma520/screentogif"
+      }
+    ],
+    "b1171d020c5d4985": [
+      {
+        "arm": "M",
+        "rank": 4,
+        "task_id": "zh2en-eval-04",
+        "repo": "messisvip-ui/wechat-sticker-tool"
+      }
+    ],
+    "3e4b626810526cf4": [
+      {
+        "arm": "M",
+        "rank": 3,
+        "task_id": "zh2en-eval-05",
+        "repo": "woody112210/swipephoto"
+      }
+    ],
+    "86ed5968afbd23f4": [
+      {
+        "arm": "M",
+        "rank": 5,
+        "task_id": "zh2en-eval-05",
+        "repo": "poerin/strokeplugins"
+      }
+    ],
+    "9967dbab24c6b948": [
+      {
+        "arm": "M",
+        "rank": 2,
+        "task_id": "zh2en-eval-06",
+        "repo": "hackingangle/php7cc-installed"
+      }
+    ],
+    "f1a091db6751242e": [
+      {
+        "arm": "M",
+        "rank": 3,
+        "task_id": "zh2en-eval-06",
+        "repo": "natsume05/inspiration-terminal"
+      }
+    ],
+    "63bfb6ddc21f1485": [
+      {
+        "arm": "M",
+        "rank": 4,
+        "task_id": "zh2en-eval-06",
+        "repo": "cirosantilli/china-dictatorship"
+      }
+    ],
+    "1d2466c809115bba": [
+      {
+        "arm": "M",
+        "rank": 5,
+        "task_id": "zh2en-eval-06",
+        "repo": "gege-circle/.github"
+      }
+    ],
+    "1561f4f2796955e3": [
+      {
+        "arm": "M",
+        "rank": 1,
+        "task_id": "zh2en-eval-07",
+        "repo": "haituni/ai-budget-book"
+      }
+    ],
+    "58635b1aef7d8b94": [
+      {
+        "arm": "M",
+        "rank": 2,
+        "task_id": "zh2en-eval-07",
+        "repo": "tianyoufeng/jizhang-app"
+      }
+    ],
+    "3480a9a277a8f8ab": [
+      {
+        "arm": "M",
+        "rank": 3,
+        "task_id": "zh2en-eval-07",
+        "repo": "block255/liushuizhang"
+      }
+    ],
+    "24e05056b919d445": [
+      {
+        "arm": "M",
+        "rank": 4,
+        "task_id": "zh2en-eval-07",
+        "repo": "haiweizhao27/neighborledger"
+      }
+    ],
+    "cd3efd1e85fdfea0": [
+      {
+        "arm": "M",
+        "rank": 2,
+        "task_id": "en2zh-eval-05",
+        "repo": "yayagsm/alertmanager"
+      }
+    ],
+    "d7fe2e5dcecc1b4c": [
+      {
+        "arm": "M",
+        "rank": 4,
+        "task_id": "en2zh-eval-05",
+        "repo": "jedore/sentry-dingtalk"
+      }
+    ],
+    "0a14b3763cd481b1": [
+      {
+        "arm": "M",
+        "rank": 5,
+        "task_id": "en2zh-eval-05",
+        "repo": "codepkgs/dingtalk-webhook"
+      }
+    ],
+    "02df9d6868c6cc96": [
+      {
+        "arm": "M",
+        "rank": 1,
+        "task_id": "en2zh-eval-06",
+        "repo": "zhaoxixi0202/xhs-screenshot-tool"
+      }
+    ],
+    "92f94b0e1d6308fe": [
+      {
+        "arm": "M",
+        "rank": 2,
+        "task_id": "en2zh-eval-06",
+        "repo": "chenxiangyunyun/pdf-to-images"
+      }
+    ],
+    "c3cef743c59d113e": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "zh2en-eval-01",
+        "repo": "sunweisu/lan-file-transfer"
+      }
+    ],
+    "2210caa1db747638": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "zh2en-eval-01",
+        "repo": "hasderhi/lanfileshare"
+      }
+    ],
+    "a0aa1e7f7453c7d6": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "zh2en-eval-01",
+        "repo": "itsjustme27/lan2land"
+      }
+    ],
+    "12a78f4699264cda": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "zh2en-eval-01",
+        "repo": "hardyslays/lan-file-transfer"
+      }
+    ],
+    "49431a5bf9d82776": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "zh2en-eval-01",
+        "repo": "matt-repository/lan-file-transfer"
+      }
+    ],
+    "f69919eed313ac5b": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "zh2en-eval-02",
+        "repo": "nickemanarin/screentogif"
+      }
+    ],
+    "b3c6820e15df47ff": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "zh2en-eval-02",
+        "repo": "wulkano/kap"
+      }
+    ],
+    "07834a0f74b85628": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "zh2en-eval-02",
+        "repo": "doprz/wlgif"
+      }
+    ],
+    "219da0af78778cf9": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "zh2en-eval-02",
+        "repo": "dergachev/screengif"
+      }
+    ],
+    "fef673cdced09bbd": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "zh2en-eval-02",
+        "repo": "druanae/screc"
+      }
+    ],
+    "a67ea3500f4d5ebb": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "zh2en-eval-03",
+        "repo": "f12998765/netease_playlist_export"
+      }
+    ],
+    "f2d777b1947b7266": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "zh2en-eval-03",
+        "repo": "lengxiqwq/playlistout"
+      }
+    ],
+    "49ba3f9ee330caae": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "zh2en-eval-03",
+        "repo": "bjason/163musictospotify"
+      }
+    ],
+    "46f112447b5812b7": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "zh2en-eval-03",
+        "repo": "luomingxu/163musictospotify"
+      }
+    ],
+    "4807f727cd6ae56a": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "zh2en-eval-03",
+        "repo": "allenroot/163musictospotify"
+      }
+    ],
+    "bd667f9ff4afd4db": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "zh2en-eval-04",
+        "repo": "caddyliu/wechat-sticker-gen"
+      }
+    ],
+    "3194e3feeed4cbe5": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "zh2en-eval-04",
+        "repo": "soulwinter/wechat-sticker-creator"
+      }
+    ],
+    "9bb3cd8f6737ed5c": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "zh2en-eval-04",
+        "repo": "shizi2077/wechat-sticker-pack"
+      }
+    ],
+    "4956001781b2b3f2": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "zh2en-eval-04",
+        "repo": "lisamsung/agent-meme-forge"
+      }
+    ],
+    "a9d33e4b7f41c7b9": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "zh2en-eval-05",
+        "repo": "marklieberman/foxygestures"
+      }
+    ],
+    "18582e6b90e97c94": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "zh2en-eval-05",
+        "repo": "david-04/grand-gesture"
+      }
+    ],
+    "d96876e9b7025d6d": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "zh2en-eval-05",
+        "repo": "chance-fyi/mouse-gestures"
+      }
+    ],
+    "c1625bc41cf7d597": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "zh2en-eval-05",
+        "repo": "cirrusli/xmouse"
+      }
+    ],
+    "66110b3fadb5ff24": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "zh2en-eval-06",
+        "repo": "composer/composer"
+      }
+    ],
+    "79ef8720784bd4ea": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "zh2en-eval-06",
+        "repo": "nazmulb/composer"
+      }
+    ],
+    "30ab65ec1791ca4f": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "zh2en-eval-06",
+        "repo": "composer/installers"
+      }
+    ],
+    "16e5edbb052ed29d": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "zh2en-eval-06",
+        "repo": "ffraenz/private-composer-installer"
+      }
+    ],
+    "b6650e8734431f0f": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "zh2en-eval-07",
+        "repo": "tanq16/expenseowl"
+      }
+    ],
+    "6aaf3d6aa8ee9173": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "zh2en-eval-07",
+        "repo": "devaldaki3/budgetbudy"
+      }
+    ],
+    "1f0ad381271ce8f4": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "zh2en-eval-07",
+        "repo": "harshpanchal01/onefinance"
+      }
+    ],
+    "c0a56011f9d65df9": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "zh2en-eval-07",
+        "repo": "mahmutessiz/budget-tracker-desktop"
+      }
+    ],
+    "534a223403235c05": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "zh2en-eval-07",
+        "repo": "ji5261/beecount"
+      }
+    ],
+    "7642f6ca634d5f54": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "zh2en-eval-08",
+        "repo": "gohugoio/hugo"
+      }
+    ],
+    "f2fcdbe5ee4ee011": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "zh2en-eval-08",
+        "repo": "getzola/zola"
+      }
+    ],
+    "67a98bf989395462": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "zh2en-eval-08",
+        "repo": "jekyll/jekyll"
+      }
+    ],
+    "c8dbad93036d7312": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "zh2en-eval-08",
+        "repo": "getpelican/pelican"
+      }
+    ],
+    "9223f278bcaed207": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "zh2en-eval-08",
+        "repo": "withastro/astro"
+      }
+    ],
+    "30e67cb071335d05": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "zh2en-eval-09",
+        "repo": "dongdongbh/mindwtr"
+      }
+    ],
+    "fa830604ed6c3e55": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "zh2en-eval-09",
+        "repo": "junpgle/countdowntodo"
+      }
+    ],
+    "7069f339d12c4cf4": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "zh2en-eval-09",
+        "repo": "lyeka/flowy"
+      }
+    ],
+    "6565ab194090cf0a": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "zh2en-eval-09",
+        "repo": "charlesschaefer/faire-todo-app"
+      }
+    ],
+    "46227b04bf9fb8e7": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "zh2en-eval-10",
+        "repo": "immich-app/immich"
+      }
+    ],
+    "96d68a1eede1da6c": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "zh2en-eval-10",
+        "repo": "photoprism/photoprism"
+      }
+    ],
+    "63cd68b75be34a1b": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "zh2en-eval-10",
+        "repo": "crymfox/phone-backup-powershell"
+      }
+    ],
+    "f81915c30bdd3591": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "zh2en-eval-10",
+        "repo": "jeff31uk/androidphotobackup"
+      }
+    ],
+    "b493f30f4fd13fea": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "zh2en-eval-10",
+        "repo": "babatman/android_photos_backup"
+      }
+    ],
+    "2de6e636963d02a7": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "en2zh-eval-01",
+        "repo": "h223492759/gz-gjj-loan-calculator"
+      }
+    ],
+    "5869b3df7d4c179a": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "en2zh-eval-01",
+        "repo": "rachel030219/chinapayrollcalculator"
+      }
+    ],
+    "fe4979a37cc4897c": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "en2zh-eval-01",
+        "repo": "zhaiyz/salarycalculator"
+      }
+    ],
+    "8e7dbf0feeb8a736": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "en2zh-eval-01",
+        "repo": "georgehuan1994/996-salary-calculator"
+      }
+    ],
+    "22111c4f680c47ee": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "en2zh-eval-01",
+        "repo": "lucas801119/social-security-calculator"
+      }
+    ],
+    "c8f51eababdb2958": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "en2zh-eval-02",
+        "repo": "zxc7563598/php-alipay-bill-parser"
+      }
+    ],
+    "282cb4c7df3a0176": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "en2zh-eval-02",
+        "repo": "lxy1992/moneywiz_importer"
+      }
+    ],
+    "a4b04d59cde9af48": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "en2zh-eval-02",
+        "repo": "seozed/bill2moneywiz"
+      }
+    ],
+    "06d0a5f0840e3c0e": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "en2zh-eval-02",
+        "repo": "stone-lyl/bill"
+      }
+    ],
+    "be4395e78c955017": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "en2zh-eval-02",
+        "repo": "jedwin/billanalyzer"
+      }
+    ],
+    "77945a4ec837c8cb": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "en2zh-eval-03",
+        "repo": "dev-zapi/weekly-reporter"
+      }
+    ],
+    "e0abdec285a38f85": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "en2zh-eval-03",
+        "repo": "cnny/git-work-summary"
+      }
+    ],
+    "d577431a1abcd4d1": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "en2zh-eval-03",
+        "repo": "tiantianyzj/weekflow"
+      }
+    ],
+    "e805500863ba436a": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "en2zh-eval-03",
+        "repo": "kkhh26864/aiweekly"
+      }
+    ],
+    "757d67d251f68491": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "en2zh-eval-03",
+        "repo": "lawrencepatricksianto/gdp-labs-weekly-report-generator"
+      }
+    ],
+    "d76b54f2c3f1276b": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "en2zh-eval-04",
+        "repo": "bobliu0518/crticketmonitor"
+      }
+    ],
+    "acdb46d6b92d9aa1": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "en2zh-eval-04",
+        "repo": "fno2010/cn-rail-monitor"
+      }
+    ],
+    "e19b4a56d99cfa2f": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "en2zh-eval-04",
+        "repo": "wxory/crtmonitor"
+      }
+    ],
+    "d4ca8a52df32d737": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "en2zh-eval-04",
+        "repo": "boy-373/12306-train-mcp"
+      }
+    ],
+    "e11ec1a2cf1aaff8": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "en2zh-eval-04",
+        "repo": "nuyoah965/crticketmonitor"
+      }
+    ],
+    "2e0544700e2d76eb": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "en2zh-eval-05",
+        "repo": "stardustlc666/dsh-dingtalk"
+      }
+    ],
+    "7d25910644833cbf": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "en2zh-eval-05",
+        "repo": "cn-qlg/dingtalkrobot"
+      }
+    ],
+    "20a1622ee52ff597": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "en2zh-eval-05",
+        "repo": "wow-actions/dingtalk-notify"
+      }
+    ],
+    "33356ca6d6e2d5ed": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "en2zh-eval-05",
+        "repo": "liwei6677/dingding-group-chat-robot-pushes-messages-regularly"
+      }
+    ],
+    "5c9cb5024c299618": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "en2zh-eval-05",
+        "repo": "catcuts/claude-code-dingtalk-mcp"
+      }
+    ],
+    "b7c51e22588769d2": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "en2zh-eval-06",
+        "repo": "xiaoyihao001018/xhs-web-exporter"
+      }
+    ],
+    "b9b1a4471a4a31c6": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "en2zh-eval-06",
+        "repo": "apple20251125/redbook-convert"
+      }
+    ],
+    "e036414e557e4236": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "en2zh-eval-06",
+        "repo": "pcprincipal67/xhs-favorites-exporter"
+      }
+    ],
+    "4c436c7db68f4bbb": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "en2zh-eval-06",
+        "repo": "asimovvong/xhs-extractor"
+      }
+    ],
+    "ea2b3e9a7ac5212a": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "en2zh-eval-06",
+        "repo": "zhulin025/xiaohongshu-exporter"
+      }
+    ],
+    "78cbfdbaad01e1ba": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "en2zh-eval-07",
+        "repo": "peterq/pan-light"
+      }
+    ],
+    "3b4f24fad8be8957": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "en2zh-eval-07",
+        "repo": "proxyee-down-org/proxyee-down"
+      }
+    ],
+    "99ffe2e8e1d91ed6": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "en2zh-eval-07",
+        "repo": "gopeedlab/gopeed"
+      }
+    ],
+    "04b69dd03c3f72d1": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "en2zh-eval-07",
+        "repo": "monkeywie/gopeed-extension-baiduwp"
+      }
+    ],
+    "97a9d3f320f45de7": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "en2zh-eval-07",
+        "repo": "cool2528/gdownload"
+      }
+    ],
+    "c1b0946795d88b55": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "en2zh-eval-08",
+        "repo": "loonghao/wecom-bot-mcp-server"
+      }
+    ],
+    "39a6c14fde1a3bf5": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "en2zh-eval-08",
+        "repo": "futuretea/wecom-bot-mcp-server"
+      }
+    ],
+    "b40f28bd23be6076": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "en2zh-eval-08",
+        "repo": "gotoolkits/mcp-wecombot-server"
+      }
+    ],
+    "3b018fe8fb3deeb5": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "en2zh-eval-08",
+        "repo": "ericzhang-cn/ailingbot"
+      }
+    ],
+    "d0cbf4494cfa0136": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "en2zh-eval-08",
+        "repo": "driftingboats/wework-bot"
+      }
+    ],
+    "81ea519d2711a322": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "en2zh-eval-09",
+        "repo": "konano/weibo_archive"
+      }
+    ],
+    "b069f769a84a7929": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "en2zh-eval-09",
+        "repo": "judgeallen/weibocrawler"
+      }
+    ],
+    "214facbd37de4880": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "en2zh-eval-09",
+        "repo": "smallyunet/yinwang-weibo"
+      }
+    ],
+    "4773845fe6f15288": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "en2zh-eval-09",
+        "repo": "fxdian/stablog"
+      }
+    ],
+    "8b39806b8e2f5e98": [
+      {
+        "arm": "D",
+        "rank": 5,
+        "task_id": "en2zh-eval-09",
+        "repo": "gongzitang/persona-vault"
+      }
+    ],
+    "cc769aad051a8ed8": [
+      {
+        "arm": "D",
+        "rank": 1,
+        "task_id": "en2zh-eval-10",
+        "repo": "huahaotech/salary_tool"
+      }
+    ],
+    "884094151d7303c4": [
+      {
+        "arm": "D",
+        "rank": 2,
+        "task_id": "en2zh-eval-10",
+        "repo": "25283531/xinchoujs"
+      }
+    ],
+    "bfe21e5d09653c45": [
+      {
+        "arm": "D",
+        "rank": 3,
+        "task_id": "en2zh-eval-10",
+        "repo": "codeno30k/tax-calculator-2025"
+      }
+    ],
+    "2681286afb07fa84": [
+      {
+        "arm": "D",
+        "rank": 4,
+        "task_id": "en2zh-eval-10",
+        "repo": "helibeiqi/dsh-hr-payroll-mcp"
+      }
+    ]
+  },
+  "arm_task_status": {
+    "A": {
+      "zh2en-eval-01": "ok",
+      "zh2en-eval-02": "ok",
+      "zh2en-eval-03": "ok",
+      "zh2en-eval-04": "ok",
+      "zh2en-eval-05": "ok",
+      "zh2en-eval-06": "ok",
+      "zh2en-eval-07": "ok",
+      "zh2en-eval-08": "ok",
+      "zh2en-eval-09": "ok",
+      "zh2en-eval-10": "ok",
+      "en2zh-eval-01": "ok",
+      "en2zh-eval-02": "ok",
+      "en2zh-eval-03": "ok",
+      "en2zh-eval-04": "ok",
+      "en2zh-eval-05": "ok",
+      "en2zh-eval-06": "ok",
+      "en2zh-eval-07": "ok",
+      "en2zh-eval-08": "ok",
+      "en2zh-eval-09": "ok",
+      "en2zh-eval-10": "ok"
+    },
+    "B": {
+      "zh2en-eval-01": "ok",
+      "zh2en-eval-02": "ok",
+      "zh2en-eval-03": "ok",
+      "zh2en-eval-04": "ok",
+      "zh2en-eval-05": "ok",
+      "zh2en-eval-06": "ok",
+      "zh2en-eval-07": "ok",
+      "zh2en-eval-08": "ok",
+      "zh2en-eval-09": "ok",
+      "zh2en-eval-10": "partial",
+      "en2zh-eval-01": "ok",
+      "en2zh-eval-02": "ok",
+      "en2zh-eval-03": "ok",
+      "en2zh-eval-04": "ok",
+      "en2zh-eval-05": "ok",
+      "en2zh-eval-06": "ok",
+      "en2zh-eval-07": "ok",
+      "en2zh-eval-08": "ok",
+      "en2zh-eval-09": "ok",
+      "en2zh-eval-10": "ok"
+    },
+    "C": {
+      "zh2en-eval-01": "ok",
+      "zh2en-eval-02": "ok",
+      "zh2en-eval-03": "ok",
+      "zh2en-eval-04": "ok",
+      "zh2en-eval-05": "ok",
+      "zh2en-eval-06": "ok",
+      "zh2en-eval-07": "ok",
+      "zh2en-eval-08": "ok",
+      "zh2en-eval-09": "ok",
+      "zh2en-eval-10": "ok",
+      "en2zh-eval-01": "ok",
+      "en2zh-eval-02": "ok",
+      "en2zh-eval-03": "blocked",
+      "en2zh-eval-04": "ok",
+      "en2zh-eval-05": "ok",
+      "en2zh-eval-06": "ok",
+      "en2zh-eval-07": "ok",
+      "en2zh-eval-08": "ok",
+      "en2zh-eval-09": "ok",
+      "en2zh-eval-10": "ok"
+    },
+    "M": {
+      "zh2en-eval-01": "ok",
+      "zh2en-eval-02": "ok",
+      "zh2en-eval-03": "ok",
+      "zh2en-eval-04": "ok",
+      "zh2en-eval-05": "ok",
+      "zh2en-eval-06": "ok",
+      "zh2en-eval-07": "ok",
+      "zh2en-eval-08": "ok",
+      "zh2en-eval-09": "ok",
+      "zh2en-eval-10": "ok",
+      "en2zh-eval-01": "ok",
+      "en2zh-eval-02": "ok",
+      "en2zh-eval-03": "ok",
+      "en2zh-eval-04": "ok",
+      "en2zh-eval-05": "ok",
+      "en2zh-eval-06": "ok",
+      "en2zh-eval-07": "ok",
+      "en2zh-eval-08": "ok",
+      "en2zh-eval-09": "ok",
+      "en2zh-eval-10": "ok"
+    },
+    "D": {
+      "zh2en-eval-01": "ok",
+      "zh2en-eval-02": "ok",
+      "zh2en-eval-03": "ok",
+      "zh2en-eval-04": "ok",
+      "zh2en-eval-05": "ok",
+      "zh2en-eval-06": "ok",
+      "zh2en-eval-07": "ok",
+      "zh2en-eval-08": "ok",
+      "zh2en-eval-09": "ok",
+      "zh2en-eval-10": "ok",
+      "en2zh-eval-01": "ok",
+      "en2zh-eval-02": "ok",
+      "en2zh-eval-03": "ok",
+      "en2zh-eval-04": "ok",
+      "en2zh-eval-05": "ok",
+      "en2zh-eval-06": "ok",
+      "en2zh-eval-07": "ok",
+      "en2zh-eval-08": "ok",
+      "en2zh-eval-09": "ok",
+      "en2zh-eval-10": "ok"
+    }
+  },
+  "source_runs": {
+    "ABCM_pipeline": "experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/pipeline.json",
+    "D_run": "experiments/E1-cross-language-search/runs/2026-10-04-d-minimax"
+  }
+}

@@ -6,7 +6,7 @@
 
 R1（模型缓存恢复）、R2（取消终态）、R3（导入链接）已修复并有连续操作回归。验证入口：`python3 scripts/run_offline_suite.py`。构建入口：`bash extension/scripts/build.sh`；产物与源码逐文件校验，源码 SHA 和 ZIP 哈希在 `dist/build-manifest.json`。
 
-实现、离线验证、提交与合并不代表真实产品效果验收。**整个阶段尚未全部验收**：个人模型凭据、本人 Chrome 安装与真人会话/盲判/持续使用仍缺。MIT 已由发起人选择并落地。Chromium fixture 自动验收已通过；它不等于真人安装或 GitHub 实际效果。状态 `verified` 表示相应工程子项经离线验证，其余子项分别列明缺口。
+实现、离线验证、提交与合并不代表真实产品效果验收。**整个阶段尚未全部验收**：E1 模型实跑已完成；本人 Chrome 安装复测与真人会话/盲判/持续使用仍待验收。MIT 已由发起人选择并落地。Chromium fixture 自动验收已通过；它不等于真人安装或 GitHub 实际效果。状态 `verified` 表示相应工程子项经离线验证，其余子项分别列明缺口。
 
 最新机器记录：[phase-status-2026-10-02.json](phase-status-2026-10-02.json)。阶段报告：[2026-10-02-phase-review.md](../reports/2026-10-02-phase-review.md)。远端已核对：[#10](https://github.com/victorzhong0110/gold-miner/pull/10) 在 CI 通过后合并，合并提交 `b93f89ee02841c25a9f9917345a4e5be77a9fb17`；#2–#9 已全部 closed/merged，当时没有遗留开放 PR。合并后 main 复验 243 项 Python + 45 项 Node 通过；合并状态不改变表中未完成的实际验收。
 
@@ -14,15 +14,15 @@ R1（模型缓存恢复）、R2（取消终态）、R3（导入链接）已修�
 |---|---|---|---|
 | WP1-01 | 核对基线与交接 | verified | 独立工作区、唯一写入者、基线与 PR 祖先已核对 |
 | WP1-02 | 对齐协议与规范 | verified | 规范入口显式对齐；历史 v0.3/v0.4 未改 |
-| WP1-03 | 真实模型客户端和配置 | partial | HTTP 客户端与恢复回归已测；个人模型实测缺凭据 |
+| WP1-03 | 真实模型客户端和配置 | verified | MiniMax-M3 真实 B/C/M 60 次调用已记录；超时/认证/解析回归通过；个人 Chrome 复测单列 WP3 |
 | WP1-04 | 接通完整检索执行链 | verified | e1_pipeline.py + test_e1_pipeline.py：保留原文、语言标签、预算和字段检查 |
-| WP1-05 | 冻结评估材料 | partial | 历史冻结材料已保留；正式比较须冻结具体模型与新代码 SHA |
+| WP1-05 | 冻结评估材料 | verified | 2026-10-04 设置冻结于已存在 ae5eeea；运行源码 48b074d 仅新增设置；题目/提示词/种子哈希全匹配 |
 | WP1-06 | 准备 E2/E3 正式材料 | partial | E2 会话包、E3 真实片段已保留；正式多轮材料和实际会话待补 |
 | WP1-07 | 离线基线与操作说明 | verified | 统一离线套件含 E6/E8/内容脚本/源码与包一致性 |
-| WP2-01 | 预先登记判断标准 | partial | protocol、judgment-guide 已有标准；正式新批次须预登记具体模型 |
-| WP2-02 | 运行 E1 A/B/C/M | partial | A 组和 README 配对有历史 live 记录；B/C/M 尚未实测 |
-| WP2-03 | 运行强对照 D | partial | 2026-10-04 MiniMax-M3 实跑 eval.batch_1 20/20 题（runs/2026-10-04-d-minimax）：169 个仓库存在，3 个 404 幻觉。人工用途判断未运行。见 docs/reports/2026-10-04-e1-d-run.json |
-| WP2-04 | 盲判和增量分析 | partial | blind_eval.py 已实现去重、遮蔽与回填；真人盲判尚未执行 |
+| WP2-01 | 预先登记判断标准 | verified | 判定口径、预算、字段、排序与失败处理预先保留；本次模型/设置在运行前冻结，未改判断门槛 |
+| WP2-02 | 运行 E1 A/B/C/M | verified | MiniMax-M3 全批 A/B/C/M 已运行并保存 60 模型/208 GitHub 请求，1 GitHub422、1解析失败未重跑；人工判断归 WP2-04 |
+| WP2-03 | 运行强对照 D | verified | MiniMax-M3 D 全批 20 题已运行并审查，169 仓库存在；人工判断归 WP2-04 |
+| WP2-04 | 盲判和增量分析 | partial | 五组前5来源遮蔽材料已生成：233 题目/仓库组合、311 组内位置；真人判断未运行 |
 | WP2-05 | 运行 E2a | pending-human | 两对自检及 4–6 人会话未发生 |
 | WP2-06 | 运行 E3 基线 | partial | 六条 gtx 输出与技术核对已保留；两种翻译界面对照待测 |
 | WP2-07 | 必要时 E9 诊断 | conditional | E9 只在增益诊断需要时执行；目前无正式比较可诊断 |
@@ -87,3 +87,11 @@ Chromium 首跑发现真实设置页消息带有 sender.tab，旧权限判断使
 PR15已合并（065ff0605cac5f641c5fd6511bda34bf8f11397a），原始记录未修改。逐题prompt/input哈希及统计离线核对一致；修复续跑混入参数/题集、截断答案被当成功、取消输出上限重发的路径。B/C/M已补2048token/思考剥离/截断拒绝，默认60秒（环境可覆盖）；未调用实际模型。机器账本已同步D实跑状态，人工用途判断仍未运行。
 
 本次续作完整离线296 Python + 58 Node通过（docs/reports/bcm-validation-2026-10-04.json）；付费请求0。B/C/M入口要求独立run-id和新输出目录，保留源码SHA/配置哈希；实际运行与人工判断留在发起人环境。
+
+## 2026-10-04 A/B/C/M 实跑
+
+2026-10-04 A/B/C/M 已用 MiniMax-M3 实跑 eval.batch_1（`runs/2026-10-04-bcm-minimax`，冻结设置 `run-settings-2026-10-04-bcm-minimax.json`，源码 SHA 48b074d）：A 20/20、B 19 完成+1 部分（GitHub 422）、C 19 完成+1 阻断（模型输出 JSON 解析失败）、M 20/20；模型请求 60，GitHub 请求 208（失败 1）；题级合并候选 A70/B212/C323/M127，与同日 D 组仓库题级交集 A0/B2/C9/M0。人工用途判断未运行，费用未知，不下跨语言增益结论。
+
+运行前修复并提交（ae5eeea）：GitHub 搜索间隔原为 0（会超过每分钟 30 次限额）、输出目录非空即拒绝（保护 D 目录）、冻结设置与客户端参数核对、记录可见 token/耗时。冻结设置提交 48b074d（BYOK_TIMEOUT_SECONDS=300，2048 输出 token，不自动重试，无密钥）。失败未重跑：B zh2en-eval-10 长句直译 GitHub 422；C en2zh-eval-03 模型输出 JSON 解析失败（原文未保存）。可见 token：B 输入8330/输出1989，C 10894/4714，M 10170/4834；费用未知。[报告](../../experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/report.md)，[机器记录](../reports/2026-10-04-e1-bcm-run.json)。WP2-04 盲判仍待发起人。
+
+2026-10-04 PR17 审查：原始记录与冻结设置一致；A/B/C/M 题级并集465，跨题独立仓库391，与D独立仓库169交集9。已准备五组前5判定材料（evaluation/2026-10-04-minimax），人工判断尚未发生。没有重跑失败项或新增付费请求。

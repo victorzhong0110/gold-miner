@@ -95,9 +95,9 @@ python3 experiments/E1-cross-language-search/scripts/blind_eval.py --pipeline /t
 
 ## D组结果之后
 
-D组2026-10-04已完成20题，记录见runs/2026-10-04-d-minimax；用途判断及B/C/M仍未运行。已合入的runner会拒绝续跑时换run_id、模型、端点、prompt或题集，截断回答不能算完成，接口拒绝8192上限不会取消上限重发。
+D组2026-10-04已完成20题，记录见runs/2026-10-04-d-minimax；用途判断仍未运行。2026-10-04 A/B/C/M 已用 MiniMax-M3 实跑 eval.batch_1（`runs/2026-10-04-bcm-minimax`，冻结设置 `run-settings-2026-10-04-bcm-minimax.json`，源码 SHA 48b074d）：A 20/20、B 19 完成+1 部分（GitHub 422）、C 19 完成+1 阻断（模型输出 JSON 解析失败）、M 20/20；模型请求 60，GitHub 请求 208（失败 1）；题级合并候选 A70/B212/C323/M127，与同日 D 组仓库题级交集 A0/B2/C9/M0。人工用途判断未运行，费用未知，不下跨语言增益结论。已合入的runner会拒绝续跑时换run_id、模型、端点、prompt或题集，截断回答不能算完成，接口拒绝8192上限不会取消上限重发。
 
-B/C/M查询生成器已统一2048输出token（含推理），默认60秒超时；设置BYOK_TIMEOUT_SECONDS会覆盖默认值。一次请求、不自动重试；think不当成最终JSON，length保留失败。比历史256token设置可能多用token/等待时间，实际费用未知。正式新批次须冻结具体参数及已有代码SHA；不要续写到D的目录。当前环境缺模型密钥，未调用付费接口。
+B/C/M查询生成器已统一2048输出token（含推理），默认60秒超时；设置BYOK_TIMEOUT_SECONDS会覆盖默认值。一次请求、不自动重试；think不当成最终JSON，length保留失败。比历史256token设置可能多用token/等待时间，实际费用未知。正式新批次须冻结具体参数及已有代码SHA；不要续写到D的目录。
 
 真实A/B/C/M入口必须显式提供新--run-id，输出目录已含pipeline.json时拒绝覆盖；任何请求前检查模型配置，结果包含source_sha、settings_sha256和batch（参数快照在generation_records，不复制可能含私密值的配置文件）。正式eval仍须冻结。已存在的D目录不得用于此命令。
 
@@ -106,3 +106,16 @@ python3 experiments/E1-cross-language-search/scripts/e1_pipeline.py \
   --live --batch eval.batch_1 --run-id YOUR_NEW_BCM_RUN_ID \
   --settings /path/to/frozen-settings.json --out /path/to/new-bcm-run
 ```
+
+2026-10-04 实跑补充：输出目录非空即拒绝（D 目录没有 pipeline.json，原检查挡不住）；冻结设置里的 `model.base_url`、`bcm_max_output_tokens`（须为 2048）、`bcm_timeout_seconds`（须等于 `BYOK_TIMEOUT_SECONDS`）在任何请求前与客户端核对；GitHub 搜索串行间隔取 `github.sleep_seconds_between_search_requests`（缺省 3 秒；原先为 0，约 200 次请求会超过每分钟 30 次搜索限额）。每次模型请求记录可见 token 与耗时，`model_usage` 按组汇总，费用记 unknown。运行后用下面命令生成 manifest/report 与机器记录（只读已有记录，不联网）：
+
+```sh
+E=experiments/E1-cross-language-search
+python3 $E/scripts/e1_bcm_report.py --run $E/runs/2026-10-04-bcm-minimax \
+  --settings $E/run-settings-2026-10-04-bcm-minimax.json --d-run $E/runs/2026-10-04-d-minimax \
+  --historical-a $E/runs/2026-09-22-w4-first --record docs/reports/2026-10-04-e1-bcm-run.json
+```
+
+pipeline 不续跑、不覆盖：失败照实保留；要重跑须新 run-id 与新目录，旧记录不删。
+
+2026-10-04 审查更新：五组前5判定材料已准备于 `experiments/E1-cross-language-search/evaluation/2026-10-04-minimax/`，包含233个题目/仓库组合；来源映射与判定表分文件，不能保证判定人从未看过组别。A/B/C/M题级并集465不等于独立仓库数；跨题去重后391，与D169交集9。原始实跑记录不改，不重跑失败项。

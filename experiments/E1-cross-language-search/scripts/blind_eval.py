@@ -3,7 +3,31 @@
 import argparse
 import hashlib
 import json
+import copy
 from pathlib import Path
+
+
+def include_d(pipeline, d_rows, manifest):
+    """Add a completed, same-batch live D run without changing either raw run."""
+    if pipeline['mode'] != 'live' or manifest.get('status') != 'complete' or manifest.get('arm') != 'D':
+        raise ValueError('combined D preparation requires completed live D evidence')
+    if manifest.get('batch') != pipeline.get('batch'):
+        raise ValueError('D and A/B/C/M batch must match')
+    task_ids = [t['task_id'] for t in pipeline['arms']['A']['task_results']]
+    grouped = {t: [] for t in task_ids}
+    for row in d_rows:
+        if row.get('run_id') != manifest['run_id'] or row.get('arm') != 'D' or row['task_id'] not in grouped:
+            raise ValueError('D candidate provenance or task does not match')
+        grouped[row['task_id']].append(row)
+    if manifest.get('tasks', {}).get('completed') != len(task_ids) or any(not rows for rows in grouped.values()):
+        raise ValueError('D evidence must cover every task; incomplete runs need separate preparation')
+    for rows in grouped.values():
+        rows.sort(key=lambda row: row['rank'])
+        if len({row['rank'] for row in rows}) != len(rows) or len({row['repo'].lower() for row in rows}) != len(rows):
+            raise ValueError('duplicate D ranks or repositories')
+    combined = copy.deepcopy(pipeline)
+    combined['arms']['D'] = {'task_results': [{'task_id': t, 'status': 'ok', 'merged_candidates': grouped[t]} for t in task_ids]}
+    return combined
 
 
 def prepare(pipeline):
@@ -64,10 +88,17 @@ def analyze(key, judgments, judge_kind):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--pipeline'); p.add_argument('--key'); p.add_argument('--judgments'); p.add_argument('--judge-kind', choices=['human', 'technical']); p.add_argument('--out', required=True)
+    p.add_argument('--pipeline'); p.add_argument('--d-run', help='optional completed same-batch D run directory'); p.add_argument('--key'); p.add_argument('--judgments'); p.add_argument('--judge-kind', choices=['human', 'technical']); p.add_argument('--out', required=True)
     args = p.parse_args(); out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
     if args.pipeline:
-        public, key = prepare(json.loads(Path(args.pipeline).read_text()))
+        pipeline = json.loads(Path(args.pipeline).read_text())
+        if args.d_run:
+            d = Path(args.d_run)
+            pipeline = include_d(pipeline, [json.loads(l) for l in (d / 'candidates.jsonl').read_text().splitlines() if l.strip()],
+                                 json.loads((d / 'manifest.json').read_text()))
+        public, key = prepare(pipeline)
+        if args.d_run:
+            key['source_runs'] = {'ABCM_pipeline': args.pipeline, 'D_run': args.d_run}
         (out / 'blind-candidates.jsonl').write_text(''.join(json.dumps(r, ensure_ascii=False) + '\n' for r in public))
         (out / 'blind-key.json').write_text(json.dumps(key, ensure_ascii=False, indent=2) + '\n')
     elif args.key and args.judgments and args.judge_kind:

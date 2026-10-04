@@ -7,7 +7,7 @@
 |---|---|---|
 | 1 | 在自己的 Chrome 加载 dist/gold-miner-extension 目录，保存阅读语言/兴趣；配置你愿意使用的模型端点、模型和密钥并授权端点 | [上手](getting-started.md)；记录浏览器、版本、端点域名/模型、探测结果，不记录密钥 |
 | 2 | 试一次中英搜索和仓库探索，取消/关闭/导航；在另一个浏览器配置目录导入缓存 | 搜索是否满足真实需要；导出无密钥；版本变化是否重新获取；与 CI fixture 证据分开 |
-| 3 | 正式评估模型已于 2026-10-04 定为 MiniMax-M3（[0004](../decisions/0004-minimax-d-group.md)）。B/C/M 实跑和人工判断仍要你做；D 组运行以仓库里的 `runs/` 记录为准 | [离线/实验操作](../engineering/offline-operator.md)；真实模型请求可能计费；不从 A-only 推断增益；记录真实等待与可见费用 |
+| 3 | 正式评估模型已于 2026-10-04 定为 MiniMax-M3（[0004](../decisions/0004-minimax-d-group.md)）。A/B/C/M 与 D 已于 2026-10-04 在本模型上实跑（`runs/2026-10-04-bcm-minimax`、`runs/2026-10-04-d-minimax`）；人工用途判断（盲判）仍要你做 | [离线/实验操作](../engineering/offline-operator.md)；真实模型请求可能计费；不从 A-only 推断增益；记录真实等待与可见费用 |
 | 4 | 安排 E2 两对自检、4–6 人探索/盲判，以及 E3 两种现成翻译界面的阅读对照 | 按既有 protocol；参与者自愿；保留实际理由、未知项和失败，不替参与者回答 |
 | 5 | 自行决定是否发出试用邀请，目标 10–20 人；逐日记录约一周并回访 | 未代发邀请；[E7 记录格式](../../experiments/E7-continuous-use/README.md)，本地验证命令见下 |
 | 6 | 有实际证据后分别决定搜索、探索和翻译方向继续、缩小或暂停；是否采用元数据草案与改名由你判断 | [阶段报告](../reports/2026-10-02-phase-review.md)；没有证据时保留未决定；商店上架不在本阶段授权内 |
@@ -31,3 +31,5 @@ E2 完整字段及操作说明见 [记录说明](../../experiments/E2-open-ended
 E3 已补 [三轮短摘录上下文与代码材料](../../experiments/E3-faithful-reading/context-pack-2026-10-03.md)；正式比较前由你冻结选定范围和工具。两种条件须使用相同的原语言 quote、代码及 authored_context，不把作者说明当成机器译文；整页或图像比较须另行登记范围。
 
 2026-10-04更新：D实跑及PR15审查已合入main。B/C/M入口修复2048token/思考解析并拒绝覆盖已有输出；完整命令与参数记录见offline-operator.md。当前Codex环境没有模型密钥，未代跑B/C/M，不需再选择模型。
+
+2026-10-04晚更新：2026-10-04 A/B/C/M 已用 MiniMax-M3 实跑 eval.batch_1（`runs/2026-10-04-bcm-minimax`，冻结设置 `run-settings-2026-10-04-bcm-minimax.json`，源码 SHA 48b074d）：A 20/20、B 19 完成+1 部分（GitHub 422）、C 19 完成+1 阻断（模型输出 JSON 解析失败）、M 20/20；模型请求 60，GitHub 请求 208（失败 1）；题级合并候选 A70/B212/C323/M127，与同日 D 组仓库题级交集 A0/B2/C9/M0。人工用途判断未运行，费用未知，不下跨语言增益结论。五组前5判定包已由 Codex 生成：`experiments/E1-cross-language-search/evaluation/2026-10-04-minimax/blind-sheet.md`。下一步需要你按 judgment-guide 做真实判断（不用生成材料或传话）；是否为 B 长句 422、C 提示词允许 `in:description`/`stars` 与主比较规则冲突另开 eval.batch_2 由你决定。报告：experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/report.md。

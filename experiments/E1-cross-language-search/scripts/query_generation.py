@@ -18,6 +18,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -31,6 +32,8 @@ PROMPTS = {
     "C": E1 / "prompts" / "c-rewrite.txt",
     "M": E1 / "prompts" / "m-rewrite.txt",
 }
+
+MAX_OUTPUT_TOKENS = 2048
 
 HttpPost = Callable[[str, dict[str, str], dict[str, Any], float], dict[str, Any]]
 
@@ -218,6 +221,7 @@ class HttpQueryClient:
         self.model = model
         self.api_key = api_key
         self.timeout = timeout
+        self.last_usage: dict | None = None
 
     def generate_variants(self, task: dict, arm: str, prompt: str) -> list[dict]:
         url = self.base_url + "/chat/completions"
@@ -226,9 +230,10 @@ class HttpQueryClient:
             user += f"\n方向：{other_lang(task['direction'])}"
         elif arm == "M":
             user += f"\n查询语言：{query_lang(task['direction'])}"
+        self.last_usage = None
         payload = {
             "model": self.model,
-            "max_tokens": 2048,
+            "max_tokens": MAX_OUTPUT_TOKENS,
             "messages": [
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": user},
@@ -260,6 +265,7 @@ class HttpQueryClient:
             raise QueryClientError("bad_response", "response was not JSON") from exc
         if not isinstance(data, dict):
             raise QueryClientError("bad_response", "response was not an object")
+        self.last_usage = _visible_usage(data.get("usage"))
         base_resp = data.get("base_resp")
         if isinstance(base_resp, dict) and base_resp.get("status_code") == 1004:
             raise QueryClientError("auth_rejected", "provider auth rejection; check key and platform region")
@@ -279,6 +285,23 @@ class HttpQueryClient:
         if not variants:
             raise QueryClientError("bad_response", "model returned no variants")
         return variants
+
+
+def _visible_usage(usage: Any) -> dict | None:
+    """Keep only numeric token counters the provider returned; never guess."""
+    if not isinstance(usage, dict):
+        return None
+    def num(value: Any) -> int | None:
+        return value if isinstance(value, int) and not isinstance(value, bool) else None
+    details = usage.get("completion_tokens_details")
+    prompt_details = usage.get("prompt_tokens_details")
+    return {
+        "prompt_tokens": num(usage.get("prompt_tokens")),
+        "completion_tokens": num(usage.get("completion_tokens")),
+        "reasoning_tokens": num(details.get("reasoning_tokens")) if isinstance(details, dict) else None,
+        "cached_prompt_tokens": num(prompt_details.get("cached_tokens")) if isinstance(prompt_details, dict) else None,
+        "total_tokens": num(usage.get("total_tokens")),
+    }
 
 
 def default_client_from_env(*, http_post: HttpPost | None = None) -> HttpQueryClient | None:
@@ -342,13 +365,17 @@ def generate(
             notes=notes,
         )
     prompt = PROMPTS[arm].read_text(encoding="utf-8")
+    started = time.monotonic()
     def recorded(**fields):
         row = record_row(**fields)
         if isinstance(client, HttpQueryClient):
             row["request_parameters"] = {"model": client.model,
                 "base_url_host": urllib.request.urlparse(client.base_url).hostname,
-                "max_tokens": 2048, "timeout_seconds": client.timeout,
+                "max_tokens": MAX_OUTPUT_TOKENS, "timeout_seconds": client.timeout,
                 "max_model_requests": 1, "automatic_retries": 0}
+            # Visible counters only; None means the provider gave none (e.g. timeout).
+            row["usage"] = client.last_usage
+            row["elapsed_seconds"] = round(time.monotonic() - started, 3)
         return row
     try:
         variants = client.generate_variants(task, arm, prompt)

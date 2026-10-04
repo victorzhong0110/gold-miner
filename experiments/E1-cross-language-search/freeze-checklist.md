@@ -21,7 +21,7 @@
 
 - [x] B/C/M/D 提示词在 `prompts/`
 - [x] `run-settings.json` 预算 A1 / B2 / C4 / M4
-- [x] `concrete_model_id` 为 MiniMax-M3（2026-10-04 发起人决定，见 docs/decisions/0004-minimax-d-group.md）。B/C/M 实跑仍未运行。
+- [x] `concrete_model_id` 为 MiniMax-M3（2026-10-04 发起人决定，见 docs/decisions/0004-minimax-d-group.md）。B/C/M 已于 2026-10-04 按冻结设置 `run-settings-2026-10-04-bcm-minimax.json`（冻结指针 ae5eeea）实跑，见 `runs/2026-10-04-bcm-minimax/`。
 
 ## SHA 回填（只能填已存在提交）
 
@@ -31,6 +31,8 @@
 - [ ] `run-settings.json` `freeze.*`
 
 在未回填前保持 `null` / `unfrozen-no-run`。
+
+2026-10-04：B/C/M 运行的冻结指针写在新文件 `run-settings-2026-10-04-bcm-minimax.json` 的 `freeze.*`（已存在提交 ae5eeea，并记录材料 sha256）。`queries.yaml` 与 `run-settings.json` 未改：D 组已在这两个文件上运行，运行后不改本批材料。
 
 ## 运行后
 

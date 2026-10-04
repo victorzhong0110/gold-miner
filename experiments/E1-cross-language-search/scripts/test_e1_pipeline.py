@@ -50,3 +50,61 @@ class PipelineTests(unittest.TestCase):
             with patch('e1_pipeline.run_pipeline') as run, patch.object(sys,'argv',['e1_pipeline.py','--live','--out',tmp]):
                 with self.assertRaises(SystemExit):main()
                 run.assert_not_called()
+
+
+class FrozenRunGuardTests(unittest.TestCase):
+    def _client(self, **kw):
+        from query_generation import HttpQueryClient
+        args = dict(base_url='https://api.minimax.cn/v1', model='MiniMax-M3', api_key='k', timeout=300.0)
+        args.update(kw)
+        return HttpQueryClient(lambda *a: None, **args)
+
+    def test_settings_must_match_client_parameters(self):
+        from e1_pipeline import check_frozen_settings
+        settings = {'model': {'concrete_model_id': 'MiniMax-M3', 'base_url': 'https://api.minimax.cn/v1/',
+                              'bcm_max_output_tokens': 2048, 'bcm_timeout_seconds': 300}}
+        self.assertEqual(check_frozen_settings(settings, self._client()), [])
+        self.assertIn('base_url', check_frozen_settings(settings, self._client(base_url='https://api.minimaxi.com/v1')))
+        self.assertTrue(check_frozen_settings(settings, self._client(timeout=60.0)))
+        bad = {'model': dict(settings['model'], bcm_max_output_tokens=8192)}
+        self.assertIn('bcm_max_output_tokens', check_frozen_settings(bad, self._client()))
+
+    def test_non_empty_output_directory_rejected_before_network(self):
+        import tempfile, sys
+        from pathlib import Path
+        from unittest.mock import patch
+        from e1_pipeline import main
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / 'manifest.json').write_text('d-run')
+            with patch('e1_pipeline.run_pipeline') as run, patch('e1_pipeline.default_client_from_env') as mk, \
+                    patch.object(sys, 'argv', ['e1_pipeline.py', '--live', '--run-id', 'new', '--out', tmp]):
+                with self.assertRaises(SystemExit):
+                    main()
+                run.assert_not_called()
+                mk.assert_not_called()
+            self.assertEqual((Path(tmp) / 'manifest.json').read_text(), 'd-run')
+
+    def test_github_spacing_and_usage_summary(self):
+        from unittest.mock import patch
+        import e1_pipeline
+        seen = []
+        def fake_batch(**kw):
+            seen.append(kw['sleep_seconds'])
+            return {'task_results': [], 'totals': {}, 'coverage': None}
+        class Client:
+            def generate_variants(self, task, arm, prompt):
+                return []
+        with patch('e1_pipeline.run_batch', fake_batch):
+            out = e1_pipeline.run_pipeline([TASK], run_id='x', mode='live', client=Client(), sleep_seconds=3.0)
+        self.assertEqual(seen, [3.0] * 4)
+        self.assertEqual(out['github_sleep_seconds'], 3.0)
+        self.assertEqual(out['model_cost'], 'unknown')
+        rows = [{'arm': 'B', 'request_parameters': {}, 'usage': {'prompt_tokens': 5, 'completion_tokens': 7,
+                 'reasoning_tokens': 3, 'cached_prompt_tokens': None}},
+                {'arm': 'B', 'request_parameters': {}, 'usage': None},
+                {'arm': 'C', 'code': 'owner_blocked'}]
+        summary = e1_pipeline.summarize_usage(rows)
+        self.assertEqual(summary['B']['model_requests'], 2)
+        self.assertEqual(summary['B']['requests_without_usage'], 1)
+        self.assertEqual(summary['B']['completion_tokens'], 7)
+        self.assertEqual(summary['C']['model_requests'], 0)
