@@ -33,9 +33,23 @@ python3 experiments/E1-cross-language-search/scripts/blind_eval.py \
   --out /tmp/masking-audit --audit-masking
 ```
 
-**要真正遮蔽需要一处不存放在本仓库的私密 salt。** 那是判定人（发起人）持有的东西，
-仓库里不能生成、也不该生成假 salt 来充数。因此本轮只做两件事：把可还原程度测出来，
-并把上面的披露从「映射在同一仓库」改成实际强度。
+**要真正遮蔽需要一处不存放在本仓库的私密 salt，机制已就绪。**
+
+```sh
+umask 077 && head -c 32 /dev/urandom | base64 > ~/.e1-blind-salt
+export E1_BLIND_SALT="$(cat ~/.e1-blind-salt)"
+python3 experiments/E1-cross-language-search/scripts/blind_eval.py \
+  --pipeline experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/pipeline.json \
+  --d-run experiments/E1-cross-language-search/runs/2026-10-04-d-minimax \
+  --out <本地材料目录> --key-out ~/.e1-blind-key.json
+```
+
+加了 salt 后，仅凭公开数据可确定归属从 196/233 降到 0/233
+（`--audit-masking` 可自查）。salt 不走命令行参数，避免进 `ps` 和 shell 历史；
+`--key-out` 让映射表落在仓库外。
+
+salt 由判定人持有，仓库里不能生成也不该生成假 salt 充数。
+**salt 挡不住主动翻 key 的人**，它只保证「仅凭公开数据无法反推」——判定前仍须披露已见信息。
 
 **判定前请披露已见信息。** 若按现状判定，结论必须写成「带已知可还原分组属性的来源遮蔽判定」，
 不能写成盲判；本记录不替判定结果背书。

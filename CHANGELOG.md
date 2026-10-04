@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased — 2026-10-05 盲判材料遮蔽强度实测与私密 salt 机制
+
+- 实测 `evaluation/2026-10-04-minimax/` 的遮蔽强度：233 个 blind_id 中
+  **196 个（84%）可确定归属单一组**，A 组基线 4/4 全部暴露。根因是
+  `blind_id = sha256(run_id + ':' + task_id + ':' + repo)` 不含 arm，
+  公开运行记录即可重算分组，不需要打开 `blind-key.json`。
+- 新增 `blind_eval.py --audit-masking`：让工具自报遮蔽强度，不读 key、不写判定材料。
+- 新增私密 salt 支持（`E1_BLIND_SALT` / `--salt-file` / `--key-out`）。
+  salt 不走 argv 以免进 `ps` 与 shell 历史；空白 salt 视为「没有」而非弱 salt。
+  实测加 salt 后仅凭公开数据可确定归属 196 → 0。**脚本不生成也不存盐**——
+  写死字符串等于公开，安全剧场。
+- 修正材料 README 披露：原写「映射在同一仓库」把问题说轻了，实际是跑一条命令
+  即可还原 84%。salt 挡不住主动翻 key 的人，判定前仍须披露已见信息。
+- 审计过程中自查出并修正一处自身缺陷：审计最初把 salt 传给了「攻击者」的重算，
+  导致加 salt 后仍报 196 可还原。威胁模型应是「持有公开数据但没有 salt 的人」。
+- 离线套件 326 Python + 58 Node 通过，付费请求 0。
+
 ## Unreleased — 2026-10-05 B/C/M 模型失败证据补齐
 
 - 失败时保存脱敏、限长的模型原文（与 D 组 `e1_d_assistant.py` 已有做法一致），

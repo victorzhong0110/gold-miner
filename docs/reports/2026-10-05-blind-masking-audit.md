@@ -64,12 +64,50 @@ A 组是首轮决策的基线，**4 条全部可确定归属**；D 组 95 条可
 blind_id = sha256(salt + ':' + run_id + ':' + task_id + ':' + repo)[:16]
 ```
 
-但 salt **不能存放在本仓库**——否则等于没加。所以：
+但 salt **不能存放在本仓库**——否则等于没加。所以本轮**不生成** salt，
+也不把任何固定字符串写进代码充数（那是安全剧场：仓库是公开的，写死等于没写）。
 
-- 本轮**不生成** salt，也不把某个固定字符串写进代码充数（那是安全剧场）
-- salt 由判定人（发起人）持有并在本地传入
-- 在 salt 到位之前，这批材料的结论只能写成
-  「带已知可还原分组属性的来源遮蔽判定」，不能写成盲判
+**机制已就绪，选择权留给判定人。** `blind_eval.py` 现在支持：
+
+```sh
+# 1) 判定人在仓库外生成并保管 salt
+umask 077 && head -c 32 /dev/urandom | base64 > ~/.e1-blind-salt
+
+# 2) 先自查遮蔽强度（不读 key、不写判定材料）
+export E1_BLIND_SALT="$(cat ~/.e1-blind-salt)"
+python3 experiments/E1-cross-language-search/scripts/blind_eval.py \
+  --pipeline experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/pipeline.json \
+  --d-run experiments/E1-cross-language-search/runs/2026-10-04-d-minimax \
+  --out /tmp/e1-blind --audit-masking
+# -> masking_strength: not-derivable-from-public-records
+
+# 3) 生成材料，并把映射写到仓库之外
+python3 experiments/E1-cross-language-search/scripts/blind_eval.py \
+  --pipeline experiments/E1-cross-language-search/runs/2026-10-04-bcm-minimax/pipeline.json \
+  --d-run experiments/E1-cross-language-search/runs/2026-10-04-d-minimax \
+  --out <你本地的材料目录> --key-out ~/.e1-blind-key.json
+```
+
+设计要点：
+
+- salt **不走命令行参数**。`ps` 和 shell history 都会记录 argv，
+  放进去等于放进日志。只从 `E1_BLIND_SALT` 或 `--salt-file` 读取。
+- 空白 salt（空串、纯空格）一律当作「没有 salt」，不静默降级成一个弱 salt。
+- `--key-out` 让映射表落在仓库外，公开目录里只留 `blind-candidates.jsonl`。
+- **salt 挡不住主动看 key 的人。** 它只保证「仅凭公开数据无法反推」。
+  判定前仍须披露已见信息。
+
+实测（用临时 salt 验证机制，未写入仓库）：
+
+| 模式 | `masking_strength` | 仅凭公开数据可确定归属 |
+|---|---|---|
+| 无 salt | `none-mechanical-reversal-possible` | **196 / 233** |
+| 有 salt | `not-derivable-from-public-records` | **0 / 233** |
+
+无 salt 时现有材料仍能**逐字节重建**，所以加 salt 是显式选择而非静默改写既有材料。
+
+在 salt 到位之前，这批材料的结论只能写成
+「带已知可还原分组属性的来源遮蔽判定」，不能写成盲判。
 
 本轮实际做的：
 

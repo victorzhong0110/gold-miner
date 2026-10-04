@@ -1,10 +1,41 @@
 #!/usr/bin/env python3
 """Prepare masked top-five candidate sheets and analyze completed judgments."""
 import argparse
+import copy
 import hashlib
 import json
-import copy
+import os
 from pathlib import Path
+
+SALT_ENV = "E1_BLIND_SALT"
+
+
+def resolve_salt(salt_file=None):
+    """Return the judge's private salt, or None when running unmasked.
+
+    Deliberately NOT a command-line value: process arguments show up in `ps`
+    and shell history, and a salt in either place is a salt in the log. Read it
+    from E1_BLIND_SALT or a file the judge keeps outside this repository.
+
+    This script never generates, stores or defaults to a salt. A fixed string in
+    a public source file is security theatre, because the repository is public.
+    """
+    if salt_file:
+        return Path(salt_file).read_text(encoding="utf-8").strip() or None
+    return (os.environ.get(SALT_ENV) or "").strip() or None
+
+
+def blind_digest(salt, run_id, task_id, repo):
+    """blind_id derivation. The arm is never an input, by design.
+
+    arm-free input is what lets a single judgment cover a repo appearing in
+    several arms. It also means the mapping is recomputable from the public run
+    records unless a private salt is supplied, which is what resolve_salt and
+    audit_masking exist to make visible.
+    """
+    prefix = (salt + ':') if salt else ''
+    return hashlib.sha256((prefix + run_id + ':' + task_id + ':' + repo).encode()).hexdigest()[:16]
+
 
 
 def include_d(pipeline, d_rows, manifest):
@@ -30,20 +61,21 @@ def include_d(pipeline, d_rows, manifest):
     return combined
 
 
-def prepare(pipeline):
+def prepare(pipeline, salt=None):
     public, key = {}, {}
     for arm, result in pipeline['arms'].items():
         for task in result['task_results']:
             for rank, row in enumerate(task['merged_candidates'][:5], 1):
                 repo = row['repo'].lower()
-                identity = task['task_id'] + ':' + repo
-                blind_id = hashlib.sha256((pipeline['run_id'] + ':' + identity).encode()).hexdigest()[:16]
+                blind_id = blind_digest(salt, pipeline['run_id'], task['task_id'], repo)
                 public[blind_id] = {'blind_id': blind_id, 'task_id': task['task_id'], 'repo': repo,
                                     'url': 'https://github.com/' + repo}
                 key.setdefault(blind_id, []).append({'arm': arm, 'rank': rank, 'task_id': task['task_id'], 'repo': repo})
     # Sort by opaque ID, never source rank or arm. Keep the key away from the judge.
     return [public[k] for k in sorted(public)], {'run_id': pipeline['run_id'], 'mode': pipeline['mode'], 'links': key,
-        'arm_task_status': {arm: {t['task_id']: t['status'] for t in a['task_results']} for arm, a in pipeline['arms'].items()}}
+        'arm_task_status': {arm: {t['task_id']: t['status'] for t in a['task_results']} for arm, a in pipeline['arms'].items()},
+        'salted': bool(salt)}
+
 
 
 def analyze(key, judgments, judge_kind):
@@ -86,7 +118,7 @@ def analyze(key, judgments, judge_kind):
             'product_effect': 'not-concluded', 'missing_judgments': len(key['links']) - len(indexed)}
 
 
-def audit_masking(public, pipeline):
+def audit_masking(public, pipeline, salt=None):
     """Measure how much of the blind set is mechanically de-anonymizable.
 
     blind_id is sha256(run_id + ':' + task_id + ':' + repo)[:16] and the arm is
@@ -104,10 +136,13 @@ def audit_masking(public, pipeline):
     for arm, result in pipeline['arms'].items():
         for task in result['task_results']:
             for row in task['merged_candidates'][:5]:
-                bid = hashlib.sha256(
-                    (run_id + ':' + task['task_id'] + ':' + row['repo'].lower()).encode()
-                ).hexdigest()[:16]
-                recoverable.setdefault(bid, set()).add(arm)
+                # Deliberately unsalted: this models the attacker, who has the
+                # public run records but NOT the judge's salt. Recomputing with
+                # the salt here would measure the judge's own view and always
+                # report full exposure, hiding the very thing being audited.
+                recoverable.setdefault(
+                    blind_digest(None, run_id, task['task_id'], row['repo'].lower()), set()
+                ).add(arm)
     exposed = [row for row in public if row['blind_id'] in recoverable]
     single = [row for row in exposed if len(recoverable[row['blind_id']]) == 1]
     per_arm = {}
@@ -120,11 +155,20 @@ def audit_masking(public, pipeline):
         'arm_group_recoverable': len(exposed),
         'single_arm_attributable': len(single),
         'single_arm_by_group': dict(sorted(per_arm.items())),
-        'masking_strength': 'none-mechanical-reversal-possible' if single else 'no-single-arm-exposure',
+        'salted': bool(salt),
+        # Describe the measured material, not the flag: a supplied salt does
+        # not make unsalted material safe, and this is the only honest label.
+        'masking_strength': ('none-mechanical-reversal-possible' if single
+                             else 'not-derivable-from-public-records'),
         'note': (
+            'Private salt in use: the published run records no longer recover the '
+            'grouping. The salt is not stored in this repository, and the mapping '
+            'key should be written outside it. Anyone who reads the key can still '
+            'de-anonymize, so disclose what has been seen.'
+            if salt else
             'arm is not part of the blind_id hash input, so the public run records '
             'are enough to recover the grouping. Real masking needs a secret salt '
-            'that is not stored in this repository; this script does not invent one. '
+            'held outside this repository; this script does not invent one. '
             'Until then the material is source-masked, not blind.'
         ),
     }
@@ -132,7 +176,7 @@ def audit_masking(public, pipeline):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--pipeline'); p.add_argument('--d-run', help='optional completed same-batch D run directory'); p.add_argument('--key'); p.add_argument('--judgments'); p.add_argument('--judge-kind', choices=['human', 'technical']); p.add_argument('--out', required=True); p.add_argument('--audit-masking', action='store_true', help='report de-anonymizability only, without writing judge material')
+    p.add_argument('--pipeline'); p.add_argument('--d-run', help='optional completed same-batch D run directory'); p.add_argument('--key'); p.add_argument('--judgments'); p.add_argument('--judge-kind', choices=['human', 'technical']); p.add_argument('--out', required=True); p.add_argument('--audit-masking', action='store_true', help='report de-anonymizability only, without writing judge material'); p.add_argument('--salt-file', help='file holding the judge\'s private salt; must live outside this repository'); p.add_argument('--key-out', help='write blind-key.json here instead of into --out, so the mapping stays out of the repository')
     args = p.parse_args(); out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
     if args.pipeline:
         pipeline = json.loads(Path(args.pipeline).read_text())
@@ -140,16 +184,19 @@ def main():
             d = Path(args.d_run)
             pipeline = include_d(pipeline, [json.loads(l) for l in (d / 'candidates.jsonl').read_text().splitlines() if l.strip()],
                                  json.loads((d / 'manifest.json').read_text()))
-        public, key = prepare(pipeline)
+        salt = resolve_salt(args.salt_file)
+        public, key = prepare(pipeline, salt)
         if args.d_run:
             key['source_runs'] = {'ABCM_pipeline': args.pipeline, 'D_run': args.d_run}
         if args.audit_masking:
-            report = audit_masking(public, pipeline)
+            report = audit_masking(public, pipeline, salt)
             (out / 'masking-audit.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
             print(json.dumps(report, ensure_ascii=False, indent=2))
             return
         (out / 'blind-candidates.jsonl').write_text(''.join(json.dumps(r, ensure_ascii=False) + '\n' for r in public))
-        (out / 'blind-key.json').write_text(json.dumps(key, ensure_ascii=False, indent=2) + '\n')
+        key_dest = Path(args.key_out) if args.key_out else out / 'blind-key.json'
+        key_dest.parent.mkdir(parents=True, exist_ok=True)
+        key_dest.write_text(json.dumps(key, ensure_ascii=False, indent=2) + '\n')
     elif args.key and args.judgments and args.judge_kind:
         result = analyze(json.loads(Path(args.key).read_text()), [json.loads(l) for l in Path(args.judgments).read_text().splitlines() if l.strip()], args.judge_kind)
         (out / 'analysis.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')

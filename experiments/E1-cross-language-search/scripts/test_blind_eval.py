@@ -108,3 +108,65 @@ class MaskingAuditTests(unittest.TestCase):
         public, key = prepare(p)
         self.assertEqual(len(public), 1)
         self.assertEqual({e['arm'] for e in next(iter(key['links'].values()))}, {'A', 'C'})
+
+
+class SaltTests(unittest.TestCase):
+    """The judge-held salt is the only thing standing between public data and
+    the arm mapping. The script must support it without ever inventing one."""
+
+    def _pipeline(self):
+        return {'run_id': 'r1', 'mode': 'live', 'arms': {
+            arm: {'task_results': [{'task_id': 't1', 'status': 'ok', 'merged_candidates': [
+                {'repo': 'only/%s' % arm.lower()}]}]} for arm in ('A', 'C', 'M')}}
+
+    def test_salt_changes_every_blind_id(self):
+        p = self._pipeline()
+        plain, _ = prepare(p)
+        salted, key = prepare(p, 'judge-private-salt')
+        self.assertNotEqual([r['blind_id'] for r in plain], [r['blind_id'] for r in salted])
+        self.assertTrue(key['salted'])
+
+    def test_salted_material_is_not_recoverable_from_public_records(self):
+        p = self._pipeline()
+        salted, _ = prepare(p, 'judge-private-salt')
+        report = audit_masking(salted, p, 'judge-private-salt')
+        # The attacker only has the public run records, so nothing is derivable.
+        self.assertEqual(report['arm_group_recoverable'], 0)
+        self.assertEqual(report['single_arm_attributable'], 0)
+        self.assertEqual(report['masking_strength'], 'not-derivable-from-public-records')
+
+    def test_audit_never_uses_the_salt_to_measure_exposure(self):
+        # Regression: measuring with the salt in hand would always report full
+        # exposure and hide exactly what the audit exists to reveal.
+        p = self._pipeline()
+        plain, _ = prepare(p)
+        report = audit_masking(plain, p, 'judge-private-salt')
+        self.assertGreater(report['single_arm_attributable'], 0)
+        self.assertEqual(report['masking_strength'], 'none-mechanical-reversal-possible')
+
+    def test_unsalted_key_records_that_it_is_unsalted(self):
+        _, key = prepare(self._pipeline())
+        self.assertFalse(key['salted'])
+
+    def test_resolve_salt_reads_env_and_file_but_never_invents_one(self):
+        import os as _os
+        import tempfile
+        from blind_eval import resolve_salt, SALT_ENV
+        previous = _os.environ.pop(SALT_ENV, None)
+        try:
+            self.assertIsNone(resolve_salt())
+            _os.environ[SALT_ENV] = '  from-env  '
+            self.assertEqual(resolve_salt(), 'from-env')
+            _os.environ[SALT_ENV] = '   '
+            self.assertIsNone(resolve_salt(), 'blank env must not become a salt')
+            with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as fh:
+                fh.write('from-file' + chr(10))
+                name = fh.name
+            self.assertEqual(resolve_salt(name), 'from-file')
+            with open(name, 'w') as fh:
+                fh.write('   ' + chr(10))
+            self.assertIsNone(resolve_salt(name), 'blank file must not become a salt')
+        finally:
+            _os.environ.pop(SALT_ENV, None)
+            if previous is not None:
+                _os.environ[SALT_ENV] = previous
