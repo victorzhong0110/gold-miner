@@ -1,0 +1,123 @@
+{
+  "actual_requests_per_task": "按实际请求数报告；重复查询去重后计数；不为填满预算添加无关查询",
+  "batch": "eval.batch_2",
+  "budget": {
+    "B": {
+      "description": "原文 1 条加另一语言忠实翻译 1 条",
+      "max_github_requests": 2,
+      "max_model_requests": 1
+    },
+    "A": {
+      "description": "原查询默认仓库搜索",
+      "max_github_requests": 1,
+      "max_model_requests": 0
+    },
+    "C": {
+      "description": "原查询加最多 3 条扩展，其中 2 条用另一语言",
+      "max_github_requests": 4,
+      "max_model_requests": 1
+    },
+    "D": {
+      "description": "本草案入口仅 A/B/C/M；旧批 D 历史对照保持独立，不自动启动 D 复测。",
+      "max_github_requests": 0,
+      "max_model_requests": "unknown-by-tool",
+      "task_cap": null,
+      "note": "可见模型请求与服务端 web_search 按响应计数；看不见的内部调用和费用记未知。见 docs/decisions/0004-minimax-d-group.md。"
+    },
+    "M": {
+      "description": "原查询加最多 3 条同语言改写",
+      "max_github_requests": 4,
+      "max_model_requests": 1
+    }
+  },
+  "candidate_merge": {
+    "dedup": "canonical lower owner/repo，见 scripts/github_search.py",
+    "per_query_top_n": 30,
+    "sort": "C/M 共用排序；原始位置与各路候选保留；热度仅辅助，不排除低 stars；命中次数排序需说明近义重复影响",
+    "truncate_merged_top_n": 30
+  },
+  "cost_accounting": [
+    "github_requests",
+    "model_requests",
+    "failures_and_retries",
+    "visible_tokens_or_fees_or_unknown",
+    "cache_hits",
+    "human_judgment_minutes"
+  ],
+  "field_config": {
+    "main": "default",
+    "note": "C/M 首次比较用完全相同字段；README 扩展另做配对诊断，两组同时启用相同字段；默认字段与增加 README 字段分开报告",
+    "paired_readme_diagnosis": "pending"
+  },
+  "freeze": {
+    "eval_frozen_commit": null,
+    "prompts_frozen_commit": null,
+    "seed_set_frozen_commit": null,
+    "run_settings_commit": null,
+    "status": "prepared-not-frozen",
+    "prompt_version": "batches/eval.batch_2/prompts/"
+  },
+  "judgment_window": {
+    "human_check_top_k_per_group": 5,
+    "seed_hit_at": 30
+  },
+  "model": {
+    "C_M_notes_limit": "一句，可空",
+    "C_M_output": "{\"zh\": [\"<=2\"], \"en\": [\"<=2\"], \"notes\": \"...\"}",
+    "call": "C/M 查询生成各最多 1 次模型请求；模型、可见上下文、输出限制与排序一致，仅允许语言不同",
+    "concrete_model_id": "MiniMax-M3",
+    "base_url": "https://api.minimax.cn/v1",
+    "alternate_base_url": "https://api.minimaxi.com/v1",
+    "d_endpoint": "POST /v1/responses",
+    "d_server_tool": "web_search",
+    "max_output_tokens": 8192,
+    "status": "owner-decided-2026-10-04",
+    "decision": "docs/decisions/0004-minimax-d-group.md",
+    "b_c_m_live": "未运行（本批）",
+    "bcm_endpoint": "POST /v1/chat/completions",
+    "bcm_max_output_tokens": 2048,
+    "bcm_max_output_tokens_note": "2048 含推理 token；finish_reason=length 记失败，不重发。",
+    "bcm_timeout_seconds": 300,
+    "bcm_timeout_note": "环境变量 BYOK_TIMEOUT_SECONDS=300（默认 60）。MiniMax-M3 为推理模型，D 组出现过超时，故放宽；pipeline 运行前核对一致。",
+    "bcm_automatic_retries": 0,
+    "bcm_max_model_requests_per_task_arm": 1,
+    "temperature": "provider default (not sent)",
+    "api_key_source": "env OPENAI_API_KEY (= MINIMAX_API_KEY); not stored",
+    "owner_decision": "沿用 2026-10-04 模型选择；本文件只准备材料，不代表本批已运行或已发生费用。"
+  },
+  "protocol_version": "v0.4",
+  "reading_setup": "reading-baseline.md v1",
+  "reading_setup_status": "recorded-not-used",
+  "run_id_pattern": "runs/<YYYY-MM-DD>-<label>/",
+  "status": "prepared-not-frozen-not-run",
+  "frozen_settings_note": "修正复测草案，基于 main 168c4efbc73f0ae2a9413298d97ad568022ca8b3。旧批材料、实际结果、判断记录均不改。材料落地后才能把已存在提交 SHA 写入独立冻结设置；不把 null 指针当冻结。",
+  "github": {
+    "endpoint": "GET https://api.github.com/search/repositories",
+    "field": "default (no in:/language:/stars:)",
+    "per_page": 30,
+    "sleep_seconds_between_search_requests": 3.0,
+    "token_source": "env GITHUB_TOKEN (gh auth token); not stored",
+    "automatic_retries": 0
+  },
+  "run": {
+    "batch": "eval.batch_2",
+    "arms": [
+      "A",
+      "B",
+      "C",
+      "M"
+    ],
+    "run_id": null,
+    "out": null,
+    "resume_rule": "不续跑、不覆盖；需要新 run-id 和新目录，旧记录保留。"
+  },
+  "prompt_profile": "eval.batch_2",
+  "material_fingerprints": {
+    "queries_sha256": "6a9b249ea72b749590875ffde86339d06511e68dbad8341d37a0b466fc2d18e0",
+    "prompts_sha256": {
+      "B": "cc9000fbfaa2c2d4a03a5534df01f02b485538a4f1835a414dac614088a382f6",
+      "C": "c7260d969e806ba05912f6b2c5a910db732ceca1f99da4854d62d7e3e640fbfb",
+      "M": "a4350e529f4455a3cd8d583ad61c9ccc33fcc21ee06c3723dd151e317c3c9b54"
+    }
+  }
+}

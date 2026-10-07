@@ -410,3 +410,13 @@ E6 探测本身仍是「未运行」，本轮只修好它的记录契约。详�
 **全仓库 13 个 schema 现已全部可满足。** 本轮未改任何已记录产物、
 提示词或冻结材料。详见
 [2026-10-05-schema-sweep-closeout.md](../reports/2026-10-05-schema-sweep-closeout.md)。
+
+## 2026-10-07 独立工程续作：第二批修正复测准备
+
+用户在本会话授权继续可独立执行的工程项，同时自行开展 Mac 与真人工作。唯一写入者为当前 Codex；工作区 `/workspace/scratch/72c9c856db61/gold-engineering`，分支 `work/20261007-eval-batch2`，起始 main `168c4efbc73f0ae2a9413298d97ad568022ca8b3`。
+
+新增 [eval.batch_2 材料](../../experiments/E1-cross-language-search/batches/eval.batch_2/README.md)：B/C/M 提示词与主比较限定符禁令对齐，独立题集、设置草案和 SHA-256；生成/流水线/批入口支持新批并拒绝误用旧设置。题目复用第一批公开任务，属于修正复测，不是未见新题确认。运行前与每次模型请求前校验材料，记录实际发送提示词哈希；单条生成入口不能绕过本批冻结执行 live。第一批提示词、题集、种子、运行、判断及历史矛盾记录未改，冻结哈希回归匹配。
+
+本轮实际验证：`python3 scripts/run_offline_suite.py` 383 项 Python + 58 项 Node 全过，13 项为新增回归；第二批 C 的单条 fixture 命令通过；`git diff --check` 通过。首次 E3 历史材料测试因浅克隆缺少原冻结提交失败，补齐 git 历史后全过，无测试或门槛改动。浏览器交给本 PR 的实际 CI gate；提交与合并状态以远端 PR 为准。
+
+材料状态仍为 **prepared-not-frozen-not-run**，没有本批 live 请求、费用、候选、真人判断或效果结论。WP2-04 的第一批来源遮蔽判断、E2a/E2b/E3 真人会话、E7 一周日记与实际 Chrome 使用仍由发起人推进；不能用离线检查代替。WP6-01 新盲题效果复测仍未执行。

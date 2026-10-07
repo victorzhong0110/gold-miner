@@ -107,8 +107,25 @@ def check_frozen_settings(settings, client):
     return problems
 
 
+def check_batch2_materials(settings, query_path):
+    from query_generation import prompt_paths
+
+    problems = []
+    if settings.get('batch') != 'eval.batch_2' or settings.get('prompt_profile') != 'eval.batch_2':
+        problems.append('batch/profile identity')
+    fingerprints = settings.get('material_fingerprints', {})
+    actual = hashlib.sha256(Path(query_path).read_bytes()).hexdigest()
+    if fingerprints.get('queries_sha256') != actual:
+        problems.append('queries digest')
+    for arm, path in prompt_paths('eval.batch_2').items():
+        if fingerprints.get('prompts_sha256', {}).get(arm) != hashlib.sha256(path.read_bytes()).hexdigest():
+            problems.append(arm + ' prompt digest')
+    return problems
+
+
 def run_pipeline(tasks, *, run_id, mode='fixture', client=None, http_get=None, token=None,
-                 should_cancel=None, allow_network=False, sleep_seconds=0):
+                 should_cancel=None, allow_network=False, sleep_seconds=0,
+                 prompt_profile="eval.batch_1", expected_prompts_sha256=None):
     if mode not in ('fixture', 'live'):
         raise ValueError('mode must be fixture or live')
     records, mappings = [], {arm: {} for arm in ('B', 'C', 'M')}
@@ -123,7 +140,9 @@ def run_pipeline(tasks, *, run_id, mode='fixture', client=None, http_get=None, t
                 continue
             gen_started = time.monotonic()
             try:
-                row = generate(task, arm, mode, client, allow_network=allow_network)
+                row = generate(task, arm, mode, client, allow_network=allow_network,
+                               prompt_profile=prompt_profile,
+                               expected_prompt_sha256=(expected_prompts_sha256 or {}).get(arm))
             except KeyError:
                 row = {'task_id': task['id'], 'arm': arm, 'mode': mode, 'code': 'fixture_missing', 'variants': []}
             generation_ms[(task['id'], arm)] = int((time.monotonic() - gen_started) * 1000)
@@ -227,10 +246,11 @@ def failure_rows(result: dict) -> list[dict]:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--live', action='store_true')
-    parser.add_argument('--batch', choices=['dev', 'eval.batch_1'], default='dev')
+    parser.add_argument('--batch', choices=['dev', 'eval.batch_1', 'eval.batch_2'], default='dev')
     parser.add_argument('--out', required=True)
     parser.add_argument('--run-id', help='required for live runs; use a new ID and output directory')
     parser.add_argument('--settings', default=str(E1 / 'run-settings.json'))
+    parser.add_argument('--queries', default=str(E1 / 'queries.yaml'))
     args = parser.parse_args()
     out = Path(args.out)
     if (out / 'pipeline.json').exists():
@@ -244,7 +264,7 @@ def main():
         parser.error('owner-blocked: live A/B/C/M run requires valid OPENAI_* configuration before any requests')
     # Formal evaluation must name a configured frozen model before any billable call.
     settings = json.loads(Path(args.settings).read_text())
-    if args.batch == 'eval.batch_1':
+    if args.batch.startswith('eval.'):
         model = settings.get('model', {}).get('concrete_model_id')
         if not args.live or not is_eval_frozen(settings) or not model or model != os.environ.get('OPENAI_MODEL'):
             parser.error('formal evaluation requires --live, frozen settings and matching concrete model')
@@ -257,11 +277,22 @@ def main():
     if args.live:
         from github_search import _urllib_get
         http_get = _urllib_get
-    tasks = load_queries(E1 / 'queries.yaml')[args.batch]
+    query_path = Path(args.queries)
+    expected_queries = settings.get('material_fingerprints', {}).get('queries_sha256') if args.batch == 'eval.batch_2' else None
+    batches = load_queries(query_path, expected_sha256=expected_queries)
+    if args.batch not in batches:
+        parser.error('requested batch is absent from query materials')
+    profile = 'eval.batch_2' if args.batch == 'eval.batch_2' else 'eval.batch_1'
+    if args.batch == 'eval.batch_2':
+        problems = check_batch2_materials(settings, query_path)
+        if problems:
+            parser.error('batch_2 materials do not match settings: ' + ', '.join(problems))
+    tasks = batches[args.batch]
     started_at = _utcnow()
     result = run_pipeline(tasks, run_id=args.run_id or 'fixture-dev', mode='live' if args.live else 'fixture',
                           client=client, http_get=http_get, allow_network=args.live,
-                          sleep_seconds=sleep_seconds)
+                          sleep_seconds=sleep_seconds, prompt_profile=profile,
+                          expected_prompts_sha256=settings.get('material_fingerprints', {}).get('prompts_sha256') if args.batch == 'eval.batch_2' else None)
     result['started_at'], result['finished_at'] = started_at, _utcnow()
     result['source_sha'] = materials_commit()
     result['settings_sha256'] = hashlib.sha256(Path(args.settings).read_bytes()).hexdigest()
