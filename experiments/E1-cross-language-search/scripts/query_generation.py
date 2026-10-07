@@ -81,8 +81,17 @@ def _utcnow() -> str:
     )
 
 
-def prompt_hash(arm: str) -> str:
-    text = PROMPTS[arm].read_text(encoding="utf-8")
+def prompt_paths(profile: str = "eval.batch_1") -> dict[str, Path]:
+    if profile == "eval.batch_1":
+        return dict(PROMPTS)
+    if profile == "eval.batch_2":
+        directory = E1 / "batches" / profile / "prompts"
+        return {arm: directory / path.name for arm, path in PROMPTS.items()}
+    raise ValueError("unknown prompt profile")
+
+
+def prompt_hash(arm: str, profile: str = "eval.batch_1") -> str:
+    text = prompt_paths(profile)[arm].read_text(encoding="utf-8")
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
 
@@ -100,7 +109,7 @@ def load_queries_yaml(path: Path) -> list[dict]:
     from e1_batch import load_queries  # type: ignore
 
     data = load_queries(path)
-    return data["dev"] + data["eval.batch_1"]
+    return [task for tasks in data.values() for task in tasks]
 
 
 def load_fixtures() -> dict:
@@ -130,6 +139,8 @@ def record_row(
     variants: list[dict] | None,
     code: str,
     notes: str,
+    prompt_profile: str = "eval.batch_1",
+    prompt_text: str | None = None,
 ) -> dict:
     return {
         "recorded_at": _utcnow(),
@@ -137,8 +148,9 @@ def record_row(
         "direction": task["direction"],
         "arm": arm,
         "mode": mode,
-        "prompt_file": str(PROMPTS[arm].relative_to(ROOT)),
-        "prompt_sha256_16": prompt_hash(arm),
+        "prompt_file": str(prompt_paths(prompt_profile)[arm].relative_to(ROOT)),
+        "prompt_sha256_16": hashlib.sha256((prompt_text if prompt_text is not None else
+            prompt_paths(prompt_profile)[arm].read_text(encoding="utf-8")).encode()).hexdigest()[:16],
         "input_sha256_16": input_hash(task),
         "original_query": task["query"],
         "variants": variants or [],
@@ -455,9 +467,15 @@ def generate(
     *,
     allow_network: bool = False,
     http_post: HttpPost | None = None,
+    prompt_profile: str = "eval.batch_1",
+    expected_prompt_sha256: str | None = None,
 ) -> dict:
-    if arm not in PROMPTS:
+    paths = prompt_paths(prompt_profile)
+    if arm not in paths:
         raise ValueError("arm must be B, C or M")
+    prompt = paths[arm].read_text(encoding="utf-8")
+    if expected_prompt_sha256 is not None and hashlib.sha256(prompt.encode()).hexdigest() != expected_prompt_sha256:
+        raise ValueError("prompt materials digest changed before dispatch")
     if mode == "fixture":
         variants = variants_from_fixture(task, arm, load_fixtures())
         return record_row(
@@ -467,6 +485,7 @@ def generate(
             variants=variants,
             code="ok",
             notes="fixture; not a model run",
+            prompt_profile=prompt_profile, prompt_text=prompt,
         )
     if mode != "live":
         raise ValueError("mode must be fixture or live")
@@ -486,11 +505,11 @@ def generate(
             variants=None,
             code="owner_blocked",
             notes=notes,
+            prompt_profile=prompt_profile, prompt_text=prompt,
         )
-    prompt = PROMPTS[arm].read_text(encoding="utf-8")
     started = time.monotonic()
     def recorded(**fields):
-        row = record_row(**fields)
+        row = record_row(**fields, prompt_profile=prompt_profile, prompt_text=prompt)
         if isinstance(client, HttpQueryClient):
             row["request_parameters"] = {"model": client.model,
                 "base_url_host": urllib.request.urlparse(client.base_url).hostname,
@@ -532,9 +551,20 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--mode", default="fixture", choices=["fixture", "live"])
     p.add_argument("--queries", default=str(E1 / "queries.yaml"))
     p.add_argument("--out", default="")
+    p.add_argument("--prompt-profile", choices=["eval.batch_1", "eval.batch_2"], default="eval.batch_1")
     args = p.parse_args(argv)
 
-    tasks = {t["id"]: t for t in load_queries_yaml(Path(args.queries))}
+    from e1_batch import load_queries
+    batches = load_queries(Path(args.queries))
+    if args.prompt_profile == "eval.batch_2":
+        if not batches.get("eval.batch_2"):
+            p.error("batch_2 prompt profile requires batch_2 query materials")
+        if args.mode == "live":
+            p.error("use e1_pipeline.py with frozen batch_2 settings for a live evaluation")
+        selected = batches["dev"] + batches["eval.batch_2"]
+    else:
+        selected = batches["dev"] + batches["eval.batch_1"]
+    tasks = {t["id"]: t for t in selected}
     if args.task_id not in tasks:
         print(json.dumps({"code": "bad_response", "message": "unknown task"}, ensure_ascii=False))
         return 2
@@ -543,6 +573,7 @@ def main(argv: list[str] | None = None) -> int:
         args.arm,
         args.mode,
         allow_network=args.mode == "live",
+        prompt_profile=args.prompt_profile,
     )
     line = json.dumps(row, ensure_ascii=False)
     if any(re.search(pat, line) for pat in (r"sk-[A-Za-z0-9]{8,}", r"ghp_[A-Za-z0-9]+")):

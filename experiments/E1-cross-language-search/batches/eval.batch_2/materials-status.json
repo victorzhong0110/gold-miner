@@ -1,0 +1,28 @@
+{
+  "batch": "eval.batch_2",
+  "status": "prepared-not-frozen-not-run",
+  "source_batch": "eval.batch_1",
+  "source_main": "168c4efbc73f0ae2a9413298d97ad568022ca8b3",
+  "all_qualifiers_covered": true,
+  "pipeline_rule": "\\b(?:language|in|stars|repo|user|org):",
+  "prompt_profile": "eval.batch_2",
+  "material_fingerprints": {
+    "queries_sha256": "6a9b249ea72b749590875ffde86339d06511e68dbad8341d37a0b466fc2d18e0",
+    "prompts_sha256": {
+      "B": "cc9000fbfaa2c2d4a03a5534df01f02b485538a4f1835a414dac614088a382f6",
+      "C": "c7260d969e806ba05912f6b2c5a910db732ceca1f99da4854d62d7e3e640fbfb",
+      "M": "a4350e529f4455a3cd8d583ad61c9ccc33fcc21ee06c3723dd151e317c3c9b54"
+    }
+  },
+  "corrections": [
+    "C in:description/stars permission removed",
+    "B/C/M enumerate all forbidden qualifiers",
+    "C explains the two distinct target-language requirement without forcing invented queries"
+  ],
+  "evidence_boundary": [
+    "same public tasks reused: correction retest, not independent confirmation",
+    "fixture is not a live model or GitHub run",
+    "no human judgment or product effect claim",
+    "batch_1 materials-status resolution retained"
+  ]
+}

@@ -1,0 +1,208 @@
+# E1 任务集。v0.4 协议见 protocol.md 第 2 节。
+# eval.batch_2 修正复测草案：复用 batch_1 原始任务，不是新盲题或独立确认。
+# 本批未冻结、未运行；旧批结果不改。
+#
+# dev：写脚本、调提示词用，可随时改。
+# eval：预注册。填好后提交；运行开始后不改。结果不理想只能新增 batch，不能改旧 batch。
+# 字段：
+#   id          任务标识，方向前缀 zh2en / en2zh
+#   direction   zh2en = 中文使用者找英文项目；en2zh = 英文使用者发现中文材料描述的项目或能力；不强制整仓库仅中文
+#   type        term | uncovered | ambiguous | negation | long
+#   query       用户原话，不做任何改写
+#   need        任务写作者对"什么算合适"的一句说明，判定时参考；不含仓库名
+#   written_at  写作日期，须早于首次运行
+
+preregistration:
+  eval_frozen_commit: null      # 填 eval 组提交的 SHA
+  prompts_frozen_commit: null   # 填 prompts/ 提交的 SHA
+  seed_set_frozen_commit: null  # 填 seed-set.jsonl 提交的 SHA
+  run_settings_commit: null     # 运行前固定方法预算/字段/排序的已存在提交；不采用旧版效果阈值
+  protocol_version: v0.4
+
+dev:
+  - id: zh2en-dev-01
+    direction: zh2en
+    type: term
+    query: 剪贴板历史 工具
+    need: 桌面端记录剪贴板历史并可搜索回粘的工具，任一系统
+    written_at: 2026-09-17
+  - id: zh2en-dev-02
+    direction: zh2en
+    type: negation
+    query: 剪贴板历史 不要 electron
+    need: 同上，但排除 Electron 实现
+    written_at: 2026-09-17
+  - id: zh2en-dev-03
+    direction: zh2en
+    type: long
+    query: 想找一个能自托管的稍后读服务，能保存网页正文，手机上也能看
+    need: 自托管稍后读，保存正文、有移动端访问方式
+    written_at: 2026-09-17
+  - id: zh2en-dev-04
+    direction: zh2en
+    type: ambiguous
+    query: 番茄钟 命令行
+    need: 终端里用的番茄工作法计时器；不是番茄品种、不是图形界面应用
+    written_at: 2026-09-17
+  - id: zh2en-dev-05
+    direction: zh2en
+    type: uncovered
+    query: 把微信聊天记录导出成 HTML
+    need: 导出微信聊天记录为可离线浏览的 HTML，任一平台
+    written_at: 2026-09-17
+  - id: en2zh-dev-01
+    direction: en2zh
+    type: term
+    query: clipboard history manager windows
+    need: Windows 剪贴板历史工具；目标是只有中文 README 的项目也能进入候选
+    written_at: 2026-09-17
+  - id: en2zh-dev-02
+    direction: en2zh
+    type: uncovered
+    query: convert wechat official account article to markdown
+    need: 微信公众号文章转 Markdown
+    written_at: 2026-09-17
+  - id: en2zh-dev-03
+    direction: en2zh
+    type: term
+    query: bilibili video downloader cli
+    need: 命令行下载 B 站视频
+    written_at: 2026-09-17
+  - id: en2zh-dev-04
+    direction: en2zh
+    type: long
+    query: offline OCR for screenshots on macOS, no cloud, Chinese and English text
+    need: macOS 本地截图 OCR，支持中英文，不上传
+    written_at: 2026-09-17
+  - id: en2zh-dev-05
+    direction: en2zh
+    type: negation
+    query: lightweight self-hosted rss reader without docker
+    need: 自托管 RSS 阅读器，不依赖 Docker 部署
+    written_at: 2026-09-17
+
+eval:
+  # 修正复测沿用第一批开放任务。两方向需求互不重复；每方向 10 条、五类各 2。
+  # 多于 v0.4「每方向 4 条」的探索性建议，运行前固定；不构成统计保证。
+  # 已知目标题另存种子记录。SHA 写入后续运行清单。
+  batch_2:
+    - id: zh2en-eval-01
+      direction: zh2en
+      type: term
+      query: 局域网文件互传 工具
+      need: 局域网内跨设备传文件的工具
+      written_at: 2026-09-18
+    - id: zh2en-eval-02
+      direction: zh2en
+      type: term
+      query: 屏幕录制转 gif 工具
+      need: 能把屏幕录制转成 GIF 的工具
+      written_at: 2026-09-18
+    - id: zh2en-eval-03
+      direction: zh2en
+      type: uncovered
+      query: 网易云歌单导出成文本
+      need: 把网易云音乐歌单导出为可再导入的文本或文件，不是听歌客户端
+      written_at: 2026-09-18
+    - id: zh2en-eval-04
+      direction: zh2en
+      type: uncovered
+      query: 微信表情包自己做
+      need: 从图片制作可添加到微信的表情包，不是表情商店爬虫
+      written_at: 2026-09-18
+    - id: zh2en-eval-05
+      direction: zh2en
+      type: ambiguous
+      query: 鼠标手势 工具
+      need: 电脑上用鼠标手势触发操作的工具，不是生物小鼠相关
+      written_at: 2026-09-18
+    - id: zh2en-eval-06
+      direction: zh2en
+      type: ambiguous
+      query: composer 依赖安装
+      need: PHP Composer 包管理，不是音乐作曲软件
+      written_at: 2026-09-18
+    - id: zh2en-eval-07
+      direction: zh2en
+      type: negation
+      query: 本地记账软件 不要联网
+      need: 本地记账，不上传、不同步到云
+      written_at: 2026-09-18
+    - id: zh2en-eval-08
+      direction: zh2en
+      type: negation
+      query: 静态站点生成器 不要 node
+      need: 静态站点生成器，运行与构建不依赖 Node.js
+      written_at: 2026-09-18
+    - id: zh2en-eval-09
+      direction: zh2en
+      type: long
+      query: 我想找一个能在 Windows 和 Mac 上同步的待办清单，支持离线使用，到期能提醒我。
+      need: 多端同步、可离线、带到期提醒的待办，不是日历订阅器
+      written_at: 2026-09-18
+    - id: zh2en-eval-10
+      direction: zh2en
+      type: long
+      query: 我需要一个可以把手机上的照片自动备份到家里电脑的工具，最好开机就能自己跑，不用我每次手动传。
+      need: 手机照片自动备份到家用电脑并可开机自启，不是网盘客户端
+      written_at: 2026-09-18
+    - id: en2zh-eval-01
+      direction: en2zh
+      type: term
+      query: china housing provident fund calculator
+      need: 住房公积金缴存或贷款计算器；中文材料描述的项目或能力也可进入候选，不强制整仓库仅中文
+      written_at: 2026-09-18
+    - id: en2zh-eval-02
+      direction: en2zh
+      type: term
+      query: alipay bill csv parser
+      need: 解析支付宝导出账单的工具，不是通用 CSV 库
+      written_at: 2026-09-18
+    - id: en2zh-eval-03
+      direction: en2zh
+      type: uncovered
+      query: weekly report generator for office workers in china
+      need: 根据工作记录生成中文周报的工具
+      written_at: 2026-09-18
+    - id: en2zh-eval-04
+      direction: en2zh
+      type: uncovered
+      query: monitor 12306 leftover train tickets and alert me
+      need: 监控 12306 余票并提醒，不是通用火车票展示站
+      written_at: 2026-09-18
+    - id: en2zh-eval-05
+      direction: en2zh
+      type: ambiguous
+      query: ding talk robot webhook
+      need: 钉钉群机器人或 webhook 工具，不是门铃或 ding 提示音
+      written_at: 2026-09-18
+    - id: en2zh-eval-06
+      direction: en2zh
+      type: ambiguous
+      query: little red book note exporter
+      need: 导出小红书笔记或封面信息的工具，不是笔记本品牌或红皮书
+      written_at: 2026-09-18
+    - id: en2zh-eval-07
+      direction: en2zh
+      type: negation
+      query: baidu netdisk downloader no chrome extension
+      need: 百度网盘下载工具，排除浏览器扩展
+      written_at: 2026-09-18
+    - id: en2zh-eval-08
+      direction: en2zh
+      type: negation
+      query: wecom bot self-hosted no saas
+      need: 可自托管的企业微信机器人，排除只提供云端 SaaS 的服务
+      written_at: 2026-09-18
+    - id: en2zh-eval-09
+      direction: en2zh
+      type: long
+      query: I want a self-hosted tool that archives my Weibo posts including images, lets me search them locally, and is not a browser extension.
+      need: 自托管微博归档（含图、可本地搜索），排除浏览器扩展
+      written_at: 2026-09-18
+    - id: en2zh-eval-10
+      direction: en2zh
+      type: long
+      query: A desktop app that fills Chinese individual income tax forms from exported salary CSVs, works offline, and is not an accounting SaaS.
+      need: 用工资 CSV 填中国个税表的离线桌面工具，排除在线记账 SaaS
+      written_at: 2026-09-18

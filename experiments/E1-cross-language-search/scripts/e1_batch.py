@@ -44,6 +44,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import hashlib
 import re
 import subprocess
 import time
@@ -67,7 +68,7 @@ except ImportError:  # direct script execution
     )
 
 ALLOWED_ARMS = frozenset(ARM_BUDGETS)
-ALLOWED_BATCHES = ("dev", "eval.batch_1")
+ALLOWED_BATCHES = ("dev", "eval.batch_1", "eval.batch_2")
 
 
 def _utcnow() -> str:
@@ -96,15 +97,19 @@ def materials_commit(repo_root: Path | None = None) -> str:
         return "unknown"
 
 
-def load_queries(path: Path) -> dict:
+def load_queries(path: Path, *, expected_sha256: str | None = None) -> dict:
     """Parse the small subset of queries.yaml we need (no pyyaml).
 
-    Returns {"dev": [...], "eval.batch_1": [...]} where each task has
+    Returns dev/eval.batch_1 and any explicitly present eval.batch_2; each task has
     id/direction/type/query/need/written_at. Raises on missing fields.
     """
-    text = Path(path).read_text(encoding="utf-8")
+    raw_bytes = Path(path).read_bytes()
+    if expected_sha256 is not None and hashlib.sha256(raw_bytes).hexdigest() != expected_sha256:
+        raise ValueError("query materials digest changed")
+    text = raw_bytes.decode("utf-8")
     dev: list = []
     eval1: list = []
+    batches = {"dev": dev, "eval.batch_1": eval1}
     section: str | None = None
     current: dict | None = None
 
@@ -116,8 +121,8 @@ def load_queries(path: Path) -> dict:
                 raise ValueError(f"task missing field {f}: {current.get('id')}")
         if section == "dev":
             dev.append(dict(current))
-        elif section == "batch_1":
-            eval1.append(dict(current))
+        elif section and section.startswith("batch_"):
+            batches["eval." + section].append(dict(current))
 
     for raw in text.splitlines():
         stripped = raw.strip()
@@ -131,10 +136,11 @@ def load_queries(path: Path) -> dict:
             current = None
             section = "eval"
             continue
-        if stripped == "batch_1:":
+        if stripped in ("batch_1:", "batch_2:"):
             flush()
             current = None
-            section = "batch_1"
+            section = stripped[:-1]
+            batches.setdefault("eval." + section, [])
             continue
         m = re.match(r"^(\s*)-\s+id:\s*(\S+)\s*$", raw)
         if m:
@@ -148,7 +154,7 @@ def load_queries(path: Path) -> dict:
             if fm:
                 current[fm.group(1)] = fm.group(2)
     flush()
-    return {"dev": dev, "eval.batch_1": eval1}
+    return batches
 
 
 def load_run_settings(path: Path) -> dict:
@@ -641,13 +647,23 @@ def main(argv: list | None = None) -> int:
         print("arm D is a networked-assistant control, not a GitHub run")
         return 2
 
-    queries = load_queries(Path(args.queries))
     settings = load_run_settings(Path(args.run_settings))
+    query_digest = None
+    if args.batch == "eval.batch_2":
+        query_digest = settings.get("material_fingerprints", {}).get("queries_sha256")
+        if (settings.get("batch") != args.batch or
+                settings.get("prompt_profile") != args.batch or not query_digest):
+            print("batch_2 requires its own fingerprinted run settings")
+            return 3
+    queries = load_queries(Path(args.queries), expected_sha256=query_digest)
+    if args.batch not in queries:
+        print("requested batch is absent from query materials")
+        return 2
     tasks = queries[args.batch]
 
-    if args.batch == "eval.batch_1" and not is_eval_frozen(settings):
+    if args.batch.startswith("eval.") and not is_eval_frozen(settings):
         if not args.allow_unfrozen:
-            print("eval.batch_1 未冻结 (freeze markers null): refusing run")
+            print(args.batch + " 未冻结 (freeze markers null): refusing run")
             return 3
 
     variants_by_task = None
